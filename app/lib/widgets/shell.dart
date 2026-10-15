@@ -13,7 +13,10 @@ class AppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final wide = width >= 720;
+    // The wide app bar now carries two pill buttons alongside four text
+    // links, so the drawer takes over below 900px rather than 720px — at
+    // 768px the row of actions no longer fits beside the logo and title.
+    final wide = width >= 900;
 
     return Scaffold(
       // Below the wide breakpoint the app bar drops its nav actions entirely,
@@ -76,16 +79,18 @@ class AppShell extends StatelessWidget {
                   child: const Text('What we do'),
                 ),
                 TextButton(
-                  onPressed: () => context.go('/apply'),
-                  child: const Text('Apply'),
-                ),
-                TextButton(
                   onPressed: () => context.go('/contact'),
                   child: const Text('Contact'),
                 ),
-                TextButton(
+                const SizedBox(width: 4),
+                OutlinedButton(
                   onPressed: () => context.go('/staff/login'),
-                  child: const Text('Staff login'),
+                  child: const Text('Sign In'),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: () => context.go('/apply'),
+                  child: const Text('Apply Now'),
                 ),
                 const SizedBox(width: 12),
               ]
@@ -97,7 +102,7 @@ class AppShell extends StatelessWidget {
 }
 
 /// Phone navigation. Mirrors the wide-screen app bar actions, which are
-/// hidden below the 720px breakpoint.
+/// hidden below the 900px breakpoint.
 class _NavDrawer extends StatelessWidget {
   const _NavDrawer();
 

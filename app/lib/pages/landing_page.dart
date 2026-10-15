@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../api/api_client.dart';
 import '../models/models.dart';
@@ -98,6 +97,9 @@ class _LandingPageState extends State<LandingPage> {
             padding: EdgeInsets.zero,
             children: <Widget>[
               _Hero(wide: wide),
+              // Thin white band of trust markers, straight from the reference
+              // design: wraps onto further lines on a phone.
+              const _TrustStrip(),
               const SizedBox(height: 28),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: wide ? 48 : 12),
@@ -271,11 +273,11 @@ class _LandingPageState extends State<LandingPage> {
             ),
           // Sticky bottom CTA bar.
           const _StickyCtaBar(),
-          // WhatsApp floating button.
-          Positioned(
+          // WhatsApp-style chat button, fixed to the bottom-right.
+          const Positioned(
             bottom: 80,
             right: 16,
-            child: _WhatsAppButton(),
+            child: _ChatFab(),
           ),
         ],
       ),
@@ -283,306 +285,113 @@ class _LandingPageState extends State<LandingPage> {
   }
 }
 
+/// Faint mint/cyan grid overlay used behind the hero.
+///
+/// 1px lines on a 72px lattice, at the same near-invisible alphas as the
+/// reference `repeating-linear-gradient` rules.
+class _HeroGridPainter extends CustomPainter {
+  const _HeroGridPainter();
+
+  static const Color _vertical = Color(0x0F15803D); // rgba(21,128,61,.06)
+  static const Color _horizontal = Color(0x0B06B6D4); // rgba(6,182,212,.045)
+  static const double _step = 72;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final vPaint = Paint()
+      ..color = _vertical
+      ..strokeWidth = 1;
+    final hPaint = Paint()
+      ..color = _horizontal
+      ..strokeWidth = 1;
+    for (var x = 0.0; x < size.width; x += _step) {
+      canvas.drawLine(Offset(x + .5, 0), Offset(x + .5, size.height), vPaint);
+    }
+    for (var y = 0.0; y < size.height; y += _step) {
+      canvas.drawLine(Offset(0, y + .5), Offset(size.width, y + .5), hPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_HeroGridPainter oldDelegate) => false;
+}
+
 class _Hero extends StatelessWidget {
   const _Hero({required this.wide});
 
   final bool wide;
 
+  /// `linear-gradient(115deg, rgba(255,255,255,.55), rgba(240,253,244,.72))`
+  /// laid over the mint page colour.
+  static const LinearGradient _wash = LinearGradient(
+    begin: Alignment(-1, -0.3),
+    end: Alignment(1, 0.35),
+    colors: <Color>[
+      Color(0x8CFFFFFF), // rgba(255,255,255,.55)
+      Color(0xB8F0FDF4), // rgba(240,253,244,.72)
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
-    return Container(
+    // The headline scales down through a FittedBox, so it never overflows a
+    // narrow column — these are only the preferred (largest) sizes.
+    final headlineSize = wide ? 54.0 : 32.0;
+
+    return SizedBox(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: <Color>[
-            Color(0xFF04122E),
-            Color(0xFF072E68),
-            Color(0xFF0D47A1),
-            Color(0xFF1565C0),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          stops: <double>[0, 0.3, 0.65, 1],
-        ),
-      ),
       child: Stack(
         children: <Widget>[
-          // Luxury mesh glows.
+          const Positioned.fill(child: ColoredBox(color: TeamakColors.surface)),
+          const Positioned.fill(child: CustomPaint(painter: _HeroGridPainter())),
+          // Soft radial blobs: green up-right, amber down-left.
           Positioned(
-            right: -80,
-            top: -80,
-            child: _blob(280, Colors.white.withValues(alpha: 0.045)),
+            right: wide ? 20 : -70,
+            top: wide ? -70 : -60,
+            child: _blob(320, const Color(0xFF22C55E), 0.22),
           ),
           Positioned(
-            right: wide ? 120 : 20,
-            top: wide ? 120 : 70,
-            child: _blob(140, TeamakColors.accent.withValues(alpha: 0.12)),
+            left: wide ? -60 : -80,
+            bottom: -90,
+            child: _blob(300, const Color(0xFFF59E0B), 0.16),
           ),
-          Positioned(
-            left: -60,
-            bottom: -100,
-            child: _blob(220, Colors.white.withValues(alpha: 0.04)),
-          ),
-          Positioned(
-            left: wide ? 300 : 150,
-            top: -40,
-            child: _blob(100, TeamakColors.accent.withValues(alpha: 0.08)),
-          ),
-          // Subtle diagonal gold streak.
-          Positioned(
-            right: wide ? 180 : 40,
-            top: 0,
-            bottom: 0,
-            child: Transform.rotate(
-              angle: 0.35,
-              child: Container(
-                width: 3,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: <Color>[
-                      Colors.transparent,
-                      TeamakColors.accent.withValues(alpha: 0.35),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
+          const Positioned.fill(child: DecoratedBox(decoration: BoxDecoration(gradient: _wash))),
           Padding(
             padding: EdgeInsets.symmetric(
               horizontal: wide ? 56 : 22,
-              vertical: wide ? 80 : 52,
+              vertical: wide ? 72 : 44,
             ),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 960),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    // Logo + company pill. Wraps so the name drops below the
-                    // logo on a phone rather than overflowing the hero.
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 14,
-                      runSpacing: 10,
-                      children: <Widget>[
-                        Container(
-                          padding: const EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: <BoxShadow>[
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.3),
-                                blurRadius: 24,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
-                          ),
-                          child: Image.asset(
-                            'assets/teamak_logo.png',
-                            height: wide ? 72 : 54,
-                            width: wide ? 72 : 54,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              'TEAMAK GLOBAL',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w900,
-                                fontSize: wide ? 15 : 13,
-                                letterSpacing: wide ? 1.8 : 0.6,
-                              ),
-                            ),
-                            Text(
-                              'SOLUTIONS  ·  RC 9907312',
-                              style: TextStyle(
-                                color: TeamakColors.accent.withValues(alpha: 0.9),
-                                fontSize: wide ? 11 : 9.5,
-                                letterSpacing: 1.2,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-                    // Premium badge. On a phone the tracked-out label plus the
-                    // star overruns the hero by ~19px, so the pill tightens its
-                    // padding and tracking, and the label is Flexible as a hard
-                    // guarantee: ellipsis only applies when Text gets a bounded
-                    // width, which a min-size Row otherwise withholds.
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: wide ? 16 : 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: <Color>[
-                            TeamakColors.accent,
-                            Color(0xFFE09210),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: <BoxShadow>[
-                          BoxShadow(
-                            color: TeamakColors.accent.withValues(alpha: 0.4),
-                            blurRadius: 16,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                constraints: const BoxConstraints(maxWidth: 1100),
+                child: wide
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: <Widget>[
-                          const Icon(Icons.star_rounded, size: 15, color: TeamakColors.ink),
-                          const SizedBox(width: 5),
-                          Flexible(
-                            child: Text(
-                              'FROM RIDER TO OWNER',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: TeamakColors.ink,
-                                letterSpacing: wide ? 1.8 : 0.2,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w900,
-                              ),
+                          Expanded(
+                            flex: 12,
+                            child: _copy(context, headlineSize, wide: true),
+                          ),
+                          const SizedBox(width: 44),
+                          const Expanded(
+                            flex: 10,
+                            child: _DashboardMockup(),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          _copy(context, headlineSize, wide: false),
+                          const SizedBox(height: 28),
+                          Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 520),
+                              child: const _DashboardMockup(),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'TEAMAK GLOBAL\nSOLUTIONS',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: wide ? 52 : 34,
-                        fontWeight: FontWeight.w900,
-                        height: 1.05,
-                        letterSpacing: -0.5,
-                        shadows: <Shadow>[
-                          Shadow(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            blurRadius: 16,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // Gold underline accent.
-                    Container(
-                      width: wide ? 120 : 80,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: <Color>[TeamakColors.accent, Colors.white],
-                        ),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 520),
-                      child: Text(
-                        'Own a brand-new Bajaj motorcycle or Maruwa tricycle '
-                        'through a one-time programme deposit. Built for riders '
-                        'in Ibadan & Environs.',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.82),
-                          fontSize: wide ? 17 : 15,
-                          height: 1.55,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 26),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 10,
-                      children: const <Widget>[
-                        _HeroChip(icon: Icons.verified_outlined, label: 'One-time deposit'),
-                        _HeroChip(icon: Icons.schedule_rounded, label: '3–6 months'),
-                        _HeroChip(icon: Icons.motorcycle_rounded, label: 'Bajaj & Maruwa'),
-                        _HeroChip(icon: Icons.location_on_outlined, label: 'Ibadan & Environs'),
-                      ],
-                    ),
-                    const SizedBox(height: 36),
-                    Wrap(
-                      spacing: 14,
-                      runSpacing: 14,
-                      children: <Widget>[
-                        FilledButton(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: TeamakColors.accent,
-                            foregroundColor: TeamakColors.ink,
-                            elevation: 8,
-                            shadowColor: TeamakColors.accent.withValues(alpha: 0.55),
-                            padding: EdgeInsets.symmetric(
-                              // Tighter on phones: 36px a side plus a wide label
-                              // overruns a ~346px hero.
-                              horizontal: wide ? 36 : 22,
-                              vertical: 20,
-                            ),
-                            textStyle: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          onPressed: () => context.go('/apply'),
-                          // The label wraps rather than shrinking: a min-size Row
-                          // cannot absorb a narrow phone, so without this the
-                          // text spills past the button's own edge.
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              Flexible(
-                                child: Text(
-                                  'Start application',
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Icon(Icons.arrow_forward_rounded, size: 20),
-                            ],
-                          ),
-                        ),
-                        OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.45),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 30,
-                              vertical: 19,
-                            ),
-                            textStyle: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          onPressed: () => context.go('/staff/login'),
-                          child: const Text('Staff login'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
               ),
             ),
           ),
@@ -591,11 +400,616 @@ class _Hero extends StatelessWidget {
     );
   }
 
-  static Widget _blob(double size, Color color) => Container(
+  /// Kicker pill → headline → copy → chips → calls to action.
+  Widget _copy(BuildContext context, double headlineSize, {required bool wide}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        // Logo + company lockup. Wraps so the name drops below the logo on a
+        // phone rather than overflowing the hero.
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 14,
+          runSpacing: 10,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: TeamakColors.border),
+                boxShadow: const <BoxShadow>[
+                  BoxShadow(
+                    color: Color(0x0F111827),
+                    blurRadius: 18,
+                    offset: Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Image.asset(
+                'assets/teamak_logo.png',
+                height: wide ? 64 : 52,
+                width: wide ? 64 : 52,
+                fit: BoxFit.cover,
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'TEAMAK GLOBAL',
+                  style: TextStyle(
+                    color: TeamakColors.ink,
+                    fontWeight: FontWeight.w900,
+                    fontSize: wide ? 15 : 13,
+                    letterSpacing: wide ? 1.8 : 0.6,
+                  ),
+                ),
+                Text(
+                  'SOLUTIONS  ·  RC 9907312',
+                  style: TextStyle(
+                    color: TeamakColors.accentDark,
+                    fontSize: wide ? 11 : 9.5,
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        // Kicker pill.
+        Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: wide ? 15 : 12,
+            vertical: 7,
+          ),
+          decoration: BoxDecoration(
+            color: const Color(0x1A22C55E), // rgba(34,197,94,.10)
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: const Color(0x4022C55E)), // rgba(34,197,94,.25)
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const Icon(Icons.star_rounded, size: 15, color: TeamakColors.primaryDark),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  'FROM RIDER TO OWNER',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: TeamakColors.primaryDark,
+                    letterSpacing: wide ? 1.6 : 0.3,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 22),
+        // Headline. FittedBox hands the texts an unbounded width so they stay
+        // on one line, then scales the whole block down when the column is
+        // narrow — the one layout that cannot overflow at 320px.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'TEAMAK GLOBAL',
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(
+                  color: TeamakColors.ink,
+                  fontSize: headlineSize,
+                  fontWeight: FontWeight.w900,
+                  height: 1.06,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              // Key word tinted with the emerald→cyan sweep.
+              ShaderMask(
+                shaderCallback: (bounds) =>
+                    TeamakColors.gradSuccess.createShader(bounds),
+                blendMode: BlendMode.srcIn,
+                child: Text(
+                  'SOLUTIONS',
+                  maxLines: 1,
+                  softWrap: false,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: headlineSize,
+                    fontWeight: FontWeight.w900,
+                    height: 1.06,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Text(
+            'Own a brand-new Bajaj motorcycle or Maruwa tricycle '
+            'through a one-time programme deposit. Built for riders '
+            'in Ibadan & Environs.',
+            style: TextStyle(
+              color: TeamakColors.subtle,
+              fontSize: wide ? 17 : 15,
+              height: 1.7,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ),
+        const SizedBox(height: 22),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: const <Widget>[
+            _HeroChip(icon: Icons.verified_outlined, label: 'One-time deposit'),
+            _HeroChip(icon: Icons.schedule_rounded, label: '3–6 months'),
+            _HeroChip(icon: Icons.motorcycle_rounded, label: 'Bajaj & Maruwa'),
+            _HeroChip(icon: Icons.location_on_outlined, label: 'Ibadan & Environs'),
+          ],
+        ),
+        const SizedBox(height: 30),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: <Widget>[
+            FilledButton(
+              style: FilledButton.styleFrom(
+                padding: EdgeInsets.symmetric(
+                  // Tighter on phones: 36px a side plus a wide label
+                  // overruns a ~276px hero column.
+                  horizontal: wide ? 36 : 24,
+                  vertical: 20,
+                ),
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
+              ),
+              onPressed: () => context.go('/apply'),
+              // The label wraps rather than shrinking: a min-size Row
+              // cannot absorb a narrow phone, so without this the
+              // text spills past the button's own edge.
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Flexible(
+                    child: Text(
+                      'Start application',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Icon(Icons.arrow_forward_rounded, size: 20),
+                ],
+              ),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: TeamakColors.primaryDark,
+                side: const BorderSide(color: TeamakColors.borderStrong),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 19,
+                ),
+              ),
+              onPressed: () => context.go('/staff/login'),
+              child: const Text('Staff login'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Heavily feathered radial blob — a blurred circle without the blur cost.
+  static Widget _blob(double size, Color color, double opacity) => Container(
         width: size,
         height: size,
-        decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: <Color>[
+              color.withValues(alpha: opacity),
+              color.withValues(alpha: 0),
+            ],
+          ),
+        ),
       );
+}
+
+/// Preview of the member dashboard: status, deposit, plan progress and the
+/// reward waiting at completion.
+class _DashboardMockup extends StatelessWidget {
+  const _DashboardMockup();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const <BoxShadow>[
+          BoxShadow(
+            color: Color(0x1F15803D),
+            blurRadius: 44,
+            offset: Offset(0, 18),
+          ),
+          BoxShadow(
+            color: Color(0x0F111827),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: <Color>[Colors.white, Color(0xFFF7FEF9)],
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              // Status row.
+              Row(
+                children: <Widget>[
+                  const Expanded(
+                    child: Text(
+                      'OKADA OWNERSHIP',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: TeamakColors.dim,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.4,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 11,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0x1A22C55E),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: const Text(
+                      'Active',
+                      style: TextStyle(
+                        color: TeamakColors.primaryDark,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                '₦450,000',
+                style: TextStyle(
+                  color: TeamakColors.ink,
+                  fontSize: 34,
+                  fontWeight: FontWeight.w900,
+                  height: 1.05,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'One-time deposit',
+                style: TextStyle(color: TeamakColors.subtle, fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Container(
+                  height: 6,
+                  width: double.infinity,
+                  color: const Color(0x120F172A), // rgba(15,23,42,.07)
+                  child: FractionallySizedBox(
+                    widthFactor: 0.68,
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        gradient: TeamakColors.gradPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Month 2 of 3 · 68% through plan',
+                style: TextStyle(color: TeamakColors.dim, fontSize: 12),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: <Widget>[
+                  const Expanded(child: _MiniStat(label: 'Asset', value: 'Bajaj Boxer')),
+                  const SizedBox(width: 8),
+                  const Expanded(child: _MiniStat(label: 'Term', value: '3 months')),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: <Widget>[
+                  const Expanded(child: _MiniStat(label: 'Training', value: 'Included')),
+                  const SizedBox(width: 8),
+                  const Expanded(child: _MiniStat(label: 'Support', value: 'After-sales')),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0x1A22C55E),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0x3322C55E)),
+                ),
+                child: Row(
+                  children: <Widget>[
+                    const Icon(
+                      Icons.workspace_premium_rounded,
+                      color: TeamakColors.primaryDark,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            'Ownership certificate',
+                            style: TextStyle(
+                              color: TeamakColors.ink,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          Text(
+                            'Ready at completion',
+                            style: TextStyle(
+                              color: TeamakColors.subtle,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One cell of the mockup's 2×2 mini-stat grid.
+class _MiniStat extends StatelessWidget {
+  const _MiniStat({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: TeamakColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            label,
+            style: const TextStyle(
+              color: TeamakColors.dim,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: TeamakColors.ink,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Thin white band of trust markers below the hero.
+class _TrustStrip extends StatelessWidget {
+  const _TrustStrip();
+
+  static const List<String> _items = <String>[
+    'Registered Nigerian Business',
+    'Real vehicles',
+    'No hidden charges',
+    'Transparent terms',
+    'Dedicated support',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final narrow = MediaQuery.sizeOf(context).width < 700;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: narrow ? 16 : 48,
+        vertical: 14,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: TeamakColors.border)),
+      ),
+      child: Center(
+        child: Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: narrow ? 10 : 16,
+          runSpacing: 10,
+          children: <Widget>[
+            for (var i = 0; i < _items.length; i++) ...<Widget>[
+              if (i > 0)
+                Container(width: 1, height: 14, color: TeamakColors.border),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    size: 15,
+                    color: TeamakColors.primary,
+                  ),
+                  const SizedBox(width: 5),
+                  // Flexible: a Row hands its children unbounded width, so
+                  // without this the long labels lay out on one line and
+                  // overflow a 320px screen instead of wrapping.
+                  Flexible(
+                    child: Text(
+                      _items[i],
+                      style: const TextStyle(
+                        color: TeamakColors.subtle,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// White feature card with the reference design's 3px gradient top edge,
+/// hairline mint border and green hover glow.
+///
+/// Inline rather than reusing `HoverCard`, whose accent bar is a flat colour
+/// and whose radius is fixed at 18.
+class _FeatureCard extends StatefulWidget {
+  const _FeatureCard({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_FeatureCard> createState() => _FeatureCardState();
+}
+
+class _FeatureCardState extends State<_FeatureCard> {
+  bool _hovered = false;
+
+  static const BorderRadius _radius = BorderRadius.all(Radius.circular(20));
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          transform: Matrix4.translationValues(0, _hovered ? -5 : 0, 0),
+          // The shadow sits on this outer wrapper, outside the ClipRRect
+          // below, so it can spill past the rounded corners instead of being
+          // clipped away with the card face.
+          decoration: BoxDecoration(
+            borderRadius: _radius,
+            boxShadow: _hovered
+                ? <BoxShadow>[
+                    BoxShadow(
+                      color: TeamakColors.primary.withValues(alpha: 0.22),
+                      blurRadius: 26,
+                      offset: const Offset(0, 12),
+                    ),
+                    BoxShadow(
+                      color: TeamakColors.primary.withValues(alpha: 0.08),
+                      blurRadius: 30,
+                      spreadRadius: 2,
+                    ),
+                  ]
+                : <BoxShadow>[
+                    BoxShadow(
+                      color: TeamakColors.ink.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+          ),
+          child: ClipRRect(
+            borderRadius: _radius,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: <Widget>[
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: _radius,
+                    border: Border.all(
+                      color: _hovered
+                          ? TeamakColors.primary.withValues(alpha: 0.5)
+                          : TeamakColors.border,
+                      width: 1.2,
+                    ),
+                  ),
+                  child: widget.child,
+                ),
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 3,
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(
+                      gradient: TeamakColors.gradPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+    );
+  }
 }
 
 class _CountdownTimer extends StatefulWidget {
@@ -643,19 +1057,19 @@ class _CountdownTimerState extends State<_CountdownTimer> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.12),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          border: Border.all(color: TeamakColors.border),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.timer_outlined, size: 14, color: TeamakColors.accent),
+            const Icon(Icons.timer_outlined, size: 14, color: TeamakColors.goldLight),
             const SizedBox(width: 5),
             Text(
               text,
               style: const TextStyle(
-                color: Colors.white,
+                color: TeamakColors.ink,
                 fontWeight: FontWeight.w800,
                 fontSize: 13,
                 fontFeatures: [FontFeature.tabularFigures()],
@@ -671,11 +1085,11 @@ class _CountdownTimerState extends State<_CountdownTimer> {
       children: [
         _timeBox(h, 'HRS'),
         const SizedBox(width: 6),
-        const Text(':', style: TextStyle(color: Colors.white38, fontWeight: FontWeight.w900)),
+        const Text(':', style: TextStyle(color: TeamakColors.dim, fontWeight: FontWeight.w900)),
         const SizedBox(width: 6),
         _timeBox(m, 'MIN'),
         const SizedBox(width: 6),
-        const Text(':', style: TextStyle(color: Colors.white38, fontWeight: FontWeight.w900)),
+        const Text(':', style: TextStyle(color: TeamakColors.dim, fontWeight: FontWeight.w900)),
         const SizedBox(width: 6),
         _timeBox(s, 'SEC'),
       ],
@@ -687,16 +1101,16 @@ class _CountdownTimerState extends State<_CountdownTimer> {
       width: 44,
       padding: const EdgeInsets.symmetric(vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.3),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+        border: Border.all(color: TeamakColors.border),
       ),
       child: Column(
         children: [
           Text(
             _pad(value),
             style: const TextStyle(
-              color: Colors.white,
+              color: TeamakColors.ink,
               fontWeight: FontWeight.w900,
               fontSize: 17,
               fontFeatures: [FontFeature.tabularFigures()],
@@ -704,8 +1118,8 @@ class _CountdownTimerState extends State<_CountdownTimer> {
           ),
           Text(
             label,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.5),
+            style: const TextStyle(
+              color: TeamakColors.dim,
               fontSize: 8,
               fontWeight: FontWeight.w700,
               letterSpacing: 1,
@@ -758,17 +1172,20 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
     final wide = widget.wide;
     return Container(
       decoration: BoxDecoration(
+        // Mint band: `linear-gradient(135deg,#ECFDF5,#F7FEE7 48%,#fff)`.
         gradient: const LinearGradient(
-          colors: <Color>[Color(0xFF072E68), Color(0xFF0D47A1), Color(0xFF1565C0)],
+          colors: <Color>[Color(0xFFECFDF5), Color(0xFFF7FEE7), Colors.white],
+          stops: <double>[0, 0.48, 1],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: TeamakColors.border),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: TeamakColors.primary.withValues(alpha: 0.4),
-            blurRadius: 30,
-            offset: const Offset(0, 14),
+            color: TeamakColors.primary.withValues(alpha: 0.12),
+            blurRadius: 28,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -783,7 +1200,7 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
               height: 180,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: TeamakColors.accent.withValues(alpha: 0.14),
+                color: TeamakColors.primary.withValues(alpha: 0.07),
               ),
             ),
           ),
@@ -795,7 +1212,7 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
               height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.05),
+                color: TeamakColors.accent.withValues(alpha: 0.06),
               ),
             ),
           ),
@@ -2058,43 +2475,43 @@ class _AfterSalesSupport extends StatelessWidget {
   }
 }
 
-class _WhatsAppButton extends StatelessWidget {
-  const _WhatsAppButton();
+/// Fixed WhatsApp-green chat bubble, bottom-right of the landing page.
+///
+/// 52px circle with the reference design's coloured glow; it hands the user
+/// to the contact page rather than leaving the app through a URL scheme.
+class _ChatFab extends StatelessWidget {
+  const _ChatFab();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF25D366),
-        shape: BoxShape.circle,
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: const Color(0xFF25D366).withValues(alpha: 0.4),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: () async {
-            final phone = '2348023449126';
-            final msg = Uri.encodeComponent(
-              'Hello Teamak, I want to apply for a vehicle ownership programme.',
-            );
-            final uri = Uri.parse('https://wa.me/$phone?text=$msg');
-            if (await canLaunchUrl(uri)) {
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            }
-          },
-          child: const Padding(
-            padding: EdgeInsets.all(14),
-            child: Icon(
-              Icons.chat_rounded,
-              color: Colors.white,
-              size: 28,
+    return Semantics(
+      button: true,
+      label: 'Chat with us',
+      child: Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: const Color(0xFF25D366),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: const Color(0xFF25D366).withValues(alpha: 0.45),
+              blurRadius: 22,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () => context.go('/contact'),
+            child: const Center(
+              child: Icon(
+                Icons.chat_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
             ),
           ),
         ),

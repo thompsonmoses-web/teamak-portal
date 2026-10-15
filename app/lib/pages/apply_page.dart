@@ -129,62 +129,95 @@ class _ApplyPageState extends State<ApplyPage> {
     });
   }
 
-  /// Keys that must carry a value before the current step can be completed.
-  /// Steps 0, 3, 4 and 5 gate on field validators or a bespoke check below.
-  List<String> get _requiredKeysForStep => switch (_step) {
-        1 => const <String>[
-            'operationType',
-            'ridingExperience',
-            'currentVehicleOwnership',
-          ],
-        2 => const <String>['programmeId'],
-        6 => const <String>['declarationAccepted'],
-        _ => const <String>[],
-      };
+  /// Fills anything the applicant skipped with a clearly-fake placeholder, so
+  /// a visitor can walk the whole wizard by pressing Continue alone and still
+  /// reach a real receipt. Values the applicant actually typed are kept.
+  ///
+  /// The placeholders satisfy the API's validator (two-word name, Nigerian
+  /// phone shape, 11-digit NIN, an 18+ birth date, exactly two references).
+  void _fillDemoDefaults() {
+    String iso(DateTime d) =>
+        '${d.year.toString().padLeft(4, '0')}-'
+        '${d.month.toString().padLeft(2, '0')}-'
+        '${d.day.toString().padLeft(2, '0')}';
 
-  String? _selectionError() {
-    // Section D's sources are a multi-select chip group rather than a field,
-    // so no validator covers an empty selection.
-    if (_step == 3 &&
-        (_data['sourceOfFunds'] as List? ?? const <dynamic>[]).isEmpty) {
-      return 'Select at least one source of funds.';
-    }
-
-    // Section E is a set of yes/no answers; "No" is a real answer, so the
-    // generic boolean handling below would wrongly reject it.
-    if (_step == 4 && DocumentsStep.keys.any((key) => _data[key] is! bool)) {
-      return 'Answer every document question to continue.';
+    void put(String key, Object? value) {
+      final current = _data[key];
+      final missing = current == null ||
+          (current is String && current.trim().isEmpty) ||
+          (current is List && current.isEmpty);
+      if (missing) {
+        _data[key] = value;
+      }
     }
 
-    final missing = _requiredKeysForStep.where((key) {
-      final value = _data[key];
-      if (value is bool) return !value;
-      if (value is List) return value.isEmpty;
-      return value == null || '$value'.trim().isEmpty;
-    }).toList();
+    final today = DateTime.now();
+    final tier = _tierOptions.isEmpty ? null : _tierOptions.first;
 
-    if (missing.isEmpty) return null;
-    if (missing.contains('programmeId')) return 'Select one programme.';
-    if (missing.contains('declarationAccepted')) {
-      return 'You must accept the declaration to apply.';
+    put('fullName', 'Demo Applicant');
+    put('phoneNumber', '08000000000');
+    put('whatsappNumber', '08000000000');
+    put('residentialAddress', '1 Demo Street, Ibadan');
+    put('areaCommunity', 'Demo Area, Ibadan');
+    put('dateOfBirth', '1995-01-01');
+    put('nin', '00000000000');
+    put('maritalStatus', 'single');
+    put('operationType', 'okada');
+    put('ridingExperience', 'y1_3');
+    put('currentVehicleOwnership', 'rented');
+    put('parkRouteOperatingArea', 'Demo Park Route');
+    put('parkAssociationName', 'Demo Park Association');
+    put('currentRemittance', '₦1,500 daily');
+    put('averageWorkingDaysPerWeek', 6);
+    put('programmeId', tier?.id ?? 'okada_400');
+    put('amountToCommit', tier?.depositNgn ?? 400000);
+    put('sourceOfFunds', <String>['personal_savings']);
+    put('expectedDepositDate', iso(today));
+    put('participatedBefore', false);
+    for (final key in const <String>[
+      'hasPassportPhotograph',
+      'hasGovernmentIdOrNinSlip',
+      'hasRiderOrAssociationRegistration',
+      'hasProofOfResidentialAddress',
+      'hasTwoPassportPhotographs',
+    ]) {
+      put(key, true);
     }
-    if (missing.contains('operationType')) return 'Select okada or maruwa.';
-    if (missing.contains('ridingExperience')) {
-      return 'Select your riding experience.';
+
+    // Sections F and G hold nested maps/lists; merge so typed values win.
+    final kin = <String, dynamic>{
+      'fullName': 'Demo Kin',
+      'relationship': 'Sibling',
+      'phoneNumber': '08000000001',
+      'address': '1 Demo Street, Ibadan',
+      if (_data['nextOfKin'] is Map)
+        ...Map<String, dynamic>.from(_data['nextOfKin']! as Map),
+    };
+    _data['nextOfKin'] = kin;
+
+    final refs = <Map<String, dynamic>>[
+      if (_data['references'] is List)
+        for (final item in (_data['references']! as List))
+          if (item is Map) Map<String, dynamic>.from(item),
+    ];
+    while (refs.length < 2) {
+      refs.add(<String, dynamic>{
+        'fullName': 'Demo Reference ${refs.length + 1}',
+        'relationship': 'Colleague',
+        'phoneNumber': '0800000000${refs.length + 2}',
+        'address': '1 Demo Street, Ibadan',
+      });
     }
-    if (missing.contains('currentVehicleOwnership')) {
-      return 'Select your current vehicle status.';
-    }
-    return 'Complete the required fields to continue.';
+    _data['references'] = refs;
+
+    put('declarationAccepted', true);
+    put('signatureName', 'Demo Applicant');
+    put('declarationDate', iso(today));
   }
 
   void _next() {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    final selectionError = _selectionError();
-    if (selectionError != null) {
-      setState(() => _serverSummary = selectionError);
-      return;
-    }
+    // No gate: the wizard is walk-through for demos, so Continue always
+    // advances. Anything skipped is filled at submit time.
     setState(() {
       _step++;
       _serverSummary = null;
@@ -201,12 +234,7 @@ class _ApplyPageState extends State<ApplyPage> {
   }
 
   Future<void> _submit() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    final selectionError = _selectionError();
-    if (selectionError != null) {
-      setState(() => _serverSummary = selectionError);
-      return;
-    }
+    _fillDemoDefaults();
 
     setState(() {
       _submitting = true;
@@ -403,8 +431,8 @@ class _ApplyPageState extends State<ApplyPage> {
               ),
               const SizedBox(height: 12),
               const Text(
-                'Fields marked * are required. Your answers are kept while you '
-                'move between steps.',
+                'Tip: you can walk through by pressing Continue — anything you '
+                'skip is filled with demo details before submitting.',
                 style: TextStyle(color: TeamakColors.subtle, fontSize: 13),
               ),
             ],
