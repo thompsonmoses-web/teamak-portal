@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'api/api_client.dart';
+import 'pages/about_page.dart';
 import 'pages/apply_page.dart';
 import 'pages/contact_page.dart';
 import 'pages/landing_page.dart';
@@ -11,6 +12,8 @@ import 'pages/staff/application_detail_page.dart';
 import 'pages/staff/dashboard_page.dart';
 import 'pages/staff/login_page.dart';
 import 'pages/staff/messages_page.dart';
+import 'pages/team_page.dart';
+import 'pages/what_we_do_page.dart';
 import 'state/session.dart';
 import 'theme.dart';
 
@@ -55,6 +58,18 @@ class _TeamakAppState extends State<TeamakApp> {
           GoRoute(
             path: '/',
             builder: (context, state) => const LandingPage(),
+          ),
+          GoRoute(
+            path: '/about',
+            builder: (context, state) => const AboutPage(),
+          ),
+          GoRoute(
+            path: '/what-we-do',
+            builder: (context, state) => const WhatWeDoPage(),
+          ),
+          GoRoute(
+            path: '/team',
+            builder: (context, state) => const TeamPage(),
           ),
           GoRoute(
             path: '/apply',

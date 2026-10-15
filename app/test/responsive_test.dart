@@ -195,6 +195,18 @@ void main() {
       await _checkRoute(tester, width, path: '/contact');
     });
 
+    testWidgets('about page fits a ${width}px viewport', (tester) async {
+      await _checkRoute(tester, width, path: '/about');
+    });
+
+    testWidgets('what we do page fits a ${width}px viewport', (tester) async {
+      await _checkRoute(tester, width, path: '/what-we-do');
+    });
+
+    testWidgets('team page fits a ${width}px viewport', (tester) async {
+      await _checkRoute(tester, width, path: '/team');
+    });
+
     testWidgets('staff login fits a ${width}px viewport', (tester) async {
       await _checkRoute(tester, width, path: '/staff/login');
     });

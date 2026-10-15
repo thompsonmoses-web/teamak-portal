@@ -68,6 +68,14 @@ class AppShell extends StatelessWidget {
                   child: const Text('Home'),
                 ),
                 TextButton(
+                  onPressed: () => context.go('/about'),
+                  child: const Text('About'),
+                ),
+                TextButton(
+                  onPressed: () => context.go('/what-we-do'),
+                  child: const Text('What we do'),
+                ),
+                TextButton(
                   onPressed: () => context.go('/apply'),
                   child: const Text('Apply'),
                 ),
@@ -96,6 +104,9 @@ class _NavDrawer extends StatelessWidget {
   static const List<(IconData, String, String)> _destinations =
       <(IconData, String, String)>[
     (Icons.home_outlined, 'Home', '/'),
+    (Icons.info_outline, 'About', '/about'),
+    (Icons.grid_view_outlined, 'What we do', '/what-we-do'),
+    (Icons.groups_outlined, 'Our team', '/team'),
     (Icons.assignment_outlined, 'Apply', '/apply'),
     (Icons.mail_outline, 'Contact', '/contact'),
     (Icons.badge_outlined, 'Staff login', '/staff/login'),
@@ -129,17 +140,27 @@ class _NavDrawer extends StatelessWidget {
               ),
             ),
             const Divider(height: 1),
-            for (final (icon, label, path) in _destinations)
-              ListTile(
-                leading: Icon(icon),
-                title: Text(label),
-                // Closes the drawer before navigating, so the caller does not
-                // land on the new page with the drawer still covering it.
-                onTap: () {
-                  Navigator.of(context).pop();
-                  context.go(path);
-                },
+            // Scrollable: seven destinations plus the header overrun a short
+            // phone, and an unscrollable Column clips the last entry.
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: <Widget>[
+                  for (final (icon, label, path) in _destinations)
+                    ListTile(
+                      leading: Icon(icon),
+                      title: Text(label),
+                      // Closes the drawer before navigating, so the caller does
+                      // not land on the new page with the drawer still covering
+                      // it.
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go(path);
+                      },
+                    ),
+                ],
               ),
+            ),
           ],
         ),
       ),
