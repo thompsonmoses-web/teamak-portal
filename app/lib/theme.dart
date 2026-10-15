@@ -1,54 +1,54 @@
 import 'package:flutter/material.dart';
 
-/// Brand palette for Teamak Global Solution Limited, styled after the
-/// Value Circle Africa design language: emerald primary, cyan accent,
-/// amber-gold highlights on a mint-white surface, pill buttons and
-/// generously rounded cards.
+/// Brand colours for Teamak Global Solution Limited (blue + gold from logo).
+///
+/// The palette is the original Teamak code; the extra tokens (light/dark
+/// siblings, tints, borders, gradients) exist so the Value Circle-style
+/// layout can be painted in the brand colours.
 class TeamakColors {
-  /// Emerald primary (`--ap-primary`).
-  static const Color primary = Color(0xFF22C55E);
+  /// Brand blue (`#0D47A1`).
+  static const Color primary = Color(0xFF0D47A1);
 
-  static const Color primaryLight = Color(0xFF16A34A);
-  static const Color primaryDark = Color(0xFF15803D);
+  static const Color primaryLight = Color(0xFF1565C0);
+  static const Color primaryDark = Color(0xFF072E68);
 
-  /// Cyan accent (`--ap-accent`).
-  static const Color accent = Color(0xFF06B6D4);
-  static const Color accentDark = Color(0xFF0891B2);
+  /// Brand gold (`#F4A81D`).
+  static const Color accent = Color(0xFFF4A81D);
+  static const Color accentDark = Color(0xFFC98A12);
 
-  /// Amber-gold highlight (`--ap-gold`).
-  static const Color gold = Color(0xFFD97706);
-  static const Color goldLight = Color(0xFFB45309);
+  static const Color gold = Color(0xFFF4A81D);
+  static const Color goldLight = Color(0xFFC98610);
 
-  static const Color ink = Color(0xFF111827);
-  static const Color subtle = Color(0xFF4B5563);
-  static const Color dim = Color(0xFF9CA3AF);
+  static const Color ink = Color(0xFF0E1B33);
+  static const Color subtle = Color(0xFF5C6B84);
+  static const Color dim = Color(0xFF8A97AD);
 
-  /// Mint page background (`--ap-bg`), with two deeper tints for bands.
-  static const Color surface = Color(0xFFF0FDF4);
-  static const Color surface2 = Color(0xFFECFDF5);
-  static const Color surface3 = Color(0xFFDCFCE7);
+  /// Page background, with two deeper blue tints for bands.
+  static const Color surface = Color(0xFFF5F7FB);
+  static const Color surface2 = Color(0xFFEEF2F9);
+  static const Color surface3 = Color(0xFFDCE4F2);
 
-  static const Color border = Color(0x17000000); // rgba(0,0,0,.09)
-  static const Color borderStrong = Color(0x29000000);
+  static const Color border = Color(0xFFE4E9F2);
+  static const Color borderStrong = Color(0xFFC6CEE0);
   static const Color danger = Color(0xFFDC2626);
 
-  /// `--ap-grad-primary`: 135° emerald sweep used on buttons and banners.
+  /// 135° blue sweep used on buttons and banners.
   static const LinearGradient gradPrimary = LinearGradient(
     colors: <Color>[primary, primaryDark],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  /// `--ap-grad-gold`: amber→coral sweep for emphasis.
+  /// Gold→deep-orange sweep for emphasis.
   static const LinearGradient gradGold = LinearGradient(
-    colors: <Color>[Color(0xFFF59E0B), Color(0xFFEF4444)],
+    colors: <Color>[Color(0xFFF4A81D), Color(0xFFEF6C00)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  /// `--ap-grad-success`: emerald→cyan sweep for hero/CTA tints.
+  /// Blue→gold sweep for hero/CTA tints.
   static const LinearGradient gradSuccess = LinearGradient(
-    colors: <Color>[Color(0xFF10B981), accent],
+    colors: <Color>[primaryLight, accent],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

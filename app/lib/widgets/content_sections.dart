@@ -408,11 +408,11 @@ class QuoteBlock extends StatelessWidget {
         children: <Widget>[
           const Row(
             children: <Widget>[
-              Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 20),
-              Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 20),
-              Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 20),
-              Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 20),
-              Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 20),
+              Icon(Icons.star_rounded, color: TeamakColors.gold, size: 20),
+              Icon(Icons.star_rounded, color: TeamakColors.gold, size: 20),
+              Icon(Icons.star_rounded, color: TeamakColors.gold, size: 20),
+              Icon(Icons.star_rounded, color: TeamakColors.gold, size: 20),
+              Icon(Icons.star_rounded, color: TeamakColors.gold, size: 20),
             ],
           ),
           const SizedBox(height: 14),

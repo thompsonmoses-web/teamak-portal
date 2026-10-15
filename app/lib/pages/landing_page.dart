@@ -292,8 +292,8 @@ class _LandingPageState extends State<LandingPage> {
 class _HeroGridPainter extends CustomPainter {
   const _HeroGridPainter();
 
-  static const Color _vertical = Color(0x0F15803D); // rgba(21,128,61,.06)
-  static const Color _horizontal = Color(0x0B06B6D4); // rgba(6,182,212,.045)
+  static const Color _vertical = Color(0x0F0D47A1); // rgba(13,71,161,.06)
+  static const Color _horizontal = Color(0x0BF4A81D); // rgba(244,168,29,.045)
   static const double _step = 72;
 
   @override
@@ -321,14 +321,14 @@ class _Hero extends StatelessWidget {
 
   final bool wide;
 
-  /// `linear-gradient(115deg, rgba(255,255,255,.55), rgba(240,253,244,.72))`
-  /// laid over the mint page colour.
+  /// `linear-gradient(115deg, rgba(255,255,255,.55), rgba(245,247,251,.72))`
+  /// laid over the page colour.
   static const LinearGradient _wash = LinearGradient(
     begin: Alignment(-1, -0.3),
     end: Alignment(1, 0.35),
     colors: <Color>[
       Color(0x8CFFFFFF), // rgba(255,255,255,.55)
-      Color(0xB8F0FDF4), // rgba(240,253,244,.72)
+      Color(0xB8F5F7FB), // rgba(245,247,251,.72)
     ],
   );
 
@@ -344,16 +344,16 @@ class _Hero extends StatelessWidget {
         children: <Widget>[
           const Positioned.fill(child: ColoredBox(color: TeamakColors.surface)),
           const Positioned.fill(child: CustomPaint(painter: _HeroGridPainter())),
-          // Soft radial blobs: green up-right, amber down-left.
+          // Soft radial blobs: blue up-right, gold down-left.
           Positioned(
             right: wide ? 20 : -70,
             top: wide ? -70 : -60,
-            child: _blob(320, const Color(0xFF22C55E), 0.22),
+            child: _blob(320, const Color(0xFF0D47A1), 0.22),
           ),
           Positioned(
             left: wide ? -60 : -80,
             bottom: -90,
-            child: _blob(300, const Color(0xFFF59E0B), 0.16),
+            child: _blob(300, const Color(0xFFF4A81D), 0.16),
           ),
           const Positioned.fill(child: DecoratedBox(decoration: BoxDecoration(gradient: _wash))),
           Padding(
@@ -420,7 +420,7 @@ class _Hero extends StatelessWidget {
                 border: Border.all(color: TeamakColors.border),
                 boxShadow: const <BoxShadow>[
                   BoxShadow(
-                    color: Color(0x0F111827),
+                    color: Color(0x0F0E1B33),
                     blurRadius: 18,
                     offset: Offset(0, 6),
                   ),
@@ -466,9 +466,9 @@ class _Hero extends StatelessWidget {
             vertical: 7,
           ),
           decoration: BoxDecoration(
-            color: const Color(0x1A22C55E), // rgba(34,197,94,.10)
+            color: const Color(0x1A0D47A1), // rgba(34,197,94,.10)
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: const Color(0x4022C55E)), // rgba(34,197,94,.25)
+            border: Border.all(color: const Color(0x400D47A1)), // rgba(34,197,94,.25)
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -642,12 +642,12 @@ class _DashboardMockup extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: const <BoxShadow>[
           BoxShadow(
-            color: Color(0x1F15803D),
+            color: Color(0x1F072E68),
             blurRadius: 44,
             offset: Offset(0, 18),
           ),
           BoxShadow(
-            color: Color(0x0F111827),
+            color: Color(0x0F0E1B33),
             blurRadius: 12,
             offset: Offset(0, 4),
           ),
@@ -662,7 +662,7 @@ class _DashboardMockup extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: <Color>[Colors.white, Color(0xFFF7FEF9)],
+              colors: <Color>[Colors.white, Color(0xFFEFF3FB)],
             ),
           ),
           child: Column(
@@ -690,7 +690,7 @@ class _DashboardMockup extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0x1A22C55E),
+                      color: const Color(0x1A0D47A1),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: const Text(
@@ -726,7 +726,7 @@ class _DashboardMockup extends StatelessWidget {
                 child: Container(
                   height: 6,
                   width: double.infinity,
-                  color: const Color(0x120F172A), // rgba(15,23,42,.07)
+                  color: const Color(0x120E1B33), // rgba(15,23,42,.07)
                   child: FractionallySizedBox(
                     widthFactor: 0.68,
                     alignment: Alignment.centerLeft,
@@ -763,9 +763,9 @@ class _DashboardMockup extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0x1A22C55E),
+                  color: const Color(0x1A0D47A1),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0x3322C55E)),
+                  border: Border.all(color: const Color(0x330D47A1)),
                 ),
                 child: Row(
                   children: <Widget>[
@@ -820,7 +820,7 @@ class _MiniStat extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: const Color(0xFFEFF3FB),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: TeamakColors.border),
       ),
@@ -1172,9 +1172,9 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
     final wide = widget.wide;
     return Container(
       decoration: BoxDecoration(
-        // Mint band: `linear-gradient(135deg,#ECFDF5,#F7FEE7 48%,#fff)`.
+        // Tinted band: `linear-gradient(135deg,#EEF2F9,#E3EAF7 48%,#fff)`.
         gradient: const LinearGradient(
-          colors: <Color>[Color(0xFFECFDF5), Color(0xFFF7FEE7), Colors.white],
+          colors: <Color>[Color(0xFFEEF2F9), Color(0xFFE3EAF7), Colors.white],
           stops: <double>[0, 0.48, 1],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
