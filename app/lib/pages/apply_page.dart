@@ -21,7 +21,10 @@ class _ApplyPageState extends State<ApplyPage> {
   static const stepTitles = <String>[
     'About you',
     'Riding details',
-    'Programme & next of kin',
+    'Programme',
+    'Funding',
+    'Documents',
+    'Next of kin & references',
     'Declaration',
   ];
 
@@ -112,8 +115,10 @@ class _ApplyPageState extends State<ApplyPage> {
             '${now.month.toString().padLeft(2, '0')}-'
             '${now.day.toString().padLeft(2, '0')}';
       }
-      // Auto-fill deposit amount from selected programme.
-      if (key == 'programmeId' && _data['amountToCommit'] == null) {
+      // Auto-fill deposit amount from the selected programme. This refreshes
+      // on every change: guarding on a null amount would leave the first
+      // choice's figure in place if the applicant changed programme later.
+      if (key == 'programmeId') {
         for (final programme in _tierOptions) {
           if (programme.id == value) {
             _data['amountToCommit'] = '${programme.depositNgn}';
@@ -125,6 +130,7 @@ class _ApplyPageState extends State<ApplyPage> {
   }
 
   /// Keys that must carry a value before the current step can be completed.
+  /// Steps 0, 3, 4 and 5 gate on field validators or a bespoke check below.
   List<String> get _requiredKeysForStep => switch (_step) {
         1 => const <String>[
             'operationType',
@@ -132,11 +138,24 @@ class _ApplyPageState extends State<ApplyPage> {
             'currentVehicleOwnership',
           ],
         2 => const <String>['programmeId'],
-        3 => const <String>['declarationAccepted'],
+        6 => const <String>['declarationAccepted'],
         _ => const <String>[],
       };
 
   String? _selectionError() {
+    // Section D's sources are a multi-select chip group rather than a field,
+    // so no validator covers an empty selection.
+    if (_step == 3 &&
+        (_data['sourceOfFunds'] as List? ?? const <dynamic>[]).isEmpty) {
+      return 'Select at least one source of funds.';
+    }
+
+    // Section E is a set of yes/no answers; "No" is a real answer, so the
+    // generic boolean handling below would wrongly reject it.
+    if (_step == 4 && DocumentsStep.keys.any((key) => _data[key] is! bool)) {
+      return 'Answer every document question to continue.';
+    }
+
     final missing = _requiredKeysForStep.where((key) {
       final value = _data[key];
       if (value is bool) return !value;
@@ -223,6 +242,9 @@ class _ApplyPageState extends State<ApplyPage> {
           write: write,
           programmes: _tierOptions,
         ),
+      3 => FundingStep(read: read, write: write),
+      4 => DocumentsStep(read: read, write: write),
+      5 => PeopleStep(read: read, write: write),
       _ => FinalStep(read: read, write: write),
     };
   }
@@ -344,7 +366,13 @@ class _ApplyPageState extends State<ApplyPage> {
                 ),
               ),
               const SizedBox(height: 20),
-              Row(
+              // A Wrap rather than a Row with a Spacer: at 320px the two
+              // buttons need 328px of the 288px available, and stacking them
+              // keeps both reachable instead of clipping one.
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.spaceBetween,
                 children: <Widget>[
                   if (_step > 0)
                     OutlinedButton.icon(
@@ -352,7 +380,6 @@ class _ApplyPageState extends State<ApplyPage> {
                       icon: const Icon(Icons.arrow_back),
                       label: const Text('Back'),
                     ),
-                  const Spacer(),
                   if (!isLast)
                     FilledButton.icon(
                       onPressed: _submitting ? null : _next,
@@ -366,7 +393,8 @@ class _ApplyPageState extends State<ApplyPage> {
                           ? const SizedBox(
                               width: 18,
                               height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.check),
                       label: Text(_submitting ? 'Submitting…' : 'Submit'),

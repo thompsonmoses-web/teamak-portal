@@ -24,6 +24,13 @@ Future<void> scrollLanding(
       scrollable: find.byType(Scrollable).first,
     );
 
+/// A typical phone viewport, used to check the narrow-width layout.
+void usePhoneSurface(WidgetTester tester) {
+  tester.view.physicalSize = const Size(390, 844);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+}
+
 void main() {
   testWidgets('landing page shows the three ownership tiers', (tester) async {
     useDesktopSurface(tester);
@@ -65,7 +72,85 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('STEP 1 OF 4'), findsOneWidget);
+    expect(find.text('STEP 1 OF 7'), findsOneWidget);
     expect(find.text('About you'), findsWidgets);
+  });
+
+  testWidgets('phone width offers navigation through the drawer',
+      (tester) async {
+    usePhoneSurface(tester);
+    await tester.pumpWidget(const TeamakApp());
+    await tester.pump(const Duration(milliseconds: 400));
+
+    // Below the 720px breakpoint the app bar hides its nav actions, so the
+    // drawer is the only route to Apply, Contact and the staff area. Without
+    // it a phone user would be stranded on whichever page they landed on.
+    expect(find.byType(Drawer), findsNothing);
+    expect(find.byIcon(Icons.menu), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byType(Drawer), findsOneWidget);
+    // Scoped to the drawer: the landing page behind it also carries an
+    // "Apply" call to action, so a bare find.text would match twice.
+    final drawer = find.byType(Drawer);
+    for (final label in const [
+      'Home',
+      'Apply',
+      'Contact',
+      'Staff login',
+    ]) {
+      expect(
+        find.descendant(of: drawer, matching: find.text(label)),
+        findsOneWidget,
+      );
+    }
+
+    // Tapping a destination must navigate and close the drawer, leaving it
+    // off-screen rather than covering the new page.
+    await tester.tap(find.descendant(of: drawer, matching: find.text('Contact')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byIcon(Icons.menu), findsOneWidget);
+  });
+
+  testWidgets('an unknown URL offers a way back instead of a dead end',
+      (tester) async {
+    useDesktopSurface(tester);
+    await tester.pumpWidget(const TeamakApp(initialPath: '/no-such-page'));
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('404'), findsOneWidget);
+    // The message names the path that failed, so a broken link is obvious.
+    expect(find.textContaining('/no-such-page'), findsOneWidget);
+    expect(find.text('Back to home'), findsOneWidget);
+
+    await tester.tap(find.text('Back to home'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('404'), findsNothing);
+    await scrollLanding(
+      tester,
+      find.text('Ride with Dignity. Own Your Future.'),
+    );
+    expect(
+      find.text('Ride with Dignity. Own Your Future.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('an unknown URL on a phone keeps the navigation drawer',
+      (tester) async {
+    usePhoneSurface(tester);
+    await tester.pumpWidget(const TeamakApp(initialPath: '/no-such-page'));
+    await tester.pump(const Duration(milliseconds: 400));
+
+    // The 404 is rendered through the shell, so the drawer — the only route
+    // to the other pages at this width — survives a broken link.
+    expect(find.byIcon(Icons.menu), findsOneWidget);
+    expect(find.text('Back to home'), findsOneWidget);
   });
 }

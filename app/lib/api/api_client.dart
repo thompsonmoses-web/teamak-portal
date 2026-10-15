@@ -30,6 +30,12 @@ class ApiClient {
 
   String? token;
 
+  /// Called when a request carrying a token is rejected with 401.
+  ///
+  /// The session installs this so an expired token clears itself instead of
+  /// stranding the staff area behind a failed request on every call.
+  void Function()? onUnauthorized;
+
   Uri _uri(String path, [Map<String, String>? query]) =>
       Uri.parse('$baseUrl$path').replace(queryParameters: query);
 
@@ -61,6 +67,13 @@ class ApiClient {
         : jsonDecode(utf8.decode(response.bodyBytes)) as dynamic;
 
     if (response.statusCode >= 400) {
+      // A password rejected at sign-in is not a dead session: the token in
+      // play belongs to an earlier, still valid, sign-in.
+      if (response.statusCode == 401 &&
+          token != null &&
+          path != '/auth/login') {
+        onUnauthorized?.call();
+      }
       final map = decoded is Map ? Map<String, dynamic>.from(decoded) : null;
       final errors = <String, String>{};
       final rawErrors = map?['errors'];

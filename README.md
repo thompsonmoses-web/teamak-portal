@@ -90,6 +90,7 @@ All optional; sensible defaults are used when unset.
 | `GET` | `/programmes` | — | The three ownership tiers. |
 | `POST` | `/auth/login` | — | Exchange credentials for a session token. |
 | `GET` | `/auth/me` | staff | The signed-in staff member. |
+| `POST` | `/auth/logout` | staff | End the session server-side; safe to repeat. |
 | `POST` | `/applications` | — | Submit an application; returns its `TRP-YYYY-NNNN` number. |
 | `GET` | `/applications` | staff | List, search (`q`) and filter (`status`). |
 | `GET` | `/applications/:id` | staff | Full application with its event history. |
@@ -107,12 +108,17 @@ cd server && dart test      # API and validation
 cd app    && flutter test   # widget tests
 ```
 
+The app suite walks the application wizard end to end and checks the payload it
+submits against every field the API validates, then re-runs the public routes at
+320, 360, 390, 414, 480, 768 and 1280 px, sweeping each one frame by frame for
+horizontal layout overflow. **Any new screen belongs in that sweep** — see
+`app/test/responsive_test.dart`.
+
 ## Known gaps
 
 Tracked as work in progress rather than settled design:
 
-- **No server-side logout.** `signOut()` clears the token locally but the session
-  remains valid on the server until it expires.
 - **No applicant document upload.** Section E files can only be attached by staff
-  against an existing application; applicants submit the checklist flags only.
+  against an existing application; applicants answer the checklist (yes/no) in the
+  wizard and bring the originals for verification.
 - **Default admin credentials** are committed as defaults in `database.dart`.

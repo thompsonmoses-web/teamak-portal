@@ -82,10 +82,11 @@ Future<DateTime?> pickDate(
   BuildContext context, {
   DateTime? initial,
   DateTime? first,
+  DateTime? last,
 }) =>
     showDatePicker(
       context: context,
       initialDate: initial ?? DateTime.now(),
       firstDate: first ?? DateTime(1950),
-      lastDate: DateTime.now(),
+      lastDate: last ?? DateTime.now(),
     );

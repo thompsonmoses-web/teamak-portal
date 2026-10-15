@@ -5,6 +5,7 @@ import 'api/api_client.dart';
 import 'pages/apply_page.dart';
 import 'pages/contact_page.dart';
 import 'pages/landing_page.dart';
+import 'pages/not_found_page.dart';
 import 'pages/receipt_page.dart';
 import 'pages/staff/application_detail_page.dart';
 import 'pages/staff/dashboard_page.dart';
@@ -14,7 +15,10 @@ import 'state/session.dart';
 import 'theme.dart';
 
 class TeamakApp extends StatefulWidget {
-  const TeamakApp({super.key});
+  const TeamakApp({super.key, this.initialPath = '/'});
+
+  /// Route to open first, so tests can target a single page.
+  final String initialPath;
 
   @override
   State<TeamakApp> createState() => _TeamakAppState();
@@ -35,7 +39,7 @@ class _TeamakAppState extends State<TeamakApp> {
   }
 
   GoRouter _buildRouter(Session session) => GoRouter(
-        initialLocation: '/',
+        initialLocation: widget.initialPath,
         refreshListenable: session,
         redirect: (context, state) {
           final location = state.matchedLocation;
@@ -86,9 +90,8 @@ class _TeamakAppState extends State<TeamakApp> {
             ),
           ),
         ],
-        errorBuilder: (context, state) => Scaffold(
-          body: Center(child: Text('Page not found: ${state.uri.path}')),
-        ),
+        errorBuilder: (context, state) =>
+            NotFoundPage(requestedPath: state.uri.path),
       );
 
   @override

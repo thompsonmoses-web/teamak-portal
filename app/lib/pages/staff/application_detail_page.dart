@@ -332,85 +332,76 @@ class _OfficialSection extends StatelessWidget {
               style: TextStyle(color: TeamakColors.subtle),
             ),
             const SizedBox(height: 16),
-            Row(
+            // Stacks on phones; two fields side by side at ~360px leaves each
+            // one too narrow to read or type into.
+            _FieldRow(
               children: <Widget>[
-                Expanded(
-                  child: TextField(
-                    controller: receivedBy,
-                    decoration: const InputDecoration(
-                      labelText: 'Application received by',
-                    ),
+                TextField(
+                  controller: receivedBy,
+                  decoration: const InputDecoration(
+                    labelText: 'Application received by',
                   ),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: TextField(
-                    controller: verificationDate,
-                    readOnly: true,
-                    decoration: InputDecoration(
-                      labelText: 'Verification date',
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.calendar_today, size: 18),
-                        onPressed: () => onPickDate(verificationDate),
-                      ),
+                TextField(
+                  controller: verificationDate,
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    labelText: 'Verification date',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.calendar_today, size: 18),
+                      onPressed: () => onPickDate(verificationDate),
                     ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 14),
-            Row(
+            _FieldRow(
               children: <Widget>[
-                Expanded(
-                  child: DropdownButtonFormField<String?>(
-                    initialValue: approvedProgramme,
-                    decoration: const InputDecoration(
-                      labelText: 'Approved programme',
+                DropdownButtonFormField<String?>(
+                  initialValue: approvedProgramme,
+                  decoration: const InputDecoration(
+                    labelText: 'Approved programme',
+                  ),
+                  items: const <DropdownMenuItem<String?>>[
+                    DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text('— not set —'),
                     ),
-                    items: const <DropdownMenuItem<String?>>[
-                      DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text('— not set —'),
-                      ),
-                      DropdownMenuItem<String?>(
-                        value: 'okada_650',
-                        child: Text('Okada ₦650,000 / 3 months'),
-                      ),
-                      DropdownMenuItem<String?>(
-                        value: 'okada_400',
-                        child: Text('Okada ₦400,000 / 6 months'),
-                      ),
-                      DropdownMenuItem<String?>(
-                        value: 'maruwa_2300',
-                        child: Text('Maruwa ₦2,300,000 / 3 months'),
-                      ),
-                    ],
-                    onChanged: saving ? null : onProgrammeChanged,
-                  ),
+                    DropdownMenuItem<String?>(
+                      value: 'okada_650',
+                      child: Text('Okada ₦650,000 / 3 months'),
+                    ),
+                    DropdownMenuItem<String?>(
+                      value: 'okada_400',
+                      child: Text('Okada ₦400,000 / 6 months'),
+                    ),
+                    DropdownMenuItem<String?>(
+                      value: 'maruwa_2300',
+                      child: Text('Maruwa ₦2,300,000 / 3 months'),
+                    ),
+                  ],
+                  onChanged: saving ? null : onProgrammeChanged,
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: TextField(
-                    controller: approvedAmount,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Approved amount (₦)'),
-                  ),
+                TextField(
+                  controller: approvedAmount,
+                  keyboardType: TextInputType.number,
+                  decoration:
+                      const InputDecoration(labelText: 'Approved amount (₦)'),
                 ),
               ],
             ),
             const SizedBox(height: 14),
-            Row(
+            _FieldRow(
               children: <Widget>[
-                Expanded(
-                  child: TextField(
-                    controller: deliveryDate,
-                    readOnly: true,
-                    decoration: InputDecoration(
-                      labelText: 'Expected delivery / completion date',
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.calendar_today, size: 18),
-                        onPressed: () => onPickDate(deliveryDate, DateTime.now()),
-                      ),
+                TextField(
+                  controller: deliveryDate,
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    labelText: 'Expected delivery / completion date',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.calendar_today, size: 18),
+                      onPressed: () => onPickDate(deliveryDate, DateTime.now()),
                     ),
                   ),
                 ),
@@ -491,10 +482,54 @@ class _OfficialSection extends StatelessWidget {
   }
 }
 
+/// Lays out two form fields side by side on desktop and stacked on phones.
+///
+/// Stacking matters because two fields sharing a ~360px viewport leave each
+/// one narrow enough to be awkward to read and type into.
+class _FieldRow extends StatelessWidget {
+  const _FieldRow({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final narrow = MediaQuery.sizeOf(context).width < 600;
+    if (narrow) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          for (var i = 0; i < children.length; i++) ...<Widget>[
+            if (i > 0) const SizedBox(height: 14),
+            children[i],
+          ],
+        ],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        for (var i = 0; i < children.length; i++)
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(left: i == 0 ? 0 : 14),
+              child: children[i],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _EventsCard extends StatelessWidget {
   const _EventsCard({required this.events});
 
   final List<dynamic> events;
+
+  /// Renders an ISO timestamp as `YYYY-MM-DD HH:MM`, tolerating short values.
+  static String _stamp(Object? raw) {
+    final text = '${raw ?? ''}'.replaceAll('T', ' ');
+    return text.length >= 16 ? text.substring(0, 16) : text;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -531,9 +566,12 @@ class _EventsCard extends StatelessWidget {
                             '${event['remark'] == null ? '' : ' — ${event['remark']}'}',
                           ),
                         ),
+                        // Guarded substring: an ISO timestamp is 20 chars, but
+                        // a short or malformed value would otherwise throw a
+                        // RangeError and blank the whole history card.
                         Text(
                           '${event['staffUsername'] ?? ''}  '
-                          '${'${event['createdAt'] ?? ''}'.replaceAll('T', ' ').substring(0, 16)}',
+                          '${_stamp(event['createdAt'])}',
                           style: const TextStyle(
                             color: TeamakColors.subtle,
                             fontSize: 12,
@@ -576,12 +614,24 @@ class _AnswersCard extends StatelessWidget {
       MapEntry('currentRemittance', 'Remittance'),
       MapEntry('averageWorkingDaysPerWeek', 'Working days / week'),
     ]),
+    MapEntry('Section C — programme', <MapEntry<String, String>>[
+      MapEntry('programmeId', 'Programme'),
+    ]),
     MapEntry('Section D — funding', <MapEntry<String, String>>[
       MapEntry('amountToCommit', 'Amount to commit (₦)'),
       MapEntry('sourceOfFunds', 'Source of funds'),
       MapEntry('expectedDepositDate', 'Expected deposit date'),
       MapEntry('participatedBefore', 'Participated before'),
       MapEntry('previousProgrammeDetails', 'Previous programme'),
+    ]),
+    // The checklist the applicant answers in the wizard. A "No" here means the
+    // rider will bring the originals later, not that the form was skipped.
+    MapEntry('Section E — documents', <MapEntry<String, String>>[
+      MapEntry('hasPassportPhotograph', 'Passport photograph'),
+      MapEntry('hasGovernmentIdOrNinSlip', 'Government ID / NIN slip'),
+      MapEntry('hasRiderOrAssociationRegistration', 'Rider registration'),
+      MapEntry('hasProofOfResidentialAddress', 'Proof of address'),
+      MapEntry('hasTwoPassportPhotographs', 'Two extra photographs'),
     ]),
     MapEntry('Section F — next of kin', <MapEntry<String, String>>[
       MapEntry('nextOfKin.fullName', 'Name'),

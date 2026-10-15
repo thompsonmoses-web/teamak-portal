@@ -16,6 +16,10 @@ class AppShell extends StatelessWidget {
     final wide = width >= 720;
 
     return Scaffold(
+      // Below the wide breakpoint the app bar drops its nav actions entirely,
+      // so without a drawer a phone would have no way to reach Apply, Contact
+      // or the staff area at all.
+      drawer: wide ? null : const _NavDrawer(),
       appBar: AppBar(
         titleSpacing: 20,
         title: Row(
@@ -80,6 +84,65 @@ class AppShell extends StatelessWidget {
             : null,
       ),
       body: child,
+    );
+  }
+}
+
+/// Phone navigation. Mirrors the wide-screen app bar actions, which are
+/// hidden below the 720px breakpoint.
+class _NavDrawer extends StatelessWidget {
+  const _NavDrawer();
+
+  static const List<(IconData, String, String)> _destinations =
+      <(IconData, String, String)>[
+    (Icons.home_outlined, 'Home', '/'),
+    (Icons.assignment_outlined, 'Apply', '/apply'),
+    (Icons.mail_outline, 'Contact', '/contact'),
+    (Icons.badge_outlined, 'Staff login', '/staff/login'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            const Padding(
+              padding: EdgeInsets.all(20),
+              child: Row(
+                children: <Widget>[
+                  _Logo(),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'TEAMAK GLOBAL\nSOLUTIONS',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        height: 1.15,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            for (final (icon, label, path) in _destinations)
+              ListTile(
+                leading: Icon(icon),
+                title: Text(label),
+                // Closes the drawer before navigating, so the caller does not
+                // land on the new page with the drawer still covering it.
+                onTap: () {
+                  Navigator.of(context).pop();
+                  context.go(path);
+                },
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

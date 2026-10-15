@@ -6,7 +6,12 @@ import '../models/models.dart';
 
 /// Holds the signed-in staff session and notifies the router on change.
 class Session extends ChangeNotifier {
-  Session(this.api);
+  Session(this.api) {
+    // The API reports 401 for any request that still carries a token it no
+    // longer honours. Clearing here keeps a dead token out of storage and
+    // lets the router's redirect fall through to the sign-in form.
+    api.onUnauthorized = _expire;
+  }
 
   final ApiClient api;
 
@@ -20,6 +25,25 @@ class Session extends ChangeNotifier {
   bool get busy => _busy;
 
   static const _tokenKey = 'teamak_staff_token';
+
+  /// Drops a session the API has rejected.
+  ///
+  /// Deliberately never calls back into the API: the request that raised the
+  /// 401 already threw, and calling `/auth/logout` with the same dead token
+  /// would only raise a second one.
+  Future<void> _expire() async {
+    final wasSignedIn = _staff != null || api.token != null;
+    api.token = null;
+    _staff = null;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_tokenKey);
+    } catch (_) {
+      // Storage can be unavailable in a restricted embedder; the in-memory
+      // clear above still ends this run's session.
+    }
+    if (wasSignedIn) notifyListeners();
+  }
 
   /// Rehydrates a previously stored token from local storage.
   Future<void> restore() async {

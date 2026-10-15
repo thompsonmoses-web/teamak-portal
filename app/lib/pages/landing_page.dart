@@ -360,9 +360,12 @@ class _Hero extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    // Logo + company pill.
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
+                    // Logo + company pill. Wraps so the name drops below the
+                    // logo on a phone rather than overflowing the hero.
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 14,
+                      runSpacing: 10,
                       children: <Widget>[
                         Container(
                           padding: const EdgeInsets.all(5),
@@ -384,7 +387,6 @@ class _Hero extends StatelessWidget {
                             fit: BoxFit.cover,
                           ),
                         ),
-                        const SizedBox(width: 14),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
@@ -394,7 +396,7 @@ class _Hero extends StatelessWidget {
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
                                 fontSize: wide ? 15 : 13,
-                                letterSpacing: 1.8,
+                                letterSpacing: wide ? 1.8 : 0.6,
                               ),
                             ),
                             Text(
@@ -411,10 +413,14 @@ class _Hero extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 32),
-                    // Premium badge.
+                    // Premium badge. On a phone the tracked-out label plus the
+                    // star overruns the hero by ~19px, so the pill tightens its
+                    // padding and tracking, and the label is Flexible as a hard
+                    // guarantee: ellipsis only applies when Text gets a bounded
+                    // width, which a min-size Row otherwise withholds.
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: wide ? 16 : 12,
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
@@ -433,18 +439,21 @@ class _Hero extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
-                          Icon(Icons.star_rounded, size: 15, color: TeamakColors.ink),
-                          SizedBox(width: 5),
-                          Text(
-                            'FROM RIDER TO OWNER',
-                            style: TextStyle(
-                              color: TeamakColors.ink,
-                              letterSpacing: 1.8,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
+                          const Icon(Icons.star_rounded, size: 15, color: TeamakColors.ink),
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              'FROM RIDER TO OWNER',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: TeamakColors.ink,
+                                letterSpacing: wide ? 1.8 : 0.2,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
                           ),
                         ],
@@ -517,8 +526,10 @@ class _Hero extends StatelessWidget {
                             foregroundColor: TeamakColors.ink,
                             elevation: 8,
                             shadowColor: TeamakColors.accent.withValues(alpha: 0.55),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 36,
+                            padding: EdgeInsets.symmetric(
+                              // Tighter on phones: 36px a side plus a wide label
+                              // overruns a ~346px hero.
+                              horizontal: wide ? 36 : 22,
                               vertical: 20,
                             ),
                             textStyle: const TextStyle(
@@ -530,10 +541,18 @@ class _Hero extends StatelessWidget {
                             ),
                           ),
                           onPressed: () => context.go('/apply'),
+                          // The label wraps rather than shrinking: a min-size Row
+                          // cannot absorb a narrow phone, so without this the
+                          // text spills past the button's own edge.
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
-                              Text('Start application'),
+                              Flexible(
+                                child: Text(
+                                  'Start application',
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
                               SizedBox(width: 8),
                               Icon(Icons.arrow_forward_rounded, size: 20),
                             ],
@@ -973,7 +992,12 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                         style: const TextStyle(color: Colors.white70, fontSize: 13),
                       ),
                       const SizedBox(height: 10),
-                      Row(
+                      // Wraps so the timer drops below the label on a phone
+                      // instead of pushing past the card edge.
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 6,
                         children: <Widget>[
                           Text(
                             'Ends in',
@@ -983,7 +1007,6 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(width: 8),
                           _CountdownTimer(deadline: widget.deadline, compact: true),
                         ],
                       ),
@@ -1190,10 +1213,19 @@ class _PromoPopup extends StatelessWidget {
                               onClose();
                               context.go('/apply');
                             },
+                            // Wraps rather than shrinking: a min-size Row cannot
+                            // absorb a narrow phone, so the label spills past
+                            // the button's own edge at ~320px.
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
                               children: <Widget>[
-                                Text('Claim ₦100,000 OFF'),
+                                Flexible(
+                                  child: Text(
+                                    'Claim ₦100,000 OFF',
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
                                 SizedBox(width: 8),
                                 Icon(Icons.arrow_forward_rounded, size: 20),
                               ],
@@ -1608,17 +1640,22 @@ class _StickyCtaBarState extends State<_StickyCtaBar> {
                 ],
               ),
               child: wide
-                  ? Row(
-                      mainAxisSize: MainAxisSize.min,
+                  // The label is Flexible rather than fixed: on a mid-width
+                // tablet the text plus the button overruns the bar by a few
+                // pixels, so the label shrinks instead of clipping the button.
+                ? Row(
                       children: <Widget>[
                         const Icon(Icons.motorcycle_rounded, color: TeamakColors.accent, size: 24),
                         const SizedBox(width: 12),
-                        const Text(
-                          'Ready to own your vehicle?',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
+                        const Flexible(
+                          child: Text(
+                            'Ready to own your vehicle?',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 20),
@@ -1638,12 +1675,15 @@ class _StickyCtaBarState extends State<_StickyCtaBar> {
                         ),
                       ],
                     )
+                  // No MainAxisSize.min here: this Row wraps an Expanded child,
+                  // which needs a bounded width to divide. A min-sized Row
+                  // reports zero, so the button overflows the bar on phones.
                   : Row(
-                      mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
                         const Expanded(
                           child: Text(
                             'Ready to own?',
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
@@ -1703,16 +1743,21 @@ class _TrustBadges extends StatelessWidget {
         children: [
           for (final (icon, label) in badges)
             Row(
+              // Tight tracking on phones; the wide-spaced variant pushes these
+              // past the container width.
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(icon, size: 18, color: TeamakColors.primary),
                 const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13.5,
-                    color: TeamakColors.ink,
+                Flexible(
+                  child: Text(
+                    label,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5,
+                      color: TeamakColors.ink,
+                    ),
                   ),
                 ),
               ],
@@ -1892,20 +1937,32 @@ class _EarningsCalculatorState extends State<_EarningsCalculator> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: highlight ? TeamakColors.accent : Colors.white60,
-              fontWeight: highlight ? FontWeight.w800 : FontWeight.w500,
-              fontSize: highlight ? 16 : 14,
+          // Flexible rather than fixed: this card shares its row with the
+          // controls panel, so on a phone neither column can grow. Without a
+          // flex factor the 24px highlight value pushes the row past the
+          // panel width and overflows.
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: highlight ? TeamakColors.accent : Colors.white60,
+                fontWeight: highlight ? FontWeight.w800 : FontWeight.w500,
+                fontSize: highlight ? 16 : 14,
+              ),
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              color: highlight ? TeamakColors.accent : Colors.white,
-              fontWeight: FontWeight.w900,
-              fontSize: highlight ? 24 : 17,
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              value,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                color: highlight ? TeamakColors.accent : Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: highlight ? 24 : 17,
+              ),
             ),
           ),
         ],
@@ -2521,8 +2578,10 @@ class _CallToAction extends StatelessWidget {
                     foregroundColor: TeamakColors.ink,
                     elevation: 6,
                     shadowColor: TeamakColors.accent.withValues(alpha: 0.5),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 36,
+                    padding: EdgeInsets.symmetric(
+                      // This sits in a Column, so it must shrink itself to a
+                      // phone's width rather than rely on a wider parent.
+                      horizontal: wide ? 36 : 22,
                       vertical: 20,
                     ),
                     textStyle: const TextStyle(
@@ -2531,10 +2590,16 @@ class _CallToAction extends StatelessWidget {
                     ),
                   ),
                   onPressed: () => context.go('/apply'),
+                  // Wraps rather than shrinking, as above.
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      Text('Start application'),
+                      Flexible(
+                        child: Text(
+                          'Start application',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
                       SizedBox(width: 8),
                       Icon(Icons.arrow_forward_rounded, size: 20),
                     ],
