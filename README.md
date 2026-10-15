@@ -53,6 +53,22 @@ may run on different origins.
 
 For a production web build: `flutter build web --release`.
 
+### Serving a built app behind one origin
+
+`API_BASE` is baked in at build time. Building with an empty value instead makes
+the app resolve every request against the page it was loaded from, so the app
+and API can be served from a single host with no CORS involved:
+
+```sh
+flutter build web --release --dart-define=API_BASE= -o build/web
+dart run tool/static_server.dart build/web 8889 http://127.0.0.1:8080
+```
+
+The optional third argument proxies `/programmes`, `/applications`, `/auth` and
+`/health` to the running API, streaming request and response bodies through. One
+URL then carries the whole app, which suits a demo tunnel or a reverse proxy in
+front of both.
+
 ## Staff sign-in
 
 A default administrator is seeded on first run:

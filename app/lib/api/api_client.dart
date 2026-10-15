@@ -36,8 +36,15 @@ class ApiClient {
   /// stranding the staff area behind a failed request on every call.
   void Function()? onUnauthorized;
 
-  Uri _uri(String path, [Map<String, String>? query]) =>
-      Uri.parse('$baseUrl$path').replace(queryParameters: query);
+  /// Resolves [path] against the configured base.
+  ///
+  /// An empty base means "same origin": the path is resolved against the page
+  /// URL instead, so a build served behind a reverse proxy or a single-host
+  /// demo keeps working when the API is not on its own domain.
+  Uri _uri(String path, [Map<String, String>? query]) {
+    final base = baseUrl.isEmpty ? Uri.base : Uri.parse(baseUrl);
+    return base.resolve(path).replace(queryParameters: query);
+  }
 
   Map<String, String> get _headers => <String, String>{
         'content-type': 'application/json; charset=utf-8',
