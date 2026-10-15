@@ -158,3 +158,34 @@ class ApplicationListResult {
         counts: Map<String, dynamic>.from(json['counts'] as Map? ?? const {}),
       );
 }
+
+/// A message sent through the public contact form.
+class ContactMessage {
+  const ContactMessage({
+    required this.id,
+    required this.name,
+    required this.phone,
+    required this.email,
+    required this.subject,
+    required this.message,
+    required this.createdAt,
+  });
+
+  final int id;
+  final String name;
+  final String phone;
+  final String email;
+  final String subject;
+  final String message;
+  final String createdAt;
+
+  factory ContactMessage.fromJson(Map<String, dynamic> json) => ContactMessage(
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        name: '${json['name'] ?? ''}',
+        phone: '${json['phone'] ?? ''}',
+        email: '${json['email'] ?? ''}',
+        subject: '${json['subject'] ?? ''}',
+        message: '${json['message'] ?? ''}',
+        createdAt: '${json['createdAt'] ?? ''}',
+      );
+}

@@ -9,6 +9,7 @@ import 'pages/receipt_page.dart';
 import 'pages/staff/application_detail_page.dart';
 import 'pages/staff/dashboard_page.dart';
 import 'pages/staff/login_page.dart';
+import 'pages/staff/messages_page.dart';
 import 'state/session.dart';
 import 'theme.dart';
 
@@ -72,6 +73,10 @@ class _TeamakAppState extends State<TeamakApp> {
           GoRoute(
             path: '/staff',
             builder: (context, state) => DashboardPage(session: session),
+          ),
+          GoRoute(
+            path: '/staff/messages',
+            builder: (context, state) => MessagesPage(session: session),
           ),
           GoRoute(
             path: '/staff/applications/:id',

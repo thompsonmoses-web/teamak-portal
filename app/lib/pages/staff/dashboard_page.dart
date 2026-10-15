@@ -105,6 +105,15 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton.tonalIcon(
+              onPressed: () => context.go('/staff/messages'),
+              icon: const Icon(Icons.mail_outline),
+              label: const Text('Contact messages'),
+            ),
+          ),
           const SizedBox(height: 20),
           _StatsRow(counts: counts),
           const SizedBox(height: 20),

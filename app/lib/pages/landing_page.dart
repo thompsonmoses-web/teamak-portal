@@ -23,15 +23,24 @@ class _LandingPageState extends State<LandingPage> {
   List<Programme> _programmes = const <Programme>[];
   bool _loading = true;
   bool _showPromoPopup = false;
+  Timer? _promoTimer;
 
   @override
   void initState() {
     super.initState();
     _api = ApiClient();
     _load();
-    Future<void>.delayed(const Duration(seconds: 3), () {
+    _promoTimer = Timer(const Duration(seconds: 3), () {
       if (mounted) setState(() => _showPromoPopup = true);
     });
+  }
+
+  @override
+  void dispose() {
+    // Without this the delayed pop-up outlives the page and keeps a timer
+    // pending against the disposed widget tree.
+    _promoTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {

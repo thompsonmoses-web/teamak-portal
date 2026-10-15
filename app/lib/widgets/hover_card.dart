@@ -24,6 +24,8 @@ class HoverCard extends StatefulWidget {
 class _HoverCardState extends State<HoverCard> {
   bool _hovered = false;
 
+  static const BorderRadius _radius = BorderRadius.all(Radius.circular(18));
+
   @override
   Widget build(BuildContext context) {
     final borderColor = _hovered
@@ -40,28 +42,11 @@ class _HoverCardState extends State<HoverCard> {
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOut,
           transform: Matrix4.translationValues(0, _hovered ? -5 : 0, 0),
-          padding: widget.padding,
+          // The shadow sits on this outer wrapper, outside the ClipRRect below,
+          // so it can spill past the rounded corners instead of being clipped
+          // away with the card face.
           decoration: BoxDecoration(
-            gradient: _hovered
-                ? const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: <Color>[Colors.white, Color(0xFFF8FAFF)],
-                  )
-                : null,
-            color: _hovered ? null : Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border(
-              top: BorderSide(
-                color: widget.accentBar
-                    ? TeamakColors.accent
-                    : (_hovered ? TeamakColors.primary : borderColor),
-                width: widget.accentBar ? 3.5 : 1.2,
-              ),
-              left: BorderSide(color: borderColor, width: 1.2),
-              right: BorderSide(color: borderColor, width: 1.2),
-              bottom: BorderSide(color: borderColor, width: 1.2),
-            ),
+            borderRadius: _radius,
             boxShadow: _hovered
                 ? <BoxShadow>[
                     BoxShadow(
@@ -83,7 +68,44 @@ class _HoverCardState extends State<HoverCard> {
                     ),
                   ],
           ),
-          child: widget.child,
+          child: ClipRRect(
+            borderRadius: _radius,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: <Widget>[
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  padding: widget.padding,
+                  decoration: BoxDecoration(
+                    gradient: _hovered
+                        ? const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: <Color>[Colors.white, Color(0xFFF8FAFF)],
+                          )
+                        : null,
+                    color: _hovered ? null : Colors.white,
+                    borderRadius: _radius,
+                    // Flutter only paints a rounded border when all four sides
+                    // share one colour (widths may differ), so the gold accent
+                    // cannot be a differently coloured top side. It is drawn as
+                    // an overlay further down instead.
+                    border: Border.all(color: borderColor, width: 1.2),
+                  ),
+                  child: widget.child,
+                ),
+                if (widget.accentBar)
+                  const Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3.5,
+                    child: ColoredBox(color: TeamakColors.accent),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );

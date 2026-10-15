@@ -113,8 +113,20 @@ class ApiClient {
     return session;
   }
 
+  /// Ends the session on the server, then drops the token locally.
+  ///
+  /// The server call matters: without it the token would stay valid until its
+  /// 12-hour TTL lapsed, so any copy of it kept working after sign-out. A
+  /// failed call still clears the local token so the UI cannot get stuck.
   Future<void> logout() async {
+    final current = token;
     token = null;
+    if (current == null) return;
+    try {
+      await _send('POST', '/auth/logout');
+    } on ApiException {
+      // Already expired or revoked server-side; nothing further to do.
+    }
   }
 
   Future<ApplicationDetail> submitApplication(Map<String, dynamic> payload) async {
@@ -161,6 +173,17 @@ class ApiClient {
   Future<ApplicationDetail> fetchApplication(String id) =>
       get('/applications/$id').then(ApplicationDetail.fromJson);
 
+  /// Fetches the staff inbox of submitted contact-form messages.
+  Future<List<ContactMessage>> fetchMessages({int limit = 100}) async {
+    final json = await get('/contact', query: <String, String>{
+      'limit': '$limit',
+    });
+    return (json['messages'] as List? ?? const [])
+        .whereType<Map>()
+        .map((e) => ContactMessage.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
   Future<ApplicationDetail> updateStatus({
     required String id,
     required String status,
@@ -180,9 +203,8 @@ class ApiClient {
             'receivedBy': receivedBy.trim(),
           if (verificationDate != null && verificationDate.isNotEmpty)
             'verificationDate': verificationDate,
-          if (approvedProgrammeId != null)
-            'approvedProgrammeId': approvedProgrammeId,
-          if (approvedAmount != null) 'approvedAmount': approvedAmount,
+          'approvedProgrammeId': ?approvedProgrammeId,
+          'approvedAmount': ?approvedAmount,
           if (expectedDeliveryDate != null && expectedDeliveryDate.isNotEmpty)
             'expectedDeliveryDate': expectedDeliveryDate,
         },

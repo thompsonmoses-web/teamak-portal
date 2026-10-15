@@ -62,14 +62,20 @@ AuthResult login(
   return AuthResult.success(token, staff);
 }
 
-/// Resolves the staff member behind an `Authorization: Bearer <token>` header.
-Map<String, Object?>? staffFromHeader(TeamakDatabase db, String? header) {
+/// Extracts the raw token from an `Authorization: Bearer <token>` header.
+String? tokenFromHeader(String? header) {
   if (header == null) return null;
   final trimmed = header.trim();
   if (trimmed.toLowerCase().startsWith('bearer ')) {
     final token = trimmed.substring(7).trim();
-    if (token.isEmpty) return null;
-    return db.staffForToken(token);
+    return token.isEmpty ? null : token;
   }
   return null;
+}
+
+/// Resolves the staff member behind an `Authorization: Bearer <token>` header.
+Map<String, Object?>? staffFromHeader(TeamakDatabase db, String? header) {
+  final token = tokenFromHeader(header);
+  if (token == null) return null;
+  return db.staffForToken(token);
 }

@@ -4,6 +4,7 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
 import 'package:server/database.dart';
+import 'package:server/http_helpers.dart';
 
 /// Company inbox that receives contact-form submissions.
 final _inbox = Platform.environment['CONTACT_EMAIL'] ??
@@ -14,6 +15,7 @@ final _inbox = Platform.environment['CONTACT_EMAIL'] ??
 String? get _appPassword => Platform.environment['CONTACT_APP_PASSWORD'];
 
 Future<Response> onRequest(RequestContext context) async {
+  if (context.request.method == HttpMethod.get) return _list(context);
   if (context.request.method != HttpMethod.post) {
     return Response(statusCode: 405, body: 'Method not allowed');
   }
@@ -89,4 +91,23 @@ ${DateTime.now().toLocal()}''';
       'emailSent': emailSent,
     },
   );
+}
+
+/// `GET /api/contact` — staff inbox of submitted contact messages.
+///
+/// Without this the contact form was a dead end: messages were stored but
+/// nothing ever exposed them, so they were silently invisible to staff.
+Future<Response> _list(RequestContext context) async {
+  if (currentStaff(context) == null) return unauthorized();
+
+  final limit = int.tryParse(context.request.uri.queryParameters['limit'] ?? '') ??
+      100;
+  final db = context.read<TeamakDatabase>();
+  try {
+    return jsonResponse(<String, Object?>{
+      'messages': db.listContactMessages(limit: limit),
+    });
+  } catch (error) {
+    return serverError(error);
+  }
 }
