@@ -1250,7 +1250,7 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.08),
+                          color: TeamakColors.primary.withValues(alpha: 0.07),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Image.asset(
@@ -1260,7 +1260,7 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                           errorBuilder: (c, e, s) => const Icon(
                             Icons.image_rounded,
                             size: 80,
-                            color: Colors.white38,
+                            color: TeamakColors.dim,
                           ),
                         ),
                       ),
@@ -1272,7 +1272,7 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                             Text(
                               widget.title,
                               style: const TextStyle(
-                                color: TeamakColors.accent,
+                                color: TeamakColors.primaryDark,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 1.8,
@@ -1282,7 +1282,7 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                             Text(
                               widget.headline,
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: TeamakColors.ink,
                                 fontSize: 26,
                                 fontWeight: FontWeight.w900,
                                 height: 1.2,
@@ -1291,7 +1291,10 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                             const SizedBox(height: 8),
                             Text(
                               widget.benefits,
-                              style: const TextStyle(color: Colors.white70, fontSize: 14),
+                              style: const TextStyle(
+                                color: TeamakColors.subtle,
+                                fontSize: 14,
+                              ),
                             ),
                             const SizedBox(height: 12),
                             Row(
@@ -1299,7 +1302,7 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                                 Text(
                                   'Ends in',
                                   style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.6),
+                                    color: TeamakColors.subtle,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -1346,16 +1349,16 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                                     vertical: 8,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.12),
+                                    color: TeamakColors.primary.withValues(alpha: 0.08),
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.2),
+                                      color: TeamakColors.border,
                                     ),
                                   ),
                                   child: Text(
                                     widget.slots,
                                     style: const TextStyle(
-                                      color: Colors.white,
+                                      color: TeamakColors.primaryDark,
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -1379,7 +1382,7 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                           errorBuilder: (c, e, s) => const Icon(
                             Icons.image_rounded,
                             size: 60,
-                            color: Colors.white38,
+                            color: TeamakColors.dim,
                           ),
                         ),
                       ),
@@ -1387,7 +1390,7 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                       Text(
                         widget.title,
                         style: const TextStyle(
-                          color: TeamakColors.accent,
+                          color: TeamakColors.primaryDark,
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.5,
@@ -1397,7 +1400,7 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                       Text(
                         widget.mobileHeadline,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: TeamakColors.ink,
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
                           height: 1.2,
@@ -1406,7 +1409,10 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                       const SizedBox(height: 8),
                       Text(
                         widget.mobileBenefits,
-                        style: const TextStyle(color: Colors.white70, fontSize: 13),
+                        style: const TextStyle(
+                          color: TeamakColors.subtle,
+                          fontSize: 13,
+                        ),
                       ),
                       const SizedBox(height: 10),
                       // Wraps so the timer drops below the label on a phone
@@ -1419,7 +1425,7 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                           Text(
                             'Ends in',
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.6),
+                              color: TeamakColors.subtle,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -1453,9 +1459,9 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                         child: Text(
                           widget.mobileSlots,
                           style: const TextStyle(
-                            color: Colors.white70,
+                            color: TeamakColors.primaryDark,
                             fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
@@ -2584,19 +2590,21 @@ class _HeroChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
+        // Solid white chips: the old translucent-white treatment was made
+        // for a dark hero and vanished against the pale wash.
+        color: Colors.white,
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+        border: Border.all(color: TeamakColors.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 15, color: TeamakColors.accent),
+          Icon(icon, size: 15, color: TeamakColors.accentDark),
           const SizedBox(width: 6),
           Text(
             label,
             style: const TextStyle(
-              color: Colors.white,
+              color: TeamakColors.ink,
               fontSize: 13,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.2,

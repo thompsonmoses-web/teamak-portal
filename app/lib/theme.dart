@@ -46,9 +46,11 @@ class TeamakColors {
     end: Alignment.bottomRight,
   );
 
-  /// Blue→gold sweep for hero/CTA tints.
+  /// Blue→dark-gold sweep for hero/CTA tints. The gold end is the *dark*
+  /// gold: the bright `#F4A81D` is only ~1.9:1 on the page colour, so as
+  /// headline text it washes out, while `#C98A12` holds ~3.5:1.
   static const LinearGradient gradSuccess = LinearGradient(
-    colors: <Color>[primaryLight, accent],
+    colors: <Color>[primaryLight, accentDark],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
