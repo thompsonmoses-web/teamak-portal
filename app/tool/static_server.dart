@@ -60,7 +60,15 @@ Future<void> main(List<String> args) async {
 }
 
 /// Route prefixes owned by the API rather than by the static build.
-const _apiPrefixes = <String>['/programmes', '/applications', '/auth', '/health'];
+///
+/// Kept in step with the routes under `server/routes/`; a prefix missing here
+/// surfaces as a 405 from the static server instead of a working page.
+const _apiPrefixes = <String>[
+  '/programmes',
+  '/applications',
+  '/auth',
+  '/contact',
+];
 
 bool _isApiPath(String path) => _apiPrefixes.any(path.startsWith);
 
