@@ -519,6 +519,72 @@ class TeamakDatabase {
     return _staffToJson(rows.first);
   }
 
+  /// One staff account without credentials, for admin-facing responses.
+  Map<String, Object?>? staffSummaryById(int id) {
+    final rows = _db.select(
+      'SELECT * FROM staff_users WHERE id = ?',
+      <Object?>[id],
+    );
+    if (rows.isEmpty) return null;
+    return _staffSummary(rows.first);
+  }
+
+  /// Every staff account, oldest first, without credentials.
+  List<Map<String, Object?>> listStaff() {
+    final rows = _db.select(
+      'SELECT * FROM staff_users ORDER BY created_at ASC, id ASC',
+    );
+    return rows.map(_staffSummary).toList();
+  }
+
+  /// Administrators currently on the books — used to refuse demoting the
+  /// last one and locking every admin out of the admin side.
+  int countAdmins() {
+    final rows = _db.select(
+      "SELECT COUNT(*) AS n FROM staff_users WHERE role = 'admin'",
+    );
+    return (rows.first['n'] as int?) ?? 0;
+  }
+
+  /// Applies a partial staff update; a null [passwordHash] keeps the old one.
+  ///
+  /// Returns null when the account does not exist.
+  Map<String, Object?>? updateStaff({
+    required int id,
+    String? fullName,
+    String? role,
+    String? passwordHash,
+  }) {
+    if (staffById(id) == null) return null;
+    final sets = <String>[];
+    final params = <Object?>[];
+    if (fullName != null) {
+      sets.add('full_name = ?');
+      params.add(fullName);
+    }
+    if (role != null) {
+      sets.add('role = ?');
+      params.add(role);
+    }
+    if (passwordHash != null) {
+      sets.add('password_hash = ?');
+      params.add(passwordHash);
+    }
+    if (sets.isNotEmpty) {
+      params.add(id);
+      _db.execute(
+        'UPDATE staff_users SET ${sets.join(', ')} WHERE id = ?',
+        params,
+      );
+    }
+    return staffById(id);
+  }
+
+  /// Ends every session belonging to [staffId] — a password reset that left
+  /// the old token alive until it aged out would not be a reset.
+  void deleteSessionsFor(int staffId) =>
+      _db.execute('DELETE FROM sessions WHERE staff_id = ?', <Object?>[staffId]);
+
   void createSession({
     required String token,
     required int staffId,
@@ -570,12 +636,18 @@ class TeamakDatabase {
 
   // ── JSON shaping ────────────────────────────────────────────────────────
 
-  Map<String, Object?> _staffToJson(Row row) => <String, Object?>{
+  /// The account as admin screens show it — no credentials.
+  Map<String, Object?> _staffSummary(Row row) => <String, Object?>{
         'id': row['id'],
         'username': row['username'],
-        'passwordHash': row['password_hash'],
         'fullName': row['full_name'],
         'role': row['role'],
+        'createdAt': row['created_at'],
+      };
+
+  Map<String, Object?> _staffToJson(Row row) => <String, Object?>{
+        ..._staffSummary(row),
+        'passwordHash': row['password_hash'],
       };
 
   Map<String, Object?> _summaryToJson(Row row) => <String, Object?>{

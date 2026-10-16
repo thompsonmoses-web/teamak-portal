@@ -26,6 +26,14 @@ Response unauthorized([String message = 'Authentication required.']) =>
       body: <String, Object?>{'error': message},
     );
 
+/// Signed in, but not allowed: the caller is a reviewer on an
+/// administrator-only route.
+Response forbidden([String message = 'Administrator access required.']) =>
+    Response.json(
+      statusCode: HttpStatus.forbidden,
+      body: <String, Object?>{'error': message},
+    );
+
 Response notFound([String message = 'Resource not found.']) => Response.json(
       statusCode: HttpStatus.notFound,
       body: <String, Object?>{'error': message},
