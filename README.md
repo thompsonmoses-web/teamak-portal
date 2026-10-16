@@ -2,7 +2,8 @@
 
 Online application portal for the **Teamak Global Solution Limited Rider Ownership
 Programme** (Ibadan & Environs). Riders apply for an Okada or Maruwa ownership
-slot online; staff review, verify and approve applications from a dashboard.
+slot online and track it afterwards with their application number; staff review,
+verify and approve applications from a dashboard.
 
 - **Ride with Dignity. Own Your Future.**
 
@@ -10,7 +11,7 @@ slot online; staff review, verify and approve applications from a dashboard.
 
 | Path | What it is |
 |------|------------|
-| `app/` | Flutter Web front end — public site, application wizard, staff dashboard. |
+| `app/` | Flutter Web front end — public site, application wizard, applicant dashboard, staff dashboard. |
 | `server/` | Dart Frog API — SQLite storage, bcrypt auth, staff-only review endpoints. |
 | `docs/` | Product specs derived from the original paper application form. |
 | `app/build/`, `*.db`, `uploads/` | Generated. Git-ignored. |
@@ -64,10 +65,10 @@ flutter build web --release --dart-define=API_BASE= -o build/web
 dart run tool/static_server.dart build/web 8889 http://127.0.0.1:8080
 ```
 
-The optional third argument proxies `/programmes`, `/applications`, `/auth` and
-`/health` to the running API, streaming request and response bodies through. One
-URL then carries the whole app, which suits a demo tunnel or a reverse proxy in
-front of both.
+The optional third argument proxies `/programmes`, `/applications`, `/track`,
+`/auth` and `/contact` to the running API, streaming request and response bodies
+through. One URL then carries the whole app, which suits a demo tunnel or a
+reverse proxy in front of both.
 
 ## Staff sign-in
 
@@ -113,6 +114,7 @@ All optional; sensible defaults are used when unset.
 | `PATCH` | `/applications/:id/status` | staff | Update status and Section I fields. |
 | `GET` | `/applications/:id/documents` | staff | List uploaded documents. |
 | `POST` | `/applications/:id/documents` | staff | Upload a base64-encoded document. |
+| `POST` | `/track` | — | Applicant lookup: number + submitted phone returns their own view (status, timeline, outcomes) with staff notes stripped. |
 | `POST` | `/contact` | — | Store a contact message, optionally email it. |
 
 Staff endpoints expect `Authorization: Bearer <token>`.
@@ -125,9 +127,10 @@ cd app    && flutter test   # widget tests
 ```
 
 The app suite walks the application wizard end to end and checks the payload it
-submits against every field the API validates, then re-runs the public routes at
-320, 360, 390, 414, 480, 768 and 1280 px, sweeping each one frame by frame for
-horizontal layout overflow. **Any new screen belongs in that sweep** — see
+submits against every field the API validates, then re-runs every route — public
+pages, the applicant dashboard (form and loaded), staff screens — at 320, 360,
+390, 414, 480, 768 and 1280 px, sweeping each one frame by frame for horizontal
+layout overflow. **Any new screen belongs in that sweep** — see
 `app/test/responsive_test.dart`.
 
 ## Known gaps
@@ -138,3 +141,7 @@ Tracked as work in progress rather than settled design:
   against an existing application; applicants answer the checklist (yes/no) in the
   wizard and bring the originals for verification.
 - **Default admin credentials** are committed as defaults in `database.dart`.
+- **No permanent hosting.** The demo runs behind an ephemeral cloudflare tunnel
+  on the developer machine, so the public URL changes whenever the services
+  restart. The app is a static bundle plus one API process, so it will move to
+  any static host + small VM/container pairing unchanged.
