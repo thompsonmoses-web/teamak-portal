@@ -247,7 +247,7 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
                         textInputAction: TextInputAction.next,
                         decoration: const InputDecoration(
                           labelText: 'Application number',
-                          hintText: 'TG-2026-0001',
+                          hintText: 'TRP-2026-0001',
                         ),
                         validator: (value) => requiredText(
                           value,

@@ -140,7 +140,7 @@ const String _staffApplications = '''
   "results": [
     {
       "id": "1",
-      "applicationNo": "TG-2026-0042",
+      "applicationNo": "TRP-2026-0042",
       "status": "pending",
       "fullName": "Adebayo Ogundele",
       "phoneNumber": "08023449126",
@@ -151,7 +151,7 @@ const String _staffApplications = '''
     },
     {
       "id": "2",
-      "applicationNo": "TG-2026-0039",
+      "applicationNo": "TRP-2026-0039",
       "status": "approved",
       "fullName": "Folake Adeyemi",
       "phoneNumber": "08031234567",
@@ -162,7 +162,7 @@ const String _staffApplications = '''
     },
     {
       "id": "3",
-      "applicationNo": "TG-2026-0035",
+      "applicationNo": "TRP-2026-0035",
       "status": "rejected",
       "fullName": "Sunday Balogun",
       "phoneNumber": "08055556666",
@@ -178,7 +178,7 @@ const String _staffApplications = '''
 const String _staffApplication = '''
 {
   "id": "1",
-  "applicationNo": "TG-2026-0042",
+  "applicationNo": "TRP-2026-0042",
   "status": "pending",
   "programmeId": "1",
   "createdAt": "2026-10-02T09:14:00Z",
@@ -281,7 +281,7 @@ const String _staffMessages = '''
 const String _trackedApplication = '''
 {
   "id": "app-1",
-  "applicationNo": "TG-2026-0042",
+  "applicationNo": "TRP-2026-0042",
   "status": "pending",
   "programmeId": "okada_650",
   "createdAt": "2026-10-02T09:14:00Z",
@@ -468,7 +468,7 @@ void main() {
         path: '/dashboard',
         api: _trackedApi(),
         storedApplicantRef:
-            '{"applicationNo":"TG-2026-0042","phone":"08023449126"}',
+            '{"applicationNo":"TRP-2026-0042","phone":"08023449126"}',
       );
     });
 

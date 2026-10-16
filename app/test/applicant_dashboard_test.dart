@@ -14,7 +14,7 @@ import 'package:teamak_app/app.dart';
 const String _tracked = '''
 {
   "id": "app-1",
-  "applicationNo": "TG-2026-0042",
+  "applicationNo": "TRP-2026-0042",
   "status": "pending",
   "programmeId": "okada_650",
   "createdAt": "2026-10-02T09:14:00Z",
@@ -37,7 +37,7 @@ const String _tracked = '''
 }
 ''';
 
-const String _number = 'TG-2026-0042';
+const String _number = 'TRP-2026-0042';
 const String _phone = '08023449126';
 
 /// Stands in for the tracking endpoint: the fixture pair answers with the

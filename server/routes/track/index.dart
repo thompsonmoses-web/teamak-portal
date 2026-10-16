@@ -18,8 +18,8 @@ String normalisePhone(String raw) {
 /// Lets an applicant fetch their own application without an account.
 ///
 /// The phone number they submitted is the credential: application numbers run
-/// in sequence, so without a matching phone anyone could walk `TG-2026-0001`,
-/// `TG-2026-0002`, … and read every record. An unknown number and a wrong
+/// in sequence, so without a matching phone anyone could walk `TRP-2026-0001`,
+/// `TRP-2026-0002`, … and read every record. An unknown number and a wrong
 /// phone therefore get the same 404 — the endpoint must not reveal which
 /// numbers exist either.
 Future<Response> onRequest(RequestContext context) async {
