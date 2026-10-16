@@ -48,46 +48,67 @@ class _MessagesPageState extends State<MessagesPage> {
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= 800;
 
+    final refresh = OutlinedButton.icon(
+      onPressed: _load,
+      icon: const Icon(Icons.refresh),
+      label: const Text('Refresh'),
+    );
+    final backToDashboard = OutlinedButton.icon(
+      onPressed: () => context.go('/staff'),
+      icon: const Icon(Icons.arrow_back),
+      label: const Text('Dashboard'),
+    );
+    final heading = <Widget>[
+      const Text(
+        'Contact messages',
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        '${_messages.length} message${_messages.length == 1 ? '' : 's'} '
+        'received through the website contact form.',
+        style: const TextStyle(color: TeamakColors.subtle),
+      ),
+    ];
+
     return AppShell(
       title: 'Messages',
       child: ListView(
         padding: EdgeInsets.all(wide ? 24 : 14),
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    const Text(
-                      'Contact messages',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${_messages.length} message${_messages.length == 1 ? '' : 's'} '
-                      'received through the website contact form.',
-                      style: const TextStyle(color: TeamakColors.subtle),
-                    ),
-                  ],
+          // The buttons are not flexible, so beside the heading they eat into
+          // it on a phone and the row runs past its width; a Wrap puts them
+          // on their own line instead.
+          if (wide)
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: heading,
+                  ),
                 ),
-              ),
-              OutlinedButton.icon(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Refresh'),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton.icon(
-                onPressed: () => context.go('/staff'),
-                icon: const Icon(Icons.arrow_back),
-                label: const Text('Dashboard'),
-              ),
-            ],
-          ),
+                refresh,
+                const SizedBox(width: 8),
+                backToDashboard,
+              ],
+            )
+          else
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                ...heading,
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: <Widget>[refresh, backToDashboard],
+                ),
+              ],
+            ),
           const SizedBox(height: 20),
           if (_error != null)
             Padding(

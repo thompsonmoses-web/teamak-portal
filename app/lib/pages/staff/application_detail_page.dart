@@ -360,6 +360,11 @@ class _OfficialSection extends StatelessWidget {
               children: <Widget>[
                 DropdownButtonFormField<String?>(
                   initialValue: approvedProgramme,
+                  // The button sizes its item stack to the widest label with
+                  // no bound of its own, so a long programme name runs past a
+                  // phone-width field and paints an overflow. Expanded ties
+                  // the stack to the field, letting the labels wrap instead.
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Approved programme',
                   ),
@@ -553,32 +558,54 @@ class _EventsCard extends StatelessWidget {
               for (final raw in events)
                 Builder(builder: (context) {
                   final event = Map<String, dynamic>.from(raw as Map);
+                  final status = Text(
+                    '${statusLabel('${event['fromStatus']}')} → '
+                    '${statusLabel('${event['toStatus']}')}'
+                    '${event['remark'] == null ? '' : ' — ${event['remark}']}'}',
+                  );
+                  // Guarded substring: an ISO timestamp is 20 chars, but
+                  // a short or malformed value would otherwise throw a
+                  // RangeError and blank the whole history card.
+                  final stamp = Text(
+                    '${event['staffUsername'] ?? ''}  '
+                    '${_stamp(event['createdAt'])}',
+                    style: const TextStyle(
+                      color: TeamakColors.subtle,
+                      fontSize: 12,
+                    ),
+                  );
+                  const dot = <Widget>[
+                    Icon(Icons.circle, size: 8, color: TeamakColors.accent),
+                    SizedBox(width: 10),
+                  ];
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      children: <Widget>[
-                        const Icon(Icons.circle, size: 8, color: TeamakColors.accent),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            '${statusLabel('${event['fromStatus']}')} → '
-                            '${statusLabel('${event['toStatus']}')}'
-                            '${event['remark'] == null ? '' : ' — ${event['remark']}'}',
+                    // The stamp is not allowed to shrink, so beside the entry
+                    // it pushes the row past a phone's width; under it, the
+                    // stamp gets the full width and the text simply wraps.
+                    child: MediaQuery.sizeOf(context).width < 600
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Row(
+                                children: <Widget>[
+                                  ...dot,
+                                  Expanded(child: status),
+                                ],
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 18, top: 2),
+                                child: stamp,
+                              ),
+                            ],
+                          )
+                        : Row(
+                            children: <Widget>[
+                              ...dot,
+                              Expanded(child: status),
+                              stamp,
+                            ],
                           ),
-                        ),
-                        // Guarded substring: an ISO timestamp is 20 chars, but
-                        // a short or malformed value would otherwise throw a
-                        // RangeError and blank the whole history card.
-                        Text(
-                          '${event['staffUsername'] ?? ''}  '
-                          '${_stamp(event['createdAt'])}',
-                          style: const TextStyle(
-                            color: TeamakColors.subtle,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
                   );
                 }),
           ],

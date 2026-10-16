@@ -18,10 +18,17 @@ import 'state/session.dart';
 import 'theme.dart';
 
 class TeamakApp extends StatefulWidget {
-  const TeamakApp({super.key, this.initialPath = '/'});
+  const TeamakApp({super.key, this.initialPath = '/', this.api});
 
   /// Route to open first, so tests can target a single page.
   final String initialPath;
+
+  /// Client the app talks to the server through.
+  ///
+  /// Tests inject a stand-in here: the staff area is unreachable otherwise,
+  /// because the router bounces every `/staff` route to sign-in until a
+  /// session exists, and a session needs an answer from the API.
+  final ApiClient? api;
 
   @override
   State<TeamakApp> createState() => _TeamakAppState();
@@ -35,7 +42,7 @@ class _TeamakAppState extends State<TeamakApp> {
   @override
   void initState() {
     super.initState();
-    _api = ApiClient();
+    _api = widget.api ?? ApiClient();
     _session = Session(_api);
     _router = _buildRouter(_session);
     _session.restore();

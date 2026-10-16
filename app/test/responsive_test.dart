@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:teamak_app/api/api_client.dart';
 import 'package:teamak_app/app.dart';
 
 import 'support/fields.dart';
@@ -124,18 +128,219 @@ Future<void> _completeStep(WidgetTester tester, int step) async {
   }
 }
 
+/// Fixture payload standing in for the API behind the staff area.
+///
+/// The signed-in pages are only reachable with data: an empty list renders a
+/// placeholder, so the filter chips, status cards and answer rows the sweep
+/// is meant to exercise would never be laid out.
+const String _staffApplications = '''
+{
+  "total": 3,
+  "counts": {"pending": 1, "approved": 1, "rejected": 1},
+  "results": [
+    {
+      "id": "1",
+      "applicationNo": "TG-2026-0042",
+      "status": "pending",
+      "fullName": "Adebayo Ogundele",
+      "phoneNumber": "08023449126",
+      "programmeId": "1",
+      "areaCommunity": "Ojoo, Ibadan",
+      "createdAt": "2026-10-02T09:14:00Z",
+      "official": {"verificationStatus": "unverified"}
+    },
+    {
+      "id": "2",
+      "applicationNo": "TG-2026-0039",
+      "status": "approved",
+      "fullName": "Folake Adeyemi",
+      "phoneNumber": "08031234567",
+      "programmeId": "2",
+      "areaCommunity": "Aba Opa, Ibadan",
+      "createdAt": "2026-09-28T14:02:00Z",
+      "official": {"verificationStatus": "verified"}
+    },
+    {
+      "id": "3",
+      "applicationNo": "TG-2026-0035",
+      "status": "rejected",
+      "fullName": "Sunday Balogun",
+      "phoneNumber": "08055556666",
+      "programmeId": "1",
+      "areaCommunity": "Oluyole, Ibadan",
+      "createdAt": "2026-09-21T08:45:00Z",
+      "official": {"verificationStatus": "failed"}
+    }
+  ]
+}
+''';
+
+const String _staffApplication = '''
+{
+  "id": "1",
+  "applicationNo": "TG-2026-0042",
+  "status": "pending",
+  "programmeId": "1",
+  "createdAt": "2026-10-02T09:14:00Z",
+  "application": {
+    "fullName": "Adebayo Ogundele",
+    "phoneNumber": "08023449126",
+    "whatsappNumber": "08023449126",
+    "residentialAddress": "12 Ojoo Road, Ibadan",
+    "areaCommunity": "Ojoo, Ibadan",
+    "dateOfBirth": "1990-05-14",
+    "nin": "12345678901",
+    "maritalStatus": "Single",
+    "operationType": "okada",
+    "ridingExperience": "4-6 years",
+    "currentVehicleOwnership": "Owned by me",
+    "vehicleMakeModel": "Bajaj Boxer 150",
+    "parkRouteOperatingArea": "Ojoo - UI Gate",
+    "parkAssociationName": "Ojoo Okada Park",
+    "currentRemittance": "1,500 Naira daily",
+    "averageWorkingDaysPerWeek": "6",
+    "programmeId": "1",
+    "amountToCommit": "400000",
+    "sourceOfFunds": "Personal savings",
+    "expectedDepositDate": "2026-11-01",
+    "participatedBefore": false,
+    "previousProgrammeDetails": "",
+    "hasPassportPhotograph": true,
+    "hasGovernmentIdOrNinSlip": true,
+    "hasRiderOrAssociationRegistration": false,
+    "hasProofOfResidentialAddress": true,
+    "hasTwoPassportPhotographs": false,
+    "nextOfKin": {
+      "fullName": "Folake Ogundele",
+      "relationship": "Wife",
+      "phoneNumber": "08031234567",
+      "address": "12 Ojoo Road, Ibadan"
+    },
+    "references": [
+      {
+        "fullName": "Sunday Adeyemi",
+        "relationship": "Park Chairman",
+        "phoneNumber": "08055556666",
+        "address": "Ojoo Park, Ibadan"
+      },
+      {
+        "fullName": "Grace Balogun",
+        "relationship": "Neighbour",
+        "phoneNumber": "08077778888",
+        "address": "Aba Opa, Ibadan"
+      }
+    ],
+    "declarationAccepted": true,
+    "signatureName": "Adebayo Ogundele",
+    "declarationDate": "2026-10-02"
+  },
+  "official": {},
+  "events": [
+    {
+      "fromStatus": "submitted",
+      "toStatus": "pending",
+      "remark": "Received at the Ibadan office",
+      "staffUsername": "admin",
+      "createdAt": "2026-10-02T10:00:00Z"
+    }
+  ],
+  "documents": []
+}
+''';
+
+const String _staffMessages = '''
+{
+  "messages": [
+    {
+      "id": 1,
+      "name": "Adebayo Ogundele",
+      "phone": "08023449126",
+      "email": "ade@example.com",
+      "subject": "Application status",
+      "message": "Good day, please when does the next cohort open for Ibadan?",
+      "createdAt": "2026-10-10T09:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "Grace Balogun",
+      "phone": "08077778888",
+      "email": "",
+      "subject": "Deposit date",
+      "message": "I have paid the deposit, who do I send the receipt to?",
+      "createdAt": "2026-10-11T15:30:00Z"
+    }
+  ]
+}
+''';
+
+/// A client answering every route the staff area calls.
+///
+/// Unknown paths return an empty object rather than an error, so an endpoint
+/// added later degrades to an empty page instead of an exception mid-sweep.
+ApiClient _staffApi() => ApiClient(
+      client: MockClient((request) async {
+        final path = request.url.path;
+        final String body;
+        if (path == '/auth/me') {
+          body = '{"username":"admin","fullName":"Portal Admin","role":"admin"}';
+        } else if (path == '/applications') {
+          body = _staffApplications;
+        } else if (path.startsWith('/applications/')) {
+          body = _staffApplication;
+        } else if (path == '/contact') {
+          body = _staffMessages;
+        } else {
+          body = '{}';
+        }
+        return http.Response(
+          body,
+          200,
+          headers: <String, String>{'content-type': 'application/json'},
+        );
+      }),
+    );
+
+/// Asserts a staff sweep landed on the page it meant to test.
+///
+/// Without this the guard is absent: a session the API refused redirects to
+/// the sign-in form, which fits every width, so the sweep would report
+/// success having measured the wrong page.
+void _expectOnStaffPage(WidgetTester tester, String title) {
+  expect(
+    find.text(title),
+    findsWidgets,
+    reason: 'expected the signed-in page to render its own title',
+  );
+  expect(
+    find.text('Sign in'),
+    findsNothing,
+    reason: 'the session was bounced to the login form, so nothing was swept',
+  );
+}
+
 /// Pumps [path], walks the page so lazily built sections are laid out, and
 /// fails if any horizontal RenderFlex overflows at any point.
 Future<void> _checkRoute(
   WidgetTester tester,
   int width, {
   String path = '/',
+  ApiClient? api,
+  bool staff = false,
 }) async {
   tester.view.physicalSize = Size(width.toDouble(), 1400);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 
-  await tester.pumpWidget(TeamakApp(initialPath: path));
+  // The router holds every /staff route at sign-in until a session exists,
+  // and a session is restored from a stored token: seed one so the sweep
+  // reaches the signed-in pages instead of the login form.
+  if (staff) {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'teamak_staff_token': 'sweep-token',
+    });
+  }
+
+  await tester.pumpWidget(TeamakApp(initialPath: path, api: api));
   await tester.pump(const Duration(milliseconds: 400));
 
   // The walk runs every frame, not just at the end: some sections overflow
@@ -209,6 +414,40 @@ void main() {
 
     testWidgets('staff login fits a ${width}px viewport', (tester) async {
       await _checkRoute(tester, width, path: '/staff/login');
+    });
+
+    testWidgets('staff dashboard fits a ${width}px viewport', (tester) async {
+      await _checkRoute(
+        tester,
+        width,
+        path: '/staff',
+        api: _staffApi(),
+        staff: true,
+      );
+      _expectOnStaffPage(tester, 'Applications');
+    });
+
+    testWidgets('staff messages fits a ${width}px viewport', (tester) async {
+      await _checkRoute(
+        tester,
+        width,
+        path: '/staff/messages',
+        api: _staffApi(),
+        staff: true,
+      );
+      _expectOnStaffPage(tester, 'Messages');
+    });
+
+    testWidgets('application review fits a ${width}px viewport',
+        (tester) async {
+      await _checkRoute(
+        tester,
+        width,
+        path: '/staff/applications/1',
+        api: _staffApi(),
+        staff: true,
+      );
+      _expectOnStaffPage(tester, 'Application review');
     });
 
     testWidgets('404 page fits a ${width}px viewport', (tester) async {

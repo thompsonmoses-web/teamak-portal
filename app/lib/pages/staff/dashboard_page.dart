@@ -293,38 +293,50 @@ class _ApplicationTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: SingleChildScrollView(
-        child: DataTable(
-          columns: const <DataColumn>[
-            DataColumn(label: Text('Application no.')),
-            DataColumn(label: Text('Applicant')),
-            DataColumn(label: Text('Phone')),
-            DataColumn(label: Text('Area')),
-            DataColumn(label: Text('Programme')),
-            DataColumn(label: Text('Status')),
-            DataColumn(label: Text('Received')),
-          ],
-          rows: [
-            for (final item in result.results)
-              DataRow(
-                onSelectChanged: (_) =>
-                    context.go('/staff/applications/${item.id}'),
-                cells: <DataCell>[
-                  DataCell(
-                    Text(
-                      item.applicationNo,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
+      // The table takes its intrinsic width and scrolls sideways when that
+      // exceeds the card. DataTable squeezes columns to a fixed width, and a
+      // heading cell is an unbounded Row — it cannot wrap the way data cells
+      // do, so squeezing paints a clipped header rather than scrolling past
+      // it. The LayoutBuilder keeps the table filling the card whenever the
+      // content is narrower than the viewport.
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: constraints.maxWidth),
+            child: DataTable(
+              columns: const <DataColumn>[
+                DataColumn(label: Text('Application no.')),
+                DataColumn(label: Text('Applicant')),
+                DataColumn(label: Text('Phone')),
+                DataColumn(label: Text('Area')),
+                DataColumn(label: Text('Programme')),
+                DataColumn(label: Text('Status')),
+                DataColumn(label: Text('Received')),
+              ],
+              rows: [
+                for (final item in result.results)
+                  DataRow(
+                    onSelectChanged: (_) =>
+                        context.go('/staff/applications/${item.id}'),
+                    cells: <DataCell>[
+                      DataCell(
+                        Text(
+                          item.applicationNo,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      DataCell(Text(item.fullName)),
+                      DataCell(Text(item.phoneNumber)),
+                      DataCell(Text(item.areaCommunity)),
+                      DataCell(Text(item.programmeId)),
+                      DataCell(_StatusChip(status: item.status)),
+                      DataCell(Text(_shortDate(item.createdAt))),
+                    ],
                   ),
-                  DataCell(Text(item.fullName)),
-                  DataCell(Text(item.phoneNumber)),
-                  DataCell(Text(item.areaCommunity)),
-                  DataCell(Text(item.programmeId)),
-                  DataCell(_StatusChip(status: item.status)),
-                  DataCell(Text(_shortDate(item.createdAt))),
-                ],
-              ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );
