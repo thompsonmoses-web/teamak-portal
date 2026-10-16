@@ -207,6 +207,49 @@ class ApiClient {
         'phone': phone,
       }).then(ApplicationDetail.fromJson);
 
+  // ── Staff directory (administrators only) ───────────────────────────
+
+  /// Every staff account, as the admin team page shows them.
+  Future<List<Map<String, dynamic>>> listStaff() async {
+    final json = await get('/staff');
+    return (json['items'] as List? ?? const <Object?>[])
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList();
+  }
+
+  /// Creates a staff account and returns it.
+  Future<Map<String, dynamic>> createStaff({
+    required String username,
+    required String fullName,
+    required String password,
+    required String role,
+  }) async {
+    final json = await post('/staff', <String, Object?>{
+      'username': username,
+      'fullName': fullName,
+      'password': password,
+      'role': role,
+    });
+    return Map<String, dynamic>.from(json as Map);
+  }
+
+  /// Updates a staff account's name, role or password.
+  ///
+  /// A password change also ends that account's sessions server-side.
+  Future<Map<String, dynamic>> updateStaff(
+    int id, {
+    String? fullName,
+    String? role,
+    String? password,
+  }) async {
+    final json = await patch('/staff/$id', <String, Object?>{
+      'fullName': ?fullName,
+      'role': ?role,
+      'password': ?password,
+    });
+    return Map<String, dynamic>.from(json as Map);
+  }
+
   /// Fetches the staff inbox of submitted contact-form messages.
   Future<List<ContactMessage>> fetchMessages({int limit = 100}) async {
     final json = await get('/contact', query: <String, String>{

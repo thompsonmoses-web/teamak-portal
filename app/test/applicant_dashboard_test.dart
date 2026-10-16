@@ -23,7 +23,12 @@ const String _tracked = '''
     "phoneNumber": "08023449126",
     "areaCommunity": "Ojoo",
     "nin": "12345678901",
-    "parkAssociationName": "Ojoo Okada Park"
+    "parkAssociationName": "Ojoo Okada Park",
+    "hasPassportPhotograph": true,
+    "hasTwoPassportPhotographs": false,
+    "hasGovernmentIdOrNinSlip": true,
+    "hasRiderOrAssociationRegistration": true,
+    "hasProofOfResidentialAddress": false
   },
   "official": {"expectedDeliveryDate": "2026-12-01"},
   "events": [
@@ -114,6 +119,21 @@ void main() {
       find.text('Expected delivery'),
       findsOneWidget,
       reason: 'public outcomes from Section I should surface',
+    );
+    expect(
+      find.text('Getting ready for verification'),
+      findsOneWidget,
+      reason: 'Section E answers should read back as visit preparation',
+    );
+    expect(
+      find.text('Proof of residential address'),
+      findsOneWidget,
+      reason: 'an unanswered-at-wizard item should be listed for the visit',
+    );
+    expect(
+      find.text('Chat on WhatsApp'),
+      findsOneWidget,
+      reason: 'the WhatsApp channel should lead the dashboard actions',
     );
   });
 

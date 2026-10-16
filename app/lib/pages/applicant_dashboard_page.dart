@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../api/api_client.dart';
 import '../form/form_utils.dart';
@@ -344,6 +345,10 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
                 ),
               ),
             ),
+            if (_PreparationCard.appliesTo(application)) ...<Widget>[
+              const SizedBox(height: 20),
+              _PreparationCard(application: application),
+            ],
             if (_hasOutcome(official)) ...<Widget>[
               const SizedBox(height: 20),
               _OutcomeCard(official: official),
@@ -355,6 +360,17 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
               spacing: 12,
               runSpacing: 12,
               children: <Widget>[
+                // WhatsApp is the channel riders actually use, so it leads
+                // and carries the application number in the first message.
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF25D366),
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: _chatOnWhatsApp,
+                  icon: const Icon(Icons.chat_rounded),
+                  label: const Text('Chat on WhatsApp'),
+                ),
                 OutlinedButton.icon(
                   onPressed: _printReceipt,
                   icon: const Icon(Icons.print),
@@ -371,7 +387,7 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
                     icon: const Icon(Icons.manage_search_outlined),
                     label: const Text('Track another application'),
                   ),
-                FilledButton.icon(
+                OutlinedButton.icon(
                   onPressed: () => context.go('/'),
                   icon: const Icon(Icons.home_outlined),
                   label: const Text('Back to home'),
@@ -394,9 +410,125 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
       ),
     );
   }
+
+  /// Opens WhatsApp with the application number already in the draft message
+  /// — the channel riders live on, and the context saves them the typing.
+  Future<void> _chatOnWhatsApp() async {
+    final detail = _detail;
+    final text = detail == null
+        ? 'Hello Teamak, I have a question about the Rider Ownership '
+            'Programme.'
+        : 'Hello Teamak, I am following up on my application '
+            '${detail.applicationNo} (${statusLabel(detail.status)}).';
+    final uri = Uri.parse(
+      'https://wa.me/2348023449126?text=${Uri.encodeComponent(text)}',
+    );
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      // No WhatsApp here (or the scheme is blocked) — the number is the
+      // point, so give it rather than an error.
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'WhatsApp could not open — call or message +234 802 344 9126.',
+          ),
+        ),
+      );
+    }
+  }
 }
 
 // ── Pieces ───────────────────────────────────────────────────────────────
+
+/// The Section E checklist the applicant answered in the wizard, read back
+/// as visit preparation: what they told us is already sorted, and what
+/// still needs arranging before staff check the originals.
+class _PreparationCard extends StatelessWidget {
+  const _PreparationCard({required this.application});
+
+  final Map<String, dynamic> application;
+
+  static const List<(String, String)> _items = <(String, String)>[
+    ('hasPassportPhotograph', 'Passport photograph'),
+    ('hasTwoPassportPhotographs', 'Two passport photographs'),
+    ('hasGovernmentIdOrNinSlip', 'Government ID or NIN slip'),
+    ('hasRiderOrAssociationRegistration', 'Rider or association registration'),
+    ('hasProofOfResidentialAddress', 'Proof of residential address'),
+  ];
+
+  /// True when the payload carries any Section E answers — a submission
+  /// without them shows no card rather than a hollow one.
+  static bool appliesTo(Map<String, dynamic> application) =>
+      _items.any((item) => application.containsKey(item.$1));
+
+  @override
+  Widget build(BuildContext context) {
+    final answered =
+        _items.where((item) => application.containsKey(item.$1)).toList();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Text(
+              'Getting ready for verification',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Staff will check the originals at your verification visit. '
+              'Bring everything marked "Arrange".',
+              style: TextStyle(color: TeamakColors.subtle, height: 1.5),
+            ),
+            const SizedBox(height: 12),
+            for (final (key, label) in answered)
+              _PreparationRow(label: label, ready: application[key] == true),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PreparationRow extends StatelessWidget {
+  const _PreparationRow({required this.label, required this.ready});
+
+  final String label;
+  final bool ready;
+
+  @override
+  Widget build(BuildContext context) {
+    // Icon + wrapped label + short verdict: nothing fixed except the icon
+    // and the 10px gaps, so 320px squeezes only the text.
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(
+            ready ? Icons.check_circle_rounded : Icons.error_outline_rounded,
+            size: 20,
+            color: ready ? TeamakColors.primary : TeamakColors.accentDark,
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Text(label)),
+          const SizedBox(width: 10),
+          Text(
+            ready ? 'Ready' : 'Arrange',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: ready ? TeamakColors.primary : TeamakColors.accentDark,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _HeaderCard extends StatelessWidget {
   const _HeaderCard({required this.detail, required this.fresh});

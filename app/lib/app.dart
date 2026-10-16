@@ -13,6 +13,7 @@ import 'pages/staff/application_detail_page.dart';
 import 'pages/staff/dashboard_page.dart';
 import 'pages/staff/login_page.dart';
 import 'pages/staff/messages_page.dart';
+import 'pages/staff/team_page.dart';
 import 'pages/team_page.dart';
 import 'pages/what_we_do_page.dart';
 import 'state/session.dart';
@@ -117,6 +118,10 @@ class _TeamakAppState extends State<TeamakApp> {
               api: session.api,
               applicationId: state.pathParameters['id']!,
             ),
+          ),
+          GoRoute(
+            path: '/staff/team',
+            builder: (context, state) => StaffTeamPage(session: session),
           ),
         ],
         errorBuilder: (context, state) =>

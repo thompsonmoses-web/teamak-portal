@@ -45,7 +45,7 @@ Future<void> main(List<String> args) async {
   final api = apiOrigin == null ? null : HttpClient();
   await for (final request in server) {
     try {
-      if (apiOrigin != null && api != null && _isApiPath(request.uri.path)) {
+      if (apiOrigin != null && api != null && _isApiPath(request)) {
         await _proxy(request, apiOrigin, api);
       } else {
         await _handle(request, root);
@@ -62,16 +62,40 @@ Future<void> main(List<String> args) async {
 /// Route prefixes owned by the API rather than by the static build.
 ///
 /// Kept in step with the routes under `server/routes/`; a prefix missing here
-/// surfaces as a 405 from the static server instead of a working page.
+/// surfaces as a failed JSON fetch instead of a working feature.
 const _apiPrefixes = <String>[
   '/programmes',
   '/applications',
   '/track',
   '/auth',
   '/contact',
+  '/staff',
 ];
 
-bool _isApiPath(String path) => _apiPrefixes.any(path.startsWith);
+/// Prefixes no frontend page shares — everything under them is an API call.
+const _apiOnlyPrefixes = <String>[
+  '/programmes',
+  '/applications',
+  '/track',
+  '/auth',
+];
+
+/// True when [request] belongs to the API rather than to the static build.
+///
+/// `/contact` and `/staff` are both API prefixes and frontend pages, so for
+/// those the Accept header breaks the tie: a browser navigation asks for
+/// `text/html` and gets the static build (SPA fallback included), while the
+/// app's JSON fetches — no `Accept`, maybe a bearer token — go to the API.
+/// Without this, refreshing `/contact` or deep-linking `/staff/team` on a
+/// proxied deployment would render an API response instead of the page.
+bool _isApiPath(HttpRequest request) {
+  final path = request.uri.path;
+  if (_apiOnlyPrefixes.any(path.startsWith)) return true;
+  final shared = path.startsWith('/contact') || path.startsWith('/staff');
+  if (!shared) return false;
+  final accept = request.headers.value('accept') ?? '';
+  return !accept.contains('text/html');
+}
 
 /// Forwards a request to [origin], streaming the body in both directions so
 /// large payloads are not buffered in memory.

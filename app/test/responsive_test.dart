@@ -290,7 +290,12 @@ const String _trackedApplication = '''
     "phoneNumber": "08023449126",
     "areaCommunity": "Ojoo",
     "nin": "12345678901",
-    "parkAssociationName": "Ojoo Okada Park"
+    "parkAssociationName": "Ojoo Okada Park",
+    "hasPassportPhotograph": true,
+    "hasTwoPassportPhotographs": false,
+    "hasGovernmentIdOrNinSlip": true,
+    "hasRiderOrAssociationRegistration": true,
+    "hasProofOfResidentialAddress": false
   },
   "official": {
     "approvedAmount": 650000,
@@ -317,6 +322,28 @@ ApiClient _trackedApi() => ApiClient(
       }),
     );
 
+/// The staff directory an administrator's team page loads.
+const String _staffTeam = '''
+{
+  "items": [
+    {
+      "id": 1,
+      "username": "admin",
+      "fullName": "Portal Admin",
+      "role": "admin",
+      "createdAt": "2026-09-01T08:00:00Z"
+    },
+    {
+      "id": 2,
+      "username": "temi",
+      "fullName": "Temi Ayo",
+      "role": "reviewer",
+      "createdAt": "2026-10-05T12:30:00Z"
+    }
+  ]
+}
+''';
+
 /// A client answering every route the staff area calls.
 ///
 /// Unknown paths return an empty object rather than an error, so an endpoint
@@ -333,6 +360,8 @@ ApiClient _staffApi() => ApiClient(
           body = _staffApplication;
         } else if (path == '/contact') {
           body = _staffMessages;
+        } else if (path == '/staff') {
+          body = _staffTeam;
         } else {
           body = '{}';
         }
@@ -520,6 +549,19 @@ void main() {
         staff: true,
       );
       _expectOnStaffPage(tester, 'Application review');
+    });
+
+    testWidgets('admin team page fits a ${width}px viewport', (tester) async {
+      // The directory of staff accounts — identity rows, role chips and the
+      // overflow menu, which is where a narrow screen would bite.
+      await _checkRoute(
+        tester,
+        width,
+        path: '/staff/team',
+        api: _staffApi(),
+        staff: true,
+      );
+      _expectOnStaffPage(tester, 'Team');
     });
 
     testWidgets('404 page fits a ${width}px viewport', (tester) async {
