@@ -82,6 +82,10 @@ class AppShell extends StatelessWidget {
                   onPressed: () => context.go('/contact'),
                   child: const Text('Contact'),
                 ),
+                TextButton(
+                  onPressed: () => context.go('/dashboard'),
+                  child: const Text('Track'),
+                ),
                 const SizedBox(width: 4),
                 OutlinedButton(
                   onPressed: () => context.go('/staff/login'),
@@ -113,6 +117,7 @@ class _NavDrawer extends StatelessWidget {
     (Icons.grid_view_outlined, 'What we do', '/what-we-do'),
     (Icons.groups_outlined, 'Our team', '/team'),
     (Icons.assignment_outlined, 'Apply', '/apply'),
+    (Icons.manage_search_outlined, 'Track application', '/dashboard'),
     (Icons.mail_outline, 'Contact', '/contact'),
     (Icons.badge_outlined, 'Staff login', '/staff/login'),
   ];

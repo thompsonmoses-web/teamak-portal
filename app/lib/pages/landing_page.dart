@@ -608,6 +608,18 @@ class _Hero extends StatelessWidget {
               onPressed: () => context.go('/staff/login'),
               child: const Text('Staff login'),
             ),
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 26,
+                  vertical: 19,
+                ),
+                side: const BorderSide(color: TeamakColors.primary),
+                foregroundColor: TeamakColors.primaryDark,
+              ),
+              onPressed: () => context.go('/dashboard'),
+              child: const Text('Track application'),
+            ),
           ],
         ),
       ],
@@ -3121,32 +3133,24 @@ class _Footer extends StatelessWidget {
             style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 13),
           ),
           const SizedBox(height: 14),
-          InkWell(
-            onTap: () => context.go('/contact'),
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          // Two pills, wrapped: side by side on a desktop footer, stacked on
+          // a phone where both labels would overrun the row.
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: <Widget>[
+              _FooterPill(
+                icon: Icons.mail_rounded,
+                label: 'Contact us',
+                onTap: () => context.go('/contact'),
               ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Icon(Icons.mail_rounded, size: 16, color: TeamakColors.accent),
-                  SizedBox(width: 8),
-                  Text(
-                    'Contact us',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
+              _FooterPill(
+                icon: Icons.manage_search_rounded,
+                label: 'Track application',
+                onTap: () => context.go('/dashboard'),
               ),
-            ),
+            ],
           ),
           const SizedBox(height: 16),
           const Text(
@@ -3165,6 +3169,56 @@ class _Footer extends StatelessWidget {
             style: TextStyle(color: Colors.white.withValues(alpha: 0.35), fontSize: 12),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Dark-surface pill used in the footer's link row.
+class _FooterPill extends StatelessWidget {
+  const _FooterPill({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(icon, size: 16, color: TeamakColors.accent),
+            const SizedBox(width: 8),
+            // Flexible: on a 320px screen (or with a large text scale) the
+            // label wraps to a second line instead of pushing the pill past
+            // the footer's width — a Row of unbounded text cannot shrink.
+            Flexible(
+              child: Text(
+                label,
+                softWrap: true,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

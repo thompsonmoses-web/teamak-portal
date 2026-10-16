@@ -99,8 +99,8 @@ void main() {
           builder: (context, state) => ApplyPage(api: api),
         ),
         GoRoute(
-          path: '/receipt',
-          builder: (context, state) => const Text('RECEIPT'),
+          path: '/dashboard',
+          builder: (context, state) => const Text('DASHBOARD'),
         ),
       ],
     );
@@ -217,7 +217,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(api.submitted, isNotNull, reason: 'the wizard never submitted');
-    expect(find.text('RECEIPT'), findsOneWidget);
+    expect(find.text('DASHBOARD'), findsOneWidget);
 
     final payload = api.submitted!;
     for (final key in _apiRequiredKeys) {

@@ -245,7 +245,7 @@ class _ApplyPageState extends State<ApplyPage> {
     try {
       final detail = await widget.api.submitApplication(Map<String, dynamic>.from(_data));
       if (!mounted) return;
-      context.go('/receipt', extra: detail);
+      context.go('/dashboard', extra: detail);
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {

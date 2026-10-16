@@ -6,7 +6,7 @@ import '../../form/form_utils.dart';
 import '../../models/models.dart';
 import '../../theme.dart';
 import '../../widgets/shell.dart';
-import '../receipt_page.dart' show statusLabel;
+import '../applicant_dashboard_page.dart' show statusLabel;
 
 class ApplicationDetailPage extends StatefulWidget {
   const ApplicationDetailPage({

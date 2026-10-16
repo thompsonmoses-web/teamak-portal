@@ -1,0 +1,811 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../api/api_client.dart';
+import '../form/form_utils.dart';
+import '../models/models.dart';
+import '../theme.dart';
+import '../widgets/shell.dart';
+
+/// Status value → the words both staff pages and the applicant's dashboard
+/// show for it.
+String statusLabel(String status) => switch (status) {
+      'submitted' => 'Submitted',
+      'pending' => 'Under review',
+      'approved' => 'Approved',
+      'not_approved' => 'Not approved',
+      'further_review' => 'Further review',
+      _ => status,
+    };
+
+/// Programme id → the display line used on receipts and dashboards.
+String programmeLabel(String programmeId) => switch (programmeId) {
+      'okada_650' => 'Okada ownership — ₦650,000 / 3 months',
+      'okada_400' => 'Okada ownership — ₦400,000 / 6 months',
+      'maruwa_2300' => 'Maruwa ownership — ₦2,300,000 / 3 months',
+      _ => programmeId,
+    };
+
+/// What the applicant sees after applying: their receipt, live status, the
+/// history of changes and what happens next.
+///
+/// Three ways in — handed over by the wizard as `extra`, remembered on the
+/// device from an earlier visit, or looked up through the tracking form in a
+/// fresh browser. A refresh that loses `extra` falls back to the stored pair
+/// instead of crashing on a missing route argument.
+class ApplicantDashboardPage extends StatefulWidget {
+  const ApplicantDashboardPage({super.key, required this.api, this.detail});
+
+  final ApiClient api;
+
+  /// Freshly submitted application from the wizard; null when opened cold.
+  final ApplicationDetail? detail;
+
+  @override
+  State<ApplicantDashboardPage> createState() => _ApplicantDashboardPageState();
+}
+
+class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
+  /// Device-local pointer to the applicant's own application: the pair the
+  /// API accepts, never a token — losing it costs a retyped form, not access.
+  static const String _refKey = 'teamak_applicant_ref';
+
+  final _formKey = GlobalKey<FormState>();
+  final _number = TextEditingController();
+  final _phone = TextEditingController();
+
+  ApplicationDetail? _detail;
+  bool _loading = false;
+  bool _viaForm = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final seed = widget.detail;
+    if (seed != null) {
+      _detail = seed;
+      _remember(seed);
+    } else {
+      _restore();
+    }
+  }
+
+  @override
+  void dispose() {
+    _number.dispose();
+    _phone.dispose();
+    super.dispose();
+  }
+
+  Future<void> _remember(ApplicationDetail detail) async {
+    final phone = '${detail.application['phoneNumber'] ?? ''}';
+    if (phone.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _refKey,
+        '{"applicationNo":"${detail.applicationNo}","phone":"$phone"}',
+      );
+    } catch (_) {
+      // Storage is a convenience: a browser that refuses it only means the
+      // applicant retypes the pair next visit, never a broken dashboard.
+    }
+  }
+
+  Future<void> _forget() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_refKey);
+    } catch (_) {
+      // Nothing remembered is nothing to forget.
+    }
+    if (!mounted) return;
+    setState(() {
+      _detail = null;
+      _error = null;
+      _number.clear();
+      _phone.clear();
+    });
+  }
+
+  /// Loads the stored pair on a cold visit so returning applicants land on
+  /// their dashboard without retyping anything.
+  Future<void> _restore() async {
+    String? stored;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      stored = prefs.getString(_refKey);
+    } catch (_) {
+      stored = null;
+    }
+    if (stored == null || !mounted) return;
+
+    try {
+      final ref = jsonDecodeRef(stored);
+      await _track(
+        applicationNo: '${ref['applicationNo'] ?? ''}',
+        phone: '${ref['phone'] ?? ''}',
+      );
+    } catch (_) {
+      // A corrupt pointer behaves like none: show the form and say so.
+      await _forget();
+      if (!mounted) return;
+      setState(() {
+        _error = 'We could not load your saved application — '
+            'enter your details below.';
+      });
+    }
+  }
+
+  Future<void> _track({
+    required String applicationNo,
+    required String phone,
+    bool viaForm = false,
+  }) async {
+    setState(() {
+      _loading = true;
+      _viaForm = viaForm;
+      _error = null;
+    });
+    try {
+      final detail = await widget.api.trackApplication(
+        applicationNo: applicationNo.trim(),
+        phone: phone.trim(),
+      );
+      if (!mounted) return;
+      setState(() {
+        _detail = detail;
+        _loading = false;
+      });
+      _remember(detail);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = error.statusCode == 404
+            ? 'No application matches that number and phone number.'
+            : error.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'Could not reach the server. Check your connection and '
+            'try again.';
+      });
+    }
+  }
+
+  Future<void> _submitForm() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    await _track(
+      applicationNo: _number.text,
+      phone: _phone.text,
+      viaForm: true,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final detail = _detail;
+
+    return AppShell(
+      title: 'Application dashboard',
+      child: detail != null
+          ? _buildDashboard(context, detail)
+          : _loading && !_viaForm
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(48),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              : _buildForm(context),
+    );
+  }
+
+  // ── Tracking form ──────────────────────────────────────────────────────
+
+  Widget _buildForm(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final wide = width >= 720;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: ListView(
+          padding: EdgeInsets.all(wide ? 32 : 16),
+          children: <Widget>[
+            Card(
+              child: Padding(
+                padding: EdgeInsets.all(wide ? 28 : 20),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      const Text(
+                        'Find your application',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Enter the application number from your receipt and '
+                        'the phone number you applied with.',
+                        style: TextStyle(color: TeamakColors.subtle),
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _number,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Application number',
+                          hintText: 'TG-2026-0001',
+                        ),
+                        validator: (value) => requiredText(
+                          value,
+                          'Application number is required.',
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: _phone,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          labelText: 'Phone number',
+                        ),
+                        validator: phoneValidator,
+                        onFieldSubmitted: (_) => _submitForm(),
+                      ),
+                      if (_error != null) ...<Widget>[
+                        const SizedBox(height: 14),
+                        Text(
+                          _error!,
+                          style: const TextStyle(
+                            color: TeamakColors.danger,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 20),
+                      FilledButton.icon(
+                        onPressed: _loading ? null : _submitForm,
+                        icon: _loading
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.search),
+                        label: Text(_loading ? 'Searching…' : 'Track application'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Dashboard ──────────────────────────────────────────────────────────
+
+  Widget _buildDashboard(BuildContext context, ApplicationDetail detail) {
+    final application = detail.application;
+    final official = detail.official;
+    final width = MediaQuery.sizeOf(context).width;
+    final wide = width >= 720;
+    // The wizard handed this page over in the same visit, so the header can
+    // greet the applicant as a fresh submission.
+    final fresh = widget.detail != null;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: ListView(
+          padding: EdgeInsets.all(wide ? 32 : 16),
+          children: <Widget>[
+            _HeaderCard(detail: detail, fresh: fresh),
+            const SizedBox(height: 20),
+            _ProgressCard(detail: detail),
+            const SizedBox(height: 20),
+            Card(
+              child: Padding(
+                padding: EdgeInsets.all(wide ? 24 : 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const Text(
+                      'Your application',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _Row(label: 'Applicant', value: _value(application, 'fullName')),
+                    _Row(label: 'Phone', value: _value(application, 'phoneNumber')),
+                    _Row(label: 'Area / Community', value: _value(application, 'areaCommunity')),
+                    _Row(label: 'NIN', value: _value(application, 'nin')),
+                    _Row(label: 'Programme', value: programmeLabel(detail.programmeId)),
+                    _Row(label: 'Park / Association', value: _value(application, 'parkAssociationName')),
+                    _Row(label: 'Submitted', value: _stamp(detail.createdAt)),
+                    _Row(label: 'Status', value: statusLabel(detail.status)),
+                  ],
+                ),
+              ),
+            ),
+            if (_hasOutcome(official)) ...<Widget>[
+              const SizedBox(height: 20),
+              _OutcomeCard(official: official),
+            ],
+            const SizedBox(height: 20),
+            _NextStepsCard(status: detail.status, phone: _value(application, 'phoneNumber')),
+            const SizedBox(height: 24),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: <Widget>[
+                OutlinedButton.icon(
+                  onPressed: _printReceipt,
+                  icon: const Icon(Icons.print),
+                  label: const Text('Print receipt'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => context.go('/contact'),
+                  icon: const Icon(Icons.mail_outline),
+                  label: const Text('Contact us'),
+                ),
+                if (!fresh)
+                  OutlinedButton.icon(
+                    onPressed: _forget,
+                    icon: const Icon(Icons.manage_search_outlined),
+                    label: const Text('Track another application'),
+                  ),
+                FilledButton.icon(
+                  onPressed: () => context.go('/'),
+                  icon: const Icon(Icons.home_outlined),
+                  label: const Text('Back to home'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _printReceipt() {
+    // Printing is platform specific; fall back to a friendly message on web.
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Use your browser\'s print dialog (Ctrl+P) to save this receipt.',
+        ),
+      ),
+    );
+  }
+}
+
+// ── Pieces ───────────────────────────────────────────────────────────────
+
+class _HeaderCard extends StatelessWidget {
+  const _HeaderCard({required this.detail, required this.fresh});
+
+  final ApplicationDetail detail;
+  final bool fresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final status = detail.status;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: <Widget>[
+            Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                color: TeamakColors.primary.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+                border: Border.all(color: TeamakColors.accent, width: 2.5),
+              ),
+              child: Icon(
+                switch (status) {
+                  'approved' => Icons.verified_rounded,
+                  'not_approved' => Icons.cancel_rounded,
+                  'further_review' => Icons.search_rounded,
+                  _ => fresh
+                      ? Icons.check_rounded
+                      : Icons.hourglass_top_rounded,
+                },
+                color: status == 'not_approved'
+                    ? TeamakColors.ink
+                    : TeamakColors.primary,
+                size: 52,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              fresh ? 'Application received' : statusLabel(status),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              fresh ? 'Your application number is' : 'Application number',
+              style: const TextStyle(color: TeamakColors.subtle),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 22,
+                vertical: 13,
+              ),
+              decoration: BoxDecoration(
+                color: TeamakColors.accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: TeamakColors.accent),
+              ),
+              child: Text(
+                detail.applicationNo,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                  color: TeamakColors.primaryDark,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            _StatusChip(status: status),
+            if (fresh) ...<Widget>[
+              const SizedBox(height: 12),
+              const Text(
+                'Keep this number safe. Our team will contact you for '
+                'verification before any approval.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: TeamakColors.subtle),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({required this.status});
+
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      decoration: BoxDecoration(
+        color: TeamakColors.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        statusLabel(status),
+        style: const TextStyle(
+          color: TeamakColors.primary,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+/// The application's journey: every status change the API recorded, ending
+/// with where it stands now.
+class _ProgressCard extends StatelessWidget {
+  const _ProgressCard({required this.detail});
+
+  final ApplicationDetail detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final events = detail.events.whereType<Map>().toList();
+    final lastTo = events.isEmpty
+        ? null
+        : '${events.last['toStatus'] ?? ''}';
+    // The current status is worth its own entry only when the recorded
+    // history has not already ended on it.
+    final showCurrent = lastTo == null || lastTo != detail.status;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Text(
+              'Progress',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 14),
+            for (final raw in events)
+              _TimelineEntry(
+                title:
+                    '${statusLabel('${raw['fromStatus'] ?? ''}')} → '
+                    '${statusLabel('${raw['toStatus'] ?? ''}')}',
+                when: _stamp(raw['createdAt']),
+              ),
+            if (showCurrent)
+              _TimelineEntry(
+                title: statusLabel(detail.status),
+                when: _stamp(detail.createdAt),
+                current: true,
+              ),
+
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TimelineEntry extends StatelessWidget {
+  const _TimelineEntry({
+    required this.title,
+    required this.when,
+    this.current = false,
+  });
+
+  final String title;
+  final String when;
+  final bool current;
+
+  @override
+  Widget build(BuildContext context) {
+    // The stamp is not allowed to shrink, so beside the entry it would push
+    // the row past a phone's width; under it, the text simply wraps.
+    final narrow = MediaQuery.sizeOf(context).width < 600;
+    final dot = Icon(
+      current ? Icons.radio_button_checked : Icons.circle,
+      size: current ? 14 : 9,
+      color: current ? TeamakColors.primary : TeamakColors.accent,
+    );
+    final heading = Row(
+      children: <Widget>[
+        SizedBox(width: 14, child: Center(child: dot)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              fontWeight: current ? FontWeight.w700 : FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+    final stamp = Text(
+      when,
+      style: const TextStyle(color: TeamakColors.subtle, fontSize: 12),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: narrow
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                heading,
+                Padding(
+                  padding: const EdgeInsets.only(left: 22, top: 2),
+                  child: stamp,
+                ),
+              ],
+            )
+          : Row(
+              children: <Widget>[
+                Expanded(child: heading),
+                const SizedBox(width: 12),
+                stamp,
+              ],
+            ),
+    );
+  }
+}
+
+/// Section I outcomes worth showing on an applicant's dashboard. A fresh
+/// application has none of them, so the "From our team" card stays hidden
+/// until staff records one.
+bool _hasOutcome(Map<String, dynamic> official) => const <String>[
+      'verificationDate',
+      'approvedProgrammeId',
+      'approvedAmount',
+      'expectedDeliveryDate',
+    ].any((key) => official[key] != null && '${official[key]}'.isNotEmpty);
+
+class _OutcomeCard extends StatelessWidget {
+  const _OutcomeCard({required this.official});
+
+  final Map<String, dynamic> official;
+
+  bool _present(String key) => official[key] != null && '${official[key]}'.isNotEmpty;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <(String, String)>[
+      if (_present('verificationDate'))
+        ('Verification date', displayDate('${official['verificationDate']}')),
+      if (_present('approvedProgrammeId'))
+        ('Approved programme', programmeLabel('${official['approvedProgrammeId']}')),
+      if (_present('approvedAmount'))
+        ('Approved amount', '₦${_group('${official['approvedAmount']}')}'),
+      if (_present('expectedDeliveryDate'))
+        ('Expected delivery', displayDate('${official['expectedDeliveryDate']}')),
+    ];
+    if (rows.isEmpty) return const SizedBox.shrink();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Text(
+              'From our team',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 12),
+            for (final (label, value) in rows)
+              _Row(label: label, value: value),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NextStepsCard extends StatelessWidget {
+  const _NextStepsCard({required this.status, required this.phone});
+
+  final String status;
+  final String phone;
+
+  ({String title, String body}) get _copy => switch (status) {
+        'pending' => (
+            title: 'Under review',
+            body:
+                'Your application is with our verification team. Please keep '
+                    'your phone reachable on $phone — we will call to confirm '
+                    'your details.',
+          ),
+        'further_review' => (
+            title: 'More time needed',
+            body:
+                'We need a little more time to complete our checks. We will '
+                    'reach out if we need anything from you.',
+          ),
+        'approved' => (
+            title: 'Approved',
+            body:
+                'Congratulations — your application has been approved. Our '
+                    'team will contact you about your deposit and the '
+                    'handover of your vehicle.',
+          ),
+        'not_approved' => (
+            title: 'Not approved',
+            body:
+                'This time we could not approve your application. Contact us '
+                    'if you would like to know why, or apply again when the '
+                    'next intake opens.',
+          ),
+        _ => (
+            title: 'Application received',
+            body:
+                'Our team is reviewing your application. We will contact you '
+                    'on $phone for verification before any approval.',
+          ),
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final copy = _copy;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              copy.title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              copy.body,
+              style: const TextStyle(color: TeamakColors.subtle, height: 1.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Row extends StatelessWidget {
+  const _Row({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SizedBox(
+            width: 150,
+            child: Text(
+              label,
+              style: const TextStyle(color: TeamakColors.subtle),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Missing answers read as `—` rather than the string `null`.
+String _value(Map<String, dynamic> map, String key) {
+  final text = '${map[key] ?? ''}';
+  return text.isEmpty ? '—' : text;
+}
+
+/// Renders an ISO timestamp as `YYYY-MM-DD HH:MM`, tolerating short values.
+String _stamp(Object? raw) {
+  final text = '${raw ?? ''}'.replaceAll('T', ' ');
+  return text.length >= 16 ? text.substring(0, 16) : (text.isEmpty ? '—' : text);
+}
+
+/// 650000 → 650,000, without pulling in number formatting for one field.
+String _group(String digits) {
+  final buffer = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) buffer.write(',');
+    buffer.write(digits[i]);
+  }
+  return buffer.toString();
+}
+
+/// Parses the stored `{applicationNo, phone}` pair, rejecting anything else
+/// so a corrupted value falls back to the tracking form instead of a map of
+/// nulls.
+Map<String, dynamic> jsonDecodeRef(String raw) {
+  final decoded = jsonDecode(raw);
+  if (decoded is! Map) {
+    throw const FormatException('not an application reference');
+  }
+  return Map<String, dynamic>.from(decoded);
+}

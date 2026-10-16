@@ -193,6 +193,20 @@ class ApiClient {
   Future<ApplicationDetail> fetchApplication(String id) =>
       get('/applications/$id').then(ApplicationDetail.fromJson);
 
+  /// Looks up an application for the person who filed it.
+  ///
+  /// There is no staff session on this path, so the API only answers when the
+  /// number and the submitted phone number agree — the pair in this request
+  /// is the credential.
+  Future<ApplicationDetail> trackApplication({
+    required String applicationNo,
+    required String phone,
+  }) =>
+      post('/track', <String, Object?>{
+        'applicationNo': applicationNo,
+        'phone': phone,
+      }).then(ApplicationDetail.fromJson);
+
   /// Fetches the staff inbox of submitted contact-form messages.
   Future<List<ContactMessage>> fetchMessages({int limit = 100}) async {
     final json = await get('/contact', query: <String, String>{

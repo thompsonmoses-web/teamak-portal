@@ -273,6 +273,50 @@ const String _staffMessages = '''
 }
 ''';
 
+/// A client answering the tracking lookup, so the sweep can measure the
+/// loaded dashboard and not only the form a fresh visit sees.
+///
+/// It carries the pieces the endpoint exposes: the applicant's answers, the
+/// public Section I outcome and one status transition.
+const String _trackedApplication = '''
+{
+  "id": "app-1",
+  "applicationNo": "TG-2026-0042",
+  "status": "pending",
+  "programmeId": "okada_650",
+  "createdAt": "2026-10-02T09:14:00Z",
+  "application": {
+    "fullName": "Adebayo Ogundele",
+    "phoneNumber": "08023449126",
+    "areaCommunity": "Ojoo",
+    "nin": "12345678901",
+    "parkAssociationName": "Ojoo Okada Park"
+  },
+  "official": {
+    "approvedAmount": 650000,
+    "expectedDeliveryDate": "2026-12-01"
+  },
+  "events": [
+    {
+      "fromStatus": "submitted",
+      "toStatus": "pending",
+      "createdAt": "2026-10-02T10:00:00Z"
+    }
+  ],
+  "documents": []
+}
+''';
+
+ApiClient _trackedApi() => ApiClient(
+      client: MockClient((request) async {
+        return http.Response(
+          request.url.path == '/track' ? _trackedApplication : '{}',
+          200,
+          headers: <String, String>{'content-type': 'application/json'},
+        );
+      }),
+    );
+
 /// A client answering every route the staff area calls.
 ///
 /// Unknown paths return an empty object rather than an error, so an endpoint
@@ -326,6 +370,7 @@ Future<void> _checkRoute(
   String path = '/',
   ApiClient? api,
   bool staff = false,
+  String? storedApplicantRef,
 }) async {
   tester.view.physicalSize = Size(width.toDouble(), 1400);
   tester.view.devicePixelRatio = 1.0;
@@ -333,10 +378,17 @@ Future<void> _checkRoute(
 
   // The router holds every /staff route at sign-in until a session exists,
   // and a session is restored from a stored token: seed one so the sweep
-  // reaches the signed-in pages instead of the login form.
+  // reaches the signed-in pages instead of the login form. The applicant
+  // dashboard works the same way — it needs a stored number + phone pair to
+  // render with data. The store is rewritten every call so one sweep's seed
+  // cannot leak into the next and quietly sweep the wrong page.
   if (staff) {
     SharedPreferences.setMockInitialValues(<String, Object>{
       'teamak_staff_token': 'sweep-token',
+    });
+  } else {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'teamak_applicant_ref': ?storedApplicantRef,
     });
   }
 
@@ -398,6 +450,26 @@ void main() {
 
     testWidgets('contact page fits a ${width}px viewport', (tester) async {
       await _checkRoute(tester, width, path: '/contact');
+    });
+
+    testWidgets('applicant dashboard fits a ${width}px viewport',
+        (tester) async {
+      // Nothing is stored, so this sweeps the tracking form a returning
+      // applicant meets; the dashboard itself is covered below.
+      await _checkRoute(tester, width, path: '/dashboard');
+    });
+
+    testWidgets('loaded dashboard fits a ${width}px viewport', (tester) async {
+      // With a stored pair the page renders timeline, summary and outcome
+      // rows — the layout a returning applicant actually lands on.
+      await _checkRoute(
+        tester,
+        width,
+        path: '/dashboard',
+        api: _trackedApi(),
+        storedApplicantRef:
+            '{"applicationNo":"TG-2026-0042","phone":"08023449126"}',
+      );
     });
 
     testWidgets('about page fits a ${width}px viewport', (tester) async {

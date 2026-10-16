@@ -66,6 +66,7 @@ Future<void> main(List<String> args) async {
 const _apiPrefixes = <String>[
   '/programmes',
   '/applications',
+  '/track',
   '/auth',
   '/contact',
 ];

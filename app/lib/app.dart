@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'api/api_client.dart';
+import 'models/models.dart';
 import 'pages/about_page.dart';
 import 'pages/apply_page.dart';
+import 'pages/applicant_dashboard_page.dart';
 import 'pages/contact_page.dart';
 import 'pages/landing_page.dart';
 import 'pages/not_found_page.dart';
-import 'pages/receipt_page.dart';
 import 'pages/staff/application_detail_page.dart';
 import 'pages/staff/dashboard_page.dart';
 import 'pages/staff/login_page.dart';
@@ -87,9 +88,15 @@ class _TeamakAppState extends State<TeamakApp> {
             builder: (context, state) => ContactPage(api: session.api),
           ),
           GoRoute(
-            path: '/receipt',
-            builder: (context, state) => ReceiptPage(
-              detail: state.extra! as ReceiptDetail,
+            path: '/dashboard',
+            // `extra` is the wizard's fresh submission. On a refresh or a
+            // cold visit it is null, and the page falls back to the pair
+            // stored on the device — or the tracking form if there is none.
+            builder: (context, state) => ApplicantDashboardPage(
+              api: session.api,
+              detail: state.extra is ApplicationDetail
+                  ? state.extra! as ApplicationDetail
+                  : null,
             ),
           ),
           GoRoute(

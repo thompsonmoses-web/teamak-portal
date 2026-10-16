@@ -5,7 +5,7 @@ import '../../models/models.dart';
 import '../../state/session.dart';
 import '../../theme.dart';
 import '../../widgets/shell.dart';
-import '../receipt_page.dart' show statusLabel;
+import '../applicant_dashboard_page.dart' show statusLabel;
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key, required this.session});
