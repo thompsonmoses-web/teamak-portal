@@ -2,8 +2,10 @@
 
 Online application portal for the **Teamak Global Solution Limited Rider Ownership
 Programme** (Ibadan & Environs). Riders apply for an Okada or Maruwa ownership
-slot online and track it afterwards with their application number; staff review,
-verify and approve applications from a dashboard.
+slot online, follow their application on a personal dashboard (status timeline,
+what to bring for verification, WhatsApp contact), and reach it again with their
+application number; staff review, verify and approve applications, and
+administrators manage which accounts can sign in.
 
 - **Ride with Dignity. Own Your Future.**
 
@@ -11,8 +13,8 @@ verify and approve applications from a dashboard.
 
 | Path | What it is |
 |------|------------|
-| `app/` | Flutter Web front end — public site, application wizard, applicant dashboard, staff dashboard. |
-| `server/` | Dart Frog API — SQLite storage, bcrypt auth, staff-only review endpoints. |
+| `app/` | Flutter Web front end — public site, application wizard, applicant dashboard, staff dashboard, admin team management. |
+| `server/` | Dart Frog API — SQLite storage, bcrypt auth, staff-only review and team endpoints. |
 | `docs/` | Product specs derived from the original paper application form. |
 | `app/build/`, `*.db`, `uploads/` | Generated. Git-ignored. |
 
@@ -66,9 +68,14 @@ dart run tool/static_server.dart build/web 8889 http://127.0.0.1:8080
 ```
 
 The optional third argument proxies `/programmes`, `/applications`, `/track`,
-`/auth` and `/contact` to the running API, streaming request and response bodies
-through. One URL then carries the whole app, which suits a demo tunnel or a
-reverse proxy in front of both.
+`/auth`, `/contact` and `/staff` to the running API, streaming request and
+response bodies through. `/contact` and `/staff` are also frontend pages, so
+for those two the `Accept` header breaks the tie: browser navigations asking
+for `text/html` get the static build (SPA fallback included), while the app's
+JSON fetches — no `Accept`, maybe a bearer token — go to the API. Without that
+rule a refresh of `/contact` or a deep link to `/staff/team` would render an
+API response instead of the page. One URL then carries the whole app, which
+suits a demo tunnel or a reverse proxy in front of both.
 
 ## Staff sign-in
 
@@ -85,6 +92,14 @@ export TEAMAK_ADMIN_PASSWORD=...
 ```
 
 Visit `/staff/login` in the app.
+
+### Team management
+
+Administrators get a **Team** entry in the staff dashboard's quick actions
+(`/staff/team`): list every account with its role, add new members, promote a
+reviewer to administrator or demote one back, and reset a password (which ends
+that account's sessions on the spot). Reviewers never see the entry, and the
+API refuses the same requests if the URL is reached directly.
 
 ## Environment variables
 
@@ -116,8 +131,14 @@ All optional; sensible defaults are used when unset.
 | `POST` | `/applications/:id/documents` | staff | Upload a base64-encoded document. |
 | `POST` | `/track` | — | Applicant lookup: number + submitted phone returns their own view (status, timeline, outcomes) with staff notes stripped. |
 | `POST` | `/contact` | — | Store a contact message, optionally email it. |
+| `GET` | `/staff` | admin | Every staff account, without credentials. |
+| `POST` | `/staff` | admin | Create a staff account (`username`, `fullName`, `password`, `role`). |
+| `PATCH` | `/staff/:id` | admin | Change a staff account's name, role or password; a password change ends its sessions server-side. |
 
 Staff endpoints expect `Authorization: Bearer <token>`.
+`/staff` additionally requires `role: admin` — a reviewer is refused with 403,
+and the last administrator cannot be demoted (400), so the door can never be
+locked behind everyone.
 
 ## Tests
 
@@ -128,10 +149,10 @@ cd app    && flutter test   # widget tests
 
 The app suite walks the application wizard end to end and checks the payload it
 submits against every field the API validates, then re-runs every route — public
-pages, the applicant dashboard (form and loaded), staff screens — at 320, 360,
-390, 414, 480, 768 and 1280 px, sweeping each one frame by frame for horizontal
-layout overflow. **Any new screen belongs in that sweep** — see
-`app/test/responsive_test.dart`.
+pages, the applicant dashboard (form and loaded), staff screens (dashboard,
+messages, review, admin team) — at 320, 360, 390, 414, 480, 768 and 1280 px,
+sweeping each one frame by frame for horizontal layout overflow. **Any new
+screen belongs in that sweep** — see `app/test/responsive_test.dart`.
 
 ## Known gaps
 
