@@ -76,8 +76,8 @@ void main() {
   Future<void> pumpDashboard(WidgetTester tester, {String? storedRef}) async {
     // The dashboard is one long scroll, so mount it on a viewport tall
     // enough to hold it: off-screen children of a ListView are not built,
-    // and finders would silently miss the summary below the header.
-    tester.view.physicalSize = const Size(800, 2400);
+    // and finders would silently miss the summary below the hero.
+    tester.view.physicalSize = const Size(800, 3000);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
@@ -115,7 +115,7 @@ void main() {
     expect(
       find.text('Under review'),
       findsWidgets,
-      reason: 'the status shows in the header chip, the stat tile and more',
+      reason: 'the status shows in the hero pill, the stat tile and more',
     );
     expect(find.text('Next milestone'), findsOneWidget);
     expect(
@@ -123,8 +123,22 @@ void main() {
       findsWidgets,
       reason: 'the delivery date should surface as the next milestone',
     );
-    expect(find.text('Okada ownership'), findsOneWidget);
+    expect(
+      find.text('Okada ownership'),
+      findsWidgets,
+      reason: 'the plan name shows in the stat tile and the plan card',
+    );
+    expect(find.text('Application journey'), findsOneWidget);
+    expect(
+      find.text('Step 2 of 4'),
+      findsOneWidget,
+      reason: 'a pending application sits on the second of four steps',
+    );
+    expect(find.text('Checks underway — keep your phone reachable.'), findsOneWidget);
+    expect(find.text('Your plan'), findsOneWidget);
+    expect(find.text('₦650,000 deposit'), findsOneWidget);
     expect(find.text('Quick actions'), findsOneWidget);
+    expect(find.text('Invite a rider'), findsOneWidget);
     expect(find.text('FAQ & help'), findsOneWidget);
     expect(find.text('Adebayo Ogundele'), findsOneWidget);
     expect(find.text('Progress'), findsOneWidget);

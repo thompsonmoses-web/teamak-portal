@@ -319,6 +319,10 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
             const SizedBox(height: 16),
             _StatStrip(detail: detail),
             const SizedBox(height: 20),
+            _JourneyCard(status: detail.status),
+            const SizedBox(height: 20),
+            _PlanCard(programmeId: detail.programmeId),
+            const SizedBox(height: 20),
             _NextStepsCard(
               status: detail.status,
               phone: _value(application, 'phoneNumber'),
@@ -336,6 +340,7 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
             const SizedBox(height: 20),
             _QuickActionsCard(
               onWhatsApp: _chatOnWhatsApp,
+              onInvite: _inviteRider,
               onPrint: _printReceipt,
               onTrackAnother: _forget,
               showTrackAnother: !fresh,
@@ -386,15 +391,30 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
 
   /// Opens WhatsApp with the application number already in the draft message
   /// — the channel riders live on, and the context saves them the typing.
-  Future<void> _chatOnWhatsApp() async {
+  Future<void> _chatOnWhatsApp() {
     final detail = _detail;
-    final text = detail == null
-        ? 'Hello Teamak, I have a question about the Rider Ownership '
-            'Programme.'
-        : 'Hello Teamak, I am following up on my application '
-            '${detail.applicationNo} (${statusLabel(detail.status)}).';
+    return _openWhatsApp(
+      number: '2348023449126',
+      text: detail == null
+          ? 'Hello Teamak, I have a question about the Rider Ownership '
+              'Programme.'
+          : 'Hello Teamak, I am following up on my application '
+              '${detail.applicationNo} (${statusLabel(detail.status)}).',
+    );
+  }
+
+  /// Passes the portal on to another rider — the referral move every
+  /// investment-club app keeps one tap from the dashboard. The link is
+  /// built from the current origin, so it points at whichever deployment
+  /// the reader is actually on.
+  Future<void> _inviteRider() => _openWhatsApp(
+        text: 'Riders wanted: apply for the Teamak Rider Ownership '
+            'Programme and own your machine. ${Uri.base.origin}/apply',
+      );
+
+  Future<void> _openWhatsApp({String number = '', required String text}) async {
     final uri = Uri.parse(
-      'https://wa.me/2348023449126?text=${Uri.encodeComponent(text)}',
+      'https://wa.me/$number?text=${Uri.encodeComponent(text)}',
     );
     try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -522,106 +542,152 @@ class _HeaderCard extends StatelessWidget {
             ? statusLabel(status)
             : 'Welcome back, $firstName';
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: <Widget>[
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                color: TeamakColors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-                border: Border.all(color: TeamakColors.accent, width: 2.5),
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: TeamakColors.gradPrimary,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: TeamakColors.accent.withValues(alpha: 0.55),
+        ),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: TeamakColors.accent, width: 2),
+                ),
+                child: Icon(
+                  switch (status) {
+                    'approved' => Icons.verified_rounded,
+                    'not_approved' => Icons.cancel_rounded,
+                    'further_review' => Icons.search_rounded,
+                    _ => fresh
+                        ? Icons.check_rounded
+                        : Icons.hourglass_top_rounded,
+                  },
+                  color: Colors.white,
+                  size: 34,
+                ),
               ),
-              child: Icon(
-                switch (status) {
-                  'approved' => Icons.verified_rounded,
-                  'not_approved' => Icons.cancel_rounded,
-                  'further_review' => Icons.search_rounded,
-                  _ => fresh
-                      ? Icons.check_rounded
-                      : Icons.hourglass_top_rounded,
-                },
-                color: status == 'not_approved'
-                    ? TeamakColors.ink
-                    : TeamakColors.primary,
-                size: 52,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 23,
+                        fontWeight: FontWeight.w800,
+                        height: 1.15,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      fresh
+                          ? 'Your application number is'
+                          : 'Application number',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.75),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: TeamakColors.accent),
             ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              textAlign: TextAlign.center,
+            child: Text(
+              detail.applicationNo,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w800,
+                letterSpacing: 1.5,
+                color: TeamakColors.accent,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              fresh ? 'Your application number is' : 'Application number',
-              style: const TextStyle(color: TeamakColors.subtle),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 22,
-                vertical: 13,
-              ),
-              decoration: BoxDecoration(
-                color: TeamakColors.accent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: TeamakColors.accent),
-              ),
-              child: Text(
-                detail.applicationNo,
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.5,
-                  color: TeamakColors.primaryDark,
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: <Widget>[
+              // Gold pill on the dark hero: the status reads at a glance,
+              // same weight the preview banner gives its own strip.
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: TeamakColors.accent,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  statusLabel(status),
+                  style: const TextStyle(
+                    color: TeamakColors.primaryDark,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 14),
-            _StatusChip(status: status),
-            if (fresh) ...<Widget>[
-              const SizedBox(height: 12),
-              const Text(
-                'Keep this number safe. Our team will contact you for '
-                'verification before any approval.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: TeamakColors.subtle),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: Text(
+                  'Submitted ${_stamp(detail.createdAt).split(' ').first}',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
+          ),
+          if (fresh) ...<Widget>[
+            const SizedBox(height: 12),
+            Text(
+              'Keep this number safe. Our team will contact you for '
+              'verification before any approval.',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.75),
+                fontSize: 13.5,
+                height: 1.4,
+              ),
+            ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.status});
-
-  final String status;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-      decoration: BoxDecoration(
-        color: TeamakColors.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        statusLabel(status),
-        style: const TextStyle(
-          color: TeamakColors.primary,
-          fontWeight: FontWeight.w700,
-        ),
+        ],
       ),
     );
   }
@@ -740,6 +806,219 @@ class _TimelineEntry extends StatelessWidget {
   }
 }
 
+/// How far the application has moved and what stage comes next — the
+/// progress bar investment dashboards put directly under their balance,
+/// reading the status as one journey in four steps.
+class _JourneyCard extends StatelessWidget {
+  const _JourneyCard({required this.status});
+
+  final String status;
+
+  ({double progress, int step, String stage, String hint}) get _journey =>
+      switch (status) {
+        'submitted' => (
+            progress: 0.15,
+            step: 1,
+            stage: 'Submitted',
+            hint: 'Received — queued for the team\u2019s first look.',
+          ),
+        'pending' => (
+            progress: 0.4,
+            step: 2,
+            stage: 'Under review',
+            hint: 'Checks underway — keep your phone reachable.',
+          ),
+        'further_review' => (
+            progress: 0.65,
+            step: 3,
+            stage: 'Further review',
+            hint: 'A little more time is needed to finish our checks.',
+          ),
+        'approved' => (
+            progress: 1,
+            step: 4,
+            stage: 'Approved',
+            hint: 'Deposit and handover are next — we will call you.',
+          ),
+        'not_approved' => (
+            progress: 1,
+            step: 4,
+            stage: 'Not approved',
+            hint: 'Not this time — the next intake is always open.',
+          ),
+        _ => (
+            progress: 0.15,
+            step: 1,
+            stage: statusLabel(status),
+            hint: 'We will update this as your application moves.',
+          ),
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final journey = _journey;
+    // The bar wears the programme's gold by default: blue once it lands
+    // (approved), red when it stops (not approved).
+    final barColor = switch (status) {
+      'approved' => TeamakColors.primary,
+      'not_approved' => TeamakColors.danger,
+      _ => TeamakColors.accent,
+    };
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Expanded(
+                  child: Text(
+                    'Application journey',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Text(
+                  'Step ${journey.step} of 4',
+                  style: const TextStyle(
+                    color: TeamakColors.subtle,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: journey.progress,
+                minHeight: 8,
+                backgroundColor: TeamakColors.surface3,
+                valueColor: AlwaysStoppedAnimation<Color>(barColor),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              journey.stage,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              journey.hint,
+              style: const TextStyle(color: TeamakColors.subtle, height: 1.45),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The track the applicant chose, shown like an asset card: what machine,
+/// what deposit, how long — parsed from the same line the receipts print,
+/// so no extra request can make it disagree with the summary below.
+class _PlanCard extends StatelessWidget {
+  const _PlanCard({required this.programmeId});
+
+  final String programmeId;
+
+  @override
+  Widget build(BuildContext context) {
+    final full = programmeLabel(programmeId);
+    final parts = full.split(' — ');
+    if (parts.length < 2) return const SizedBox.shrink();
+    final name = parts.first;
+    final terms = parts[1].split(' / ');
+    final amount = terms.first;
+    final duration = terms.length > 1 ? terms[1] : '';
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Text(
+              'Your plan',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: <Widget>[
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: TeamakColors.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    programmeId.startsWith('maruwa')
+                        ? Icons.local_shipping_outlined
+                        : Icons.two_wheeler_outlined,
+                    color: TeamakColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '$amount deposit',
+                        style: const TextStyle(
+                          color: TeamakColors.subtle,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (duration.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: TeamakColors.accent.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: TeamakColors.accent),
+                    ),
+                    child: Text(
+                      duration,
+                      style: const TextStyle(
+                        color: TeamakColors.primaryDark,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// The four numbers an applicant checks first: where it stands, on what,
 /// since when, and what comes next — the glanceable row that member
 /// dashboards are built around.
@@ -852,12 +1131,14 @@ class _StatStrip extends StatelessWidget {
 class _QuickActionsCard extends StatelessWidget {
   const _QuickActionsCard({
     required this.onWhatsApp,
+    required this.onInvite,
     required this.onPrint,
     required this.onTrackAnother,
     this.showTrackAnother = true,
   });
 
   final VoidCallback onWhatsApp;
+  final VoidCallback onInvite;
   final VoidCallback onPrint;
   final VoidCallback onTrackAnother;
   final bool showTrackAnother;
@@ -894,6 +1175,11 @@ class _QuickActionsCard extends StatelessWidget {
                   onPressed: onWhatsApp,
                   icon: const Icon(Icons.chat_rounded),
                   label: const Text('Chat on WhatsApp'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: onInvite,
+                  icon: const Icon(Icons.group_add_outlined),
+                  label: const Text('Invite a rider'),
                 ),
                 OutlinedButton.icon(
                   onPressed: onPrint,
