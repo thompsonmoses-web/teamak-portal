@@ -175,8 +175,10 @@ Republish after changing the app:
 cd app
 flutter build web --release --no-wasm-dry-run \
   --dart-define=API_BASE=demo --base-href /teamak-portal/ -o build/pages
-# then publish build/pages to the gh-pages branch (with .nojekyll and a
-# 404.html copy of index.html for deep links); Pages rebuilds from it.
+# add an empty .nojekyll and a 404.html copy of index.html (deep links),
+# then replace the gh-pages branch content with build/pages and force-push
+# (the branch is generated output, so history never needs preserving);
+# Pages rebuilds the site from it automatically.
 ```
 
 ## Known gaps
