@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../api/api_client.dart';
 import '../../state/session.dart';
 import '../../theme.dart';
 import '../../widgets/shell.dart';
@@ -87,6 +88,30 @@ class _LoginPageState extends State<LoginPage> {
                         style: TextStyle(color: TeamakColors.subtle),
                       ),
                       const SizedBox(height: 24),
+                      if (const String.fromEnvironment('API_BASE') ==
+                          demoApiBase) ...<Widget>[
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 18),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color:
+                                TeamakColors.accent.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Text(
+                            'Preview build — sign in with demo / demo1234 '
+                            '(administrator) or reviewer / reviewer1 '
+                            '(reviewer).',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              height: 1.4,
+                              fontWeight: FontWeight.w600,
+                              color: TeamakColors.ink,
+                            ),
+                          ),
+                        ),
+                      ],
                       TextFormField(
                         controller: _username,
                         decoration: const InputDecoration(labelText: 'Username'),

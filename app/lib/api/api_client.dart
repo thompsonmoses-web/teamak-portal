@@ -3,6 +3,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/models.dart';
+import 'demo_backend.dart';
+
+/// The magic [ApiClient.baseUrl] value that selects `DemoBackend` — the
+/// in-browser stand-in the GitHub Pages preview build ships with.
+const String demoApiBase = 'demo';
 
 /// Raised when the API returns an error response.
 class ApiException implements Exception {
@@ -58,17 +63,30 @@ class ApiClient {
     Map<String, String>? query,
     bool auth = true,
   }) async {
-    final uri = _uri(path, query);
-    final request = http.Request(method, uri);
-    if (auth || token != null) {
-      request.headers.addAll(_headers);
-    }
-    if (body != null) {
-      request.body = jsonEncode(body);
-    }
+    final http.Response response;
+    if (baseUrl == demoApiBase) {
+      // The Pages preview has no server: the demo backend answers the same
+      // URLs from local storage. Nothing here touches the network.
+      response = await DemoBackend.send(
+        method,
+        path,
+        query: query,
+        body: body,
+        token: token,
+      );
+    } else {
+      final uri = _uri(path, query);
+      final request = http.Request(method, uri);
+      if (auth || token != null) {
+        request.headers.addAll(_headers);
+      }
+      if (body != null) {
+        request.body = jsonEncode(body);
+      }
 
-    final streamed = await _client.send(request);
-    final response = await http.Response.fromStream(streamed);
+      final streamed = await _client.send(request);
+      response = await http.Response.fromStream(streamed);
+    }
     final decoded = response.body.isEmpty
         ? <String, dynamic>{}
         : jsonDecode(utf8.decode(response.bodyBytes)) as dynamic;

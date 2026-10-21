@@ -154,6 +154,31 @@ messages, review, admin team) — at 320, 360, 390, 414, 480, 768 and 1280 px,
 sweeping each one frame by frame for horizontal layout overflow. **Any new
 screen belongs in that sweep** — see `app/test/responsive_test.dart`.
 
+## Permanent preview link (GitHub Pages)
+
+**https://thompsonmoses-web.github.io/teamak-portal/** — a link that never
+changes, needs no server, and survives restarts: the same pattern used for
+the Home of Hymns app.
+
+GitHub Pages hosts static files only, so this build (`API_BASE=demo`)
+answers every API call from an in-browser demo backend
+(`app/lib/api/demo_backend.dart`): applying, tracking, the staff area and
+team management all work, stored in the visitor's own browser. A gold
+banner on every screen and a sign-in hint on the staff login page say so —
+nothing there reaches a Teamak server. The real deployment (local, tunnelled
+or hosted) is unaffected: it talks to the Dart Frog API and never loads the
+demo backend.
+
+Republish after changing the app:
+
+```sh
+cd app
+flutter build web --release --no-wasm-dry-run \
+  --dart-define=API_BASE=demo --base-href /teamak-portal/ -o build/pages
+# then publish build/pages to the gh-pages branch (with .nojekyll and a
+# 404.html copy of index.html for deep links); Pages rebuilds from it.
+```
+
 ## Known gaps
 
 Tracked as work in progress rather than settled design:
@@ -162,7 +187,9 @@ Tracked as work in progress rather than settled design:
   against an existing application; applicants answer the checklist (yes/no) in the
   wizard and bring the originals for verification.
 - **Default admin credentials** are committed as defaults in `database.dart`.
-- **No permanent hosting.** The demo runs behind an ephemeral cloudflare tunnel
-  on the developer machine, so the public URL changes whenever the services
-  restart. The app is a static bundle plus one API process, so it will move to
-  any static host + small VM/container pairing unchanged.
+- **Hosting is split.** The permanent preview on GitHub Pages (above) runs a
+  browser-only demo backend, so applications there stay in the visitor's
+  browser and never reach a real database. The full stack — real API, shared
+  SQLite file — still runs on the developer machine behind a tunnel whose URL
+  changes on restart; it will move to any static host + small VM/container
+  pairing unchanged.

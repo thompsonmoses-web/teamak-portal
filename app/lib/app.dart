@@ -136,6 +136,42 @@ class _TeamakAppState extends State<TeamakApp> {
           debugShowCheckedModeBanner: false,
           theme: buildTheme(),
           routerConfig: _router,
+          // The Pages preview states what it is on every screen — nobody
+          // should mistake a browser-stored demo application for a real one.
+          builder: (context, child) => Column(
+            children: <Widget>[
+              if (const String.fromEnvironment('API_BASE') == demoApiBase)
+                const _PreviewBanner(),
+              Expanded(child: child ?? const SizedBox.shrink()),
+            ],
+          ),
+        ),
+      );
+}
+
+/// Gold strip shown above every screen in the Pages preview build.
+class _PreviewBanner extends StatelessWidget {
+  const _PreviewBanner();
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: TeamakColors.accent,
+        child: SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Text(
+              'Preview build — applications and sign-ins are stored only in '
+              'this browser; nothing reaches a Teamak server.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.3,
+                fontWeight: FontWeight.w700,
+                color: TeamakColors.primaryDark,
+              ),
+            ),
+          ),
         ),
       );
 }
