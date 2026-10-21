@@ -7,6 +7,7 @@ import 'pages/about_page.dart';
 import 'pages/apply_page.dart';
 import 'pages/applicant_dashboard_page.dart';
 import 'pages/contact_page.dart';
+import 'pages/faq_page.dart';
 import 'pages/landing_page.dart';
 import 'pages/not_found_page.dart';
 import 'pages/staff/application_detail_page.dart';
@@ -75,6 +76,10 @@ class _TeamakAppState extends State<TeamakApp> {
           GoRoute(
             path: '/what-we-do',
             builder: (context, state) => const WhatWeDoPage(),
+          ),
+          GoRoute(
+            path: '/faq',
+            builder: (context, state) => const FaqPage(),
           ),
           GoRoute(
             path: '/team',

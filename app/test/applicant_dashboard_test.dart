@@ -111,7 +111,21 @@ void main() {
       findsWidgets,
       reason: 'the application number should headline the dashboard',
     );
-    expect(find.text('Under review'), findsWidgets);
+    expect(find.text('Welcome back, Adebayo'), findsOneWidget);
+    expect(
+      find.text('Under review'),
+      findsWidgets,
+      reason: 'the status shows in the header chip, the stat tile and more',
+    );
+    expect(find.text('Next milestone'), findsOneWidget);
+    expect(
+      find.text('01/12/2026'),
+      findsWidgets,
+      reason: 'the delivery date should surface as the next milestone',
+    );
+    expect(find.text('Okada ownership'), findsOneWidget);
+    expect(find.text('Quick actions'), findsOneWidget);
+    expect(find.text('FAQ & help'), findsOneWidget);
     expect(find.text('Adebayo Ogundele'), findsOneWidget);
     expect(find.text('Progress'), findsOneWidget);
     expect(find.text('Your application'), findsOneWidget);

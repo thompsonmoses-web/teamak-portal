@@ -3141,6 +3141,11 @@ class _Footer extends StatelessWidget {
             alignment: WrapAlignment.center,
             children: <Widget>[
               _FooterPill(
+                icon: Icons.help_outline_rounded,
+                label: 'FAQ & support',
+                onTap: () => context.go('/faq'),
+              ),
+              _FooterPill(
                 icon: Icons.mail_rounded,
                 label: 'Contact us',
                 onTap: () => context.go('/contact'),

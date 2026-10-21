@@ -79,6 +79,10 @@ class AppShell extends StatelessWidget {
                   child: const Text('What we do'),
                 ),
                 TextButton(
+                  onPressed: () => context.go('/faq'),
+                  child: const Text('FAQ'),
+                ),
+                TextButton(
                   onPressed: () => context.go('/contact'),
                   child: const Text('Contact'),
                 ),
@@ -115,6 +119,7 @@ class _NavDrawer extends StatelessWidget {
     (Icons.home_outlined, 'Home', '/'),
     (Icons.info_outline, 'About', '/about'),
     (Icons.grid_view_outlined, 'What we do', '/what-we-do'),
+    (Icons.help_outline, 'FAQ & support', '/faq'),
     (Icons.groups_outlined, 'Our team', '/team'),
     (Icons.assignment_outlined, 'Apply', '/apply'),
     (Icons.manage_search_outlined, 'Track application', '/dashboard'),

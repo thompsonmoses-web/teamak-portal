@@ -316,8 +316,30 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
           padding: EdgeInsets.all(wide ? 32 : 16),
           children: <Widget>[
             _HeaderCard(detail: detail, fresh: fresh),
+            const SizedBox(height: 16),
+            _StatStrip(detail: detail),
+            const SizedBox(height: 20),
+            _NextStepsCard(
+              status: detail.status,
+              phone: _value(application, 'phoneNumber'),
+            ),
             const SizedBox(height: 20),
             _ProgressCard(detail: detail),
+            if (_PreparationCard.appliesTo(application)) ...<Widget>[
+              const SizedBox(height: 20),
+              _PreparationCard(application: application),
+            ],
+            if (_hasOutcome(official)) ...<Widget>[
+              const SizedBox(height: 20),
+              _OutcomeCard(official: official),
+            ],
+            const SizedBox(height: 20),
+            _QuickActionsCard(
+              onWhatsApp: _chatOnWhatsApp,
+              onPrint: _printReceipt,
+              onTrackAnother: _forget,
+              showTrackAnother: !fresh,
+            ),
             const SizedBox(height: 20),
             Card(
               child: Padding(
@@ -344,55 +366,6 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
                   ],
                 ),
               ),
-            ),
-            if (_PreparationCard.appliesTo(application)) ...<Widget>[
-              const SizedBox(height: 20),
-              _PreparationCard(application: application),
-            ],
-            if (_hasOutcome(official)) ...<Widget>[
-              const SizedBox(height: 20),
-              _OutcomeCard(official: official),
-            ],
-            const SizedBox(height: 20),
-            _NextStepsCard(status: detail.status, phone: _value(application, 'phoneNumber')),
-            const SizedBox(height: 24),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: <Widget>[
-                // WhatsApp is the channel riders actually use, so it leads
-                // and carries the application number in the first message.
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF25D366),
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: _chatOnWhatsApp,
-                  icon: const Icon(Icons.chat_rounded),
-                  label: const Text('Chat on WhatsApp'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: _printReceipt,
-                  icon: const Icon(Icons.print),
-                  label: const Text('Print receipt'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => context.go('/contact'),
-                  icon: const Icon(Icons.mail_outline),
-                  label: const Text('Contact us'),
-                ),
-                if (!fresh)
-                  OutlinedButton.icon(
-                    onPressed: _forget,
-                    icon: const Icon(Icons.manage_search_outlined),
-                    label: const Text('Track another application'),
-                  ),
-                OutlinedButton.icon(
-                  onPressed: () => context.go('/'),
-                  icon: const Icon(Icons.home_outlined),
-                  label: const Text('Back to home'),
-                ),
-              ],
             ),
           ],
         ),
@@ -539,6 +512,15 @@ class _HeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = detail.status;
+    // The returning applicant gets a personal welcome; a fresh submission
+    // still headlines its receipt.
+    final name = '${detail.application['fullName'] ?? ''}'.trim();
+    final firstName = name.isEmpty ? '' : name.split(RegExp(r'\s+')).first;
+    final title = fresh
+        ? 'Application received'
+        : firstName.isEmpty
+            ? statusLabel(status)
+            : 'Welcome back, $firstName';
 
     return Card(
       child: Padding(
@@ -570,7 +552,7 @@ class _HeaderCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              fresh ? 'Application received' : statusLabel(status),
+              title,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 24,
@@ -758,6 +740,196 @@ class _TimelineEntry extends StatelessWidget {
   }
 }
 
+/// The four numbers an applicant checks first: where it stands, on what,
+/// since when, and what comes next — the glanceable row that member
+/// dashboards are built around.
+class _StatStrip extends StatelessWidget {
+  const _StatStrip({required this.detail});
+
+  final ApplicationDetail detail;
+
+  /// The next thing to wait for, in the applicant's words: a delivery date
+  /// once staff record one, otherwise the step the current status is
+  /// working towards.
+  String get _milestone {
+    final delivery = '${detail.official['expectedDeliveryDate'] ?? ''}';
+    if (delivery.isNotEmpty) return displayDate(delivery);
+    return switch (detail.status) {
+      'approved' => 'Handover',
+      'pending' => 'Verification visit',
+      'further_review' => 'Extra checks',
+      'not_approved' => 'Next intake',
+      _ => 'Team review',
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= 680;
+    final tiles = <(String, String, Color)>[
+      ('Status', statusLabel(detail.status), TeamakColors.primary),
+      (
+        'Programme',
+        _shortProgramme(programmeLabel(detail.programmeId)),
+        TeamakColors.ink,
+      ),
+      (
+        'Submitted',
+        _stamp(detail.createdAt).split(' ').first,
+        TeamakColors.ink,
+      ),
+      ('Next milestone', _milestone, TeamakColors.accentDark),
+    ];
+
+    Widget tile((String, String, Color) data) => Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+            decoration: BoxDecoration(
+              color: TeamakColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: TeamakColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  data.$1,
+                  style: const TextStyle(
+                    color: TeamakColors.subtle,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  data.$2,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    height: 1.25,
+                    color: data.$3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+
+    // Two tiles per row on a phone; one row of four on anything wider.
+    if (wide) {
+      return Row(
+        children: <Widget>[
+          for (var i = 0; i < tiles.length; i++) ...<Widget>[
+            if (i > 0) const SizedBox(width: 12),
+            tile(tiles[i]),
+          ],
+        ],
+      );
+    }
+    return Column(
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            tile(tiles[0]),
+            const SizedBox(width: 12),
+            tile(tiles[1]),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: <Widget>[
+            tile(tiles[2]),
+            const SizedBox(width: 12),
+            tile(tiles[3]),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Everything an applicant can do from the dashboard, gathered into one
+/// card so the page reads like a portal rather than a receipt.
+class _QuickActionsCard extends StatelessWidget {
+  const _QuickActionsCard({
+    required this.onWhatsApp,
+    required this.onPrint,
+    required this.onTrackAnother,
+    this.showTrackAnother = true,
+  });
+
+  final VoidCallback onWhatsApp;
+  final VoidCallback onPrint;
+  final VoidCallback onTrackAnother;
+  final bool showTrackAnother;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Text(
+              'Quick actions',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Support, answers and your receipt — one tap away.',
+              style: TextStyle(color: TeamakColors.subtle),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: <Widget>[
+                // WhatsApp is the channel riders actually use, so it leads
+                // and carries the application number in the first message.
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF25D366),
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: onWhatsApp,
+                  icon: const Icon(Icons.chat_rounded),
+                  label: const Text('Chat on WhatsApp'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: onPrint,
+                  icon: const Icon(Icons.print),
+                  label: const Text('Print receipt'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => context.go('/faq'),
+                  icon: const Icon(Icons.help_outline),
+                  label: const Text('FAQ & help'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => context.go('/contact'),
+                  icon: const Icon(Icons.mail_outline),
+                  label: const Text('Contact us'),
+                ),
+                if (showTrackAnother)
+                  OutlinedButton.icon(
+                    onPressed: onTrackAnother,
+                    icon: const Icon(Icons.manage_search_outlined),
+                    label: const Text('Track another application'),
+                  ),
+                OutlinedButton.icon(
+                  onPressed: () => context.go('/'),
+                  icon: const Icon(Icons.home_outlined),
+                  label: const Text('Back to home'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Section I outcomes worth showing on an applicant's dashboard. A fresh
 /// application has none of them, so the "From our team" card stays hidden
 /// until staff records one.
@@ -930,6 +1102,11 @@ String _group(String digits) {
   }
   return buffer.toString();
 }
+
+/// 'Okada ownership — ₦650,000 / 3 months' → 'Okada ownership': the short
+/// form the dashboard's stat tiles carry; the full line lives in the
+/// summary below them.
+String _shortProgramme(String label) => label.split(' — ').first;
 
 /// Parses the stored `{applicationNo, phone}` pair, rejecting anything else
 /// so a corrupted value falls back to the tracking form instead of a map of
