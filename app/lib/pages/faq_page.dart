@@ -501,10 +501,12 @@ const List<_FaqEntry> _questions = <_FaqEntry>[
   _FaqEntry(
     'Approval & payment',
     'What do the programmes cost?',
-    'There are three ownership tracks: Okada at ₦650,000 over 3 months, '
-        'Okada at ₦400,000 over 6 months, and Maruwa at ₦2,300,000 over '
-        '3 months. The programme you pick in the form is what staff '
-        'confirm with you at approval.',
+    'There are three ownership tracks, each with a one-time programme '
+        'deposit: Okada ₦650,000 (3-month programme), Okada ₦400,000 '
+        '(6-month programme), and Maruwa ₦2,300,000 (3-month programme). '
+        'The deposit covers the machine — there is no further vehicle '
+        'payment under the ownership offer. The programme you pick in the '
+        'form is what staff confirm with you at approval.',
   ),
   _FaqEntry(
     'Approval & payment',

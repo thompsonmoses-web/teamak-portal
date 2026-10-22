@@ -43,11 +43,12 @@ void main() {
 
     // The landing list builds lazily, so off-screen sections are not in the
     // tree yet. Scroll the first tier card into view before asserting. The
-    // deposit labels are exact-match unique; the surrounding summaries contain
-    // the same figures, so we match on full text rather than textContaining.
+    // deposit labels are exact-match unique among the tiers; the hero's
+    // dashboard mockup also quotes the entry price, so ₦400,000 may appear
+    // twice (mockup + tier card).
     await scrollLanding(tester, find.text('₦650,000'));
     expect(find.text('₦650,000'), findsOneWidget);
-    expect(find.text('₦400,000'), findsOneWidget);
+    expect(find.text('₦400,000'), findsWidgets);
     expect(find.text('₦2,300,000'), findsOneWidget);
     expect(find.text('Apply for this'), findsNWidgets(3));
 

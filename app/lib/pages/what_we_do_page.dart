@@ -93,9 +93,10 @@ class WhatWeDoPage extends StatelessWidget {
       'Rider ownership',
       'How do I stop renting and start owning?',
       'Pay a one-time programme deposit — from ₦400,000 for a Bajaj Boxer or '
-          '₦2,300,000 for an approved Maruwa tricycle — clear the plan over three '
-          'to six months, and take the vehicle. Applications are reviewed and '
-          'verified by our own staff before anything is approved.',
+          '₦2,300,000 for an approved Maruwa tricycle — take part for the '
+          'three- or six-month programme, and own the vehicle. There is no '
+          'further vehicle payment under the ownership offer. Applications are '
+          'reviewed and verified by our own staff before anything is approved.',
       Icons.motorcycle_rounded,
     ),
     (
