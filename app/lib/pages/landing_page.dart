@@ -126,6 +126,27 @@ class _LandingPageState extends State<LandingPage> {
                 ),
               ),
               const SizedBox(height: 20),
+              // 3-month Okada ownership promo — the flagship tier, the only
+              // vehicle price without a banner until now.
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: wide ? 48 : 16),
+                child: _VehiclePromoBanner(
+                  wide: wide,
+                  asset: 'assets/slides/motorcycle.png',
+                  badge: 'FAST TRACK',
+                  badgeGradient: const <Color>[Color(0xFFF4A81D), Color(0xFFEF6C00)],
+                  badgeShadow: const Color(0xFFC98A12),
+                  title: 'BAJAJ OKADA — 3 MONTHS TO OWN',
+                  headline: 'Own a brand-new Bajaj\nin 3 months — ₦650,000',
+                  mobileHeadline: 'Own a brand-new Bajaj in 3 months — ₦650,000',
+                  benefits: 'One-time deposit · 3-month programme · Free rider training',
+                  mobileBenefits: 'One-time deposit · 3-month plan · Free training',
+                  slots: '⚡ Only 15 slots left',
+                  mobileSlots: '⚡ Only 15 slots left this month',
+                  deadline: promoEnd,
+                ),
+              ),
+              const SizedBox(height: 20),
               // Tricycle promo.
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: wide ? 48 : 16),
