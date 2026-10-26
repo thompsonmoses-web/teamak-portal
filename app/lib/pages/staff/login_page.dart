@@ -22,6 +22,18 @@ class _LoginPageState extends State<LoginPage> {
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    // The preview's credentials are printed in the note above the form, so
+    // filling them in costs nothing and keeps a sign-out from turning into a
+    // typing exercise. Compile-time check — the real build starts empty.
+    if (const String.fromEnvironment('API_BASE') == demoApiBase) {
+      _username.text = 'demo';
+      _password.text = 'demo1234';
+    }
+  }
+
+  @override
   void dispose() {
     _username.dispose();
     _password.dispose();

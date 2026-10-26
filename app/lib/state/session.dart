@@ -66,6 +66,21 @@ class Session extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_tokenKey);
     } finally {
+      // The Pages preview ships the demo backend — seeded accounts, per
+      // visitor data — inside the same bundle, and prints its credentials on
+      // the form, so there is no real account to protect: the demo build
+      // signs itself in instead of asking anyone to type. Compile-time
+      // check: a build pointed at the real API never takes this branch, and
+      // if the demo sign-in ever failed the form below remains the
+      // fallback.
+      if (_staff == null &&
+          const String.fromEnvironment('API_BASE') == demoApiBase) {
+        try {
+          await signIn(username: 'demo', password: 'demo1234');
+        } catch (_) {
+          // Leave the visitor at the sign-in form; nothing else to clean up.
+        }
+      }
       _restored = true;
       notifyListeners();
     }
