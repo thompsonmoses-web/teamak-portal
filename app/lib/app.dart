@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'admin/applicants_page.dart';
+import 'admin/dashboard_page.dart';
+import 'admin/messages_page.dart';
+import 'admin/pipeline_page.dart';
+import 'admin/programmes_page.dart';
+import 'admin/reports_page.dart';
+import 'admin/settings_page.dart';
+import 'admin/staff_page.dart';
 import 'api/api_client.dart';
 import 'models/models.dart';
 import 'pages/about_page.dart';
@@ -58,10 +66,24 @@ class _TeamakAppState extends State<TeamakApp> {
           final location = state.matchedLocation;
           final onStaffArea = location.startsWith('/staff');
           final onLogin = location == '/staff/login';
+          final onAdminArea = location.startsWith('/admin');
 
           if (onStaffArea && !session.restored) return null;
           if (onStaffArea && !session.isSignedIn) return '/staff/login';
-          if (onLogin && session.isSignedIn) return '/staff';
+          // The console is a working area holding every applicant's details,
+          // so it waits for a restored session and then for a signed-in
+          // administrator. A reviewer who reaches the URL is held at the
+          // sign-in form — the pages explain the refusal if one gets through.
+          if (onAdminArea && !session.restored) return null;
+          if (onAdminArea && !session.isSignedIn) return '/staff/login';
+          if (onAdminArea && session.staff?.role != 'admin') {
+            return '/staff';
+          }
+          // An administrator lands on the console; everyone else on the
+          // applications list they work through.
+          if (onLogin && session.isSignedIn) {
+            return session.staff?.role == 'admin' ? '/admin' : '/staff';
+          }
           return null;
         },
         routes: <RouteBase>[
@@ -127,6 +149,64 @@ class _TeamakAppState extends State<TeamakApp> {
           GoRoute(
             path: '/staff/team',
             builder: (context, state) => StaffTeamPage(session: session),
+          ),
+
+          // ── Administrator console ────────────────────────────────────
+          // A separate frame from the staff area: the sidebar console carries
+          // the whole programme, so it sits beside /staff rather than inside
+          // it. Every page is reached only through the admin guard above.
+          GoRoute(
+            path: '/admin',
+            builder: (context, state) =>
+                AdminDashboardPage(session: session),
+          ),
+          GoRoute(
+            path: '/admin/applicants',
+            builder: (context, state) => AdminApplicantsPage(
+              session: session,
+              // The top-bar search on the dashboard carries its query here.
+              initialQuery: state.uri.queryParameters['q'],
+            ),
+          ),
+          GoRoute(
+            path: '/admin/applicants/:id',
+            // One review page for the whole portal: the console opens the
+            // same application the staff area does, so a decision is made in
+            // one place whichever door it was reached through.
+            builder: (context, state) => ApplicationDetailPage(
+              api: session.api,
+              applicationId: state.pathParameters['id']!,
+            ),
+          ),
+          GoRoute(
+            path: '/admin/pipeline',
+            builder: (context, state) =>
+                AdminPipelinePage(session: session),
+          ),
+          GoRoute(
+            path: '/admin/programmes',
+            builder: (context, state) =>
+                AdminProgrammesPage(session: session),
+          ),
+          GoRoute(
+            path: '/admin/reports',
+            builder: (context, state) =>
+                AdminReportsPage(session: session),
+          ),
+          GoRoute(
+            path: '/admin/messages',
+            builder: (context, state) =>
+                AdminMessagesPage(session: session),
+          ),
+          GoRoute(
+            path: '/admin/staff',
+            builder: (context, state) =>
+                AdminStaffPage(session: session),
+          ),
+          GoRoute(
+            path: '/admin/settings',
+            builder: (context, state) =>
+                AdminSettingsPage(session: session),
           ),
         ],
         errorBuilder: (context, state) =>

@@ -85,7 +85,7 @@ class _StaffTeamPageState extends State<StaffTeamPage> {
   Future<void> _resetPassword(Map<String, dynamic> member) async {
     final password = await showDialog<String>(
       context: context,
-      builder: (context) => _ResetPasswordDialog(
+      builder: (context) => ResetPasswordDialog(
         name: '${member['fullName']}',
         isSelf: member['username'] == _session.staff?.username,
       ),
@@ -116,7 +116,7 @@ class _StaffTeamPageState extends State<StaffTeamPage> {
   Future<void> _addMember() async {
     final created = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => _AddStaffDialog(api: _session.api),
+      builder: (context) => AddStaffDialog(api: _session.api),
     );
     if (created == null || !mounted) return;
     await _load();
@@ -444,16 +444,19 @@ class _NoticeCard extends StatelessWidget {
 }
 
 /// The add-account form, as a dialog: four fields, one submit.
-class _AddStaffDialog extends StatefulWidget {
-  const _AddStaffDialog({required this.api});
+///
+/// Public because the administrator console manages the same accounts, and
+/// one form is the only way the two places can agree on the validation rules.
+class AddStaffDialog extends StatefulWidget {
+  const AddStaffDialog({super.key, required this.api});
 
   final ApiClient api;
 
   @override
-  State<_AddStaffDialog> createState() => _AddStaffDialogState();
+  State<AddStaffDialog> createState() => AddStaffDialogState();
 }
 
-class _AddStaffDialogState extends State<_AddStaffDialog> {
+class AddStaffDialogState extends State<AddStaffDialog> {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _username = TextEditingController();
@@ -589,17 +592,24 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
 }
 
 /// Password reset, as a dialog: one field plus the warning that matters.
-class _ResetPasswordDialog extends StatefulWidget {
-  const _ResetPasswordDialog({required this.name, required this.isSelf});
+///
+/// Public for the same reason as [AddStaffDialog]: the console and the staff
+/// team page must warn about the self-reset identically.
+class ResetPasswordDialog extends StatefulWidget {
+  const ResetPasswordDialog({
+    super.key,
+    required this.name,
+    required this.isSelf,
+  });
 
   final String name;
   final bool isSelf;
 
   @override
-  State<_ResetPasswordDialog> createState() => _ResetPasswordDialogState();
+  State<ResetPasswordDialog> createState() => ResetPasswordDialogState();
 }
 
-class _ResetPasswordDialogState extends State<_ResetPasswordDialog> {
+class ResetPasswordDialogState extends State<ResetPasswordDialog> {
   final _password = TextEditingController();
 
   @override

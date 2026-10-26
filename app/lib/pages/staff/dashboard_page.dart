@@ -115,6 +115,15 @@ class _DashboardPageState extends State<DashboardPage> {
                 icon: const Icon(Icons.mail_outline),
                 label: const Text('Contact messages'),
               ),
+              // The console carries the whole programme — reports, pipeline,
+              // the staff directory — so it is an administrator's door, kept
+              // beside the team link rather than inside it.
+              if (_session.staff?.role == 'admin')
+                FilledButton.icon(
+                  onPressed: () => context.go('/admin'),
+                  icon: const Icon(Icons.space_dashboard_outlined),
+                  label: const Text('Open admin console'),
+                ),
               // Managing who can sign in is an administrator's door —
               // reviewers never see the route into it.
               if (_session.staff?.role == 'admin')

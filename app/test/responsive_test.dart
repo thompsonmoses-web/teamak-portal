@@ -82,7 +82,7 @@ Future<void> _completeStep(WidgetTester tester, int step) async {
 const String _staffApplications = '''
 {
   "total": 3,
-  "counts": {"pending": 1, "approved": 1, "rejected": 1},
+  "counts": {"submitted": 0, "pending": 1, "approved": 1, "further_review": 0, "not_approved": 1, "total": 3},
   "results": [
     {
       "id": "1",
@@ -90,7 +90,7 @@ const String _staffApplications = '''
       "status": "pending",
       "fullName": "Adebayo Ogundele",
       "phoneNumber": "08023449126",
-      "programmeId": "1",
+      "programmeId": "okada_650",
       "areaCommunity": "Ojoo, Ibadan",
       "createdAt": "2026-10-02T09:14:00Z",
       "official": {"verificationStatus": "unverified"}
@@ -101,7 +101,7 @@ const String _staffApplications = '''
       "status": "approved",
       "fullName": "Folake Adeyemi",
       "phoneNumber": "08031234567",
-      "programmeId": "2",
+      "programmeId": "okada_400",
       "areaCommunity": "Aba Opa, Ibadan",
       "createdAt": "2026-09-28T14:02:00Z",
       "official": {"verificationStatus": "verified"}
@@ -109,10 +109,10 @@ const String _staffApplications = '''
     {
       "id": "3",
       "applicationNo": "TRP-2026-0035",
-      "status": "rejected",
+      "status": "not_approved",
       "fullName": "Sunday Balogun",
       "phoneNumber": "08055556666",
-      "programmeId": "1",
+      "programmeId": "maruwa_2300",
       "areaCommunity": "Oluyole, Ibadan",
       "createdAt": "2026-09-21T08:45:00Z",
       "official": {"verificationStatus": "failed"}
@@ -126,7 +126,7 @@ const String _staffApplication = '''
   "id": "1",
   "applicationNo": "TRP-2026-0042",
   "status": "pending",
-  "programmeId": "1",
+  "programmeId": "okada_650",
   "createdAt": "2026-10-02T09:14:00Z",
   "application": {
     "fullName": "Adebayo Ogundele",
@@ -145,8 +145,8 @@ const String _staffApplication = '''
     "parkAssociationName": "Ojoo Okada Park",
     "currentRemittance": "1,500 Naira daily",
     "averageWorkingDaysPerWeek": "6",
-    "programmeId": "1",
-    "amountToCommit": "400000",
+    "programmeId": "okada_650",
+    "amountToCommit": "650000",
     "sourceOfFunds": "Personal savings",
     "expectedDepositDate": "2026-11-01",
     "participatedBefore": false,
@@ -290,6 +290,42 @@ const String _staffTeam = '''
 }
 ''';
 
+/// The programme tiers, quoted verbatim from the signed-off form.
+///
+/// The admin programmes page and the reports charts both read these, so an
+/// empty answer would leave half the console unmeasured.
+const String _programmes = '''
+{
+  "programmes": [
+    {
+      "id": "okada_650",
+      "label": "OKADA OWNERSHIP",
+      "depositNgn": 650000,
+      "months": 3,
+      "asset": "1 brand-new Bajaj motorcycle",
+      "summary": "N650,000 one-time deposit, 3 months, 1 brand-new Bajaj motorcycle."
+    },
+    {
+      "id": "okada_400",
+      "label": "OKADA OWNERSHIP",
+      "depositNgn": 400000,
+      "months": 6,
+      "asset": "1 brand-new Bajaj motorcycle",
+      "summary": "N400,000 one-time deposit, 6 months, 1 brand-new Bajaj motorcycle."
+    },
+    {
+      "id": "maruwa_2300",
+      "label": "MARUWA OWNERSHIP",
+      "depositNgn": 2300000,
+      "months": 3,
+      "asset": "1 Bajaj or approved Maruwa tricycle",
+      "summary": "N2,300,000 one-time deposit, 3 months, 1 tricycle."
+    }
+  ],
+  "depositNote": "The deposit is one-time; there is no further vehicle payment."
+}
+''';
+
 /// A client answering every route the staff area calls.
 ///
 /// Unknown paths return an empty object rather than an error, so an endpoint
@@ -308,6 +344,8 @@ ApiClient _staffApi() => ApiClient(
           body = _staffMessages;
         } else if (path == '/staff') {
           body = _staffTeam;
+        } else if (path == '/programmes') {
+          body = _programmes;
         } else {
           body = '{}';
         }
@@ -514,6 +552,98 @@ void main() {
         staff: true,
       );
       _expectOnStaffPage(tester, 'Team');
+    });
+
+    // ── Administrator console ──────────────────────────────────────────
+    // The sidebar console mirrors the staff area's data but lays it out as
+    // tables, charts and side panels — a different set of overflow risks, so
+    // each page earns its own sweep at every width.
+    testWidgets('admin dashboard fits a ${width}px viewport', (tester) async {
+      await _checkRoute(
+        tester,
+        width,
+        path: '/admin',
+        api: _staffApi(),
+        staff: true,
+      );
+      _expectOnStaffPage(tester, 'Dashboard');
+    });
+
+    testWidgets('admin applicants fits a ${width}px viewport', (tester) async {
+      await _checkRoute(
+        tester,
+        width,
+        path: '/admin/applicants',
+        api: _staffApi(),
+        staff: true,
+      );
+      _expectOnStaffPage(tester, 'Applicants');
+    });
+
+    testWidgets('admin pipeline fits a ${width}px viewport', (tester) async {
+      await _checkRoute(
+        tester,
+        width,
+        path: '/admin/pipeline',
+        api: _staffApi(),
+        staff: true,
+      );
+      _expectOnStaffPage(tester, 'Pipeline');
+    });
+
+    testWidgets('admin programmes fits a ${width}px viewport', (tester) async {
+      await _checkRoute(
+        tester,
+        width,
+        path: '/admin/programmes',
+        api: _staffApi(),
+        staff: true,
+      );
+      _expectOnStaffPage(tester, 'Programmes');
+    });
+
+    testWidgets('admin reports fits a ${width}px viewport', (tester) async {
+      await _checkRoute(
+        tester,
+        width,
+        path: '/admin/reports',
+        api: _staffApi(),
+        staff: true,
+      );
+      _expectOnStaffPage(tester, 'Reports');
+    });
+
+    testWidgets('admin messages fits a ${width}px viewport', (tester) async {
+      await _checkRoute(
+        tester,
+        width,
+        path: '/admin/messages',
+        api: _staffApi(),
+        staff: true,
+      );
+      _expectOnStaffPage(tester, 'Messages');
+    });
+
+    testWidgets('admin staff fits a ${width}px viewport', (tester) async {
+      await _checkRoute(
+        tester,
+        width,
+        path: '/admin/staff',
+        api: _staffApi(),
+        staff: true,
+      );
+      _expectOnStaffPage(tester, 'Staff');
+    });
+
+    testWidgets('admin settings fits a ${width}px viewport', (tester) async {
+      await _checkRoute(
+        tester,
+        width,
+        path: '/admin/settings',
+        api: _staffApi(),
+        staff: true,
+      );
+      _expectOnStaffPage(tester, 'Settings');
     });
 
     testWidgets('404 page fits a ${width}px viewport', (tester) async {
