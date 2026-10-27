@@ -616,19 +616,9 @@ class _Hero extends StatelessWidget {
                 ],
               ),
             ),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: TeamakColors.primaryDark,
-                side: const BorderSide(color: TeamakColors.borderStrong),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 30,
-                  vertical: 19,
-                ),
-              ),
-              onPressed: () => context.go('/staff/login'),
-              child: const Text('Staff login'),
-            ),
+            // The staff login has no button here on purpose: the customer
+            // site carries no route into the review console. Staff enter
+            // through the console's own address (/staff/login or /admin).
             OutlinedButton(
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(

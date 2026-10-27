@@ -101,7 +101,6 @@ void main() {
       'Home',
       'Apply',
       'Contact',
-      'Staff login',
     ]) {
       expect(
         find.descendant(of: drawer, matching: find.text(label)),

@@ -90,11 +90,10 @@ class AppShell extends StatelessWidget {
                   onPressed: () => context.go('/dashboard'),
                   child: const Text('Track'),
                 ),
-                const SizedBox(width: 4),
-                OutlinedButton(
-                  onPressed: () => context.go('/staff/login'),
-                  child: const Text('Sign In'),
-                ),
+                // No sign-in button here on purpose: the staff area and the
+                // admin console are not linked from the customer site. Staff
+                // reach the console by its own address (/staff/login or
+                // /admin), which customers have no reason to visit.
                 const SizedBox(width: 8),
                 FilledButton(
                   onPressed: () => context.go('/apply'),
@@ -124,7 +123,8 @@ class _NavDrawer extends StatelessWidget {
     (Icons.assignment_outlined, 'Apply', '/apply'),
     (Icons.manage_search_outlined, 'Track application', '/dashboard'),
     (Icons.mail_outline, 'Contact', '/contact'),
-    (Icons.badge_outlined, 'Staff login', '/staff/login'),
+    // The staff login has no drawer entry: the console is reached by its own
+    // address, never from the customer-facing navigation.
   ];
 
   @override
@@ -155,7 +155,7 @@ class _NavDrawer extends StatelessWidget {
               ),
             ),
             const Divider(height: 1),
-            // Scrollable: seven destinations plus the header overrun a short
+            // Scrollable: the destinations plus the header overrun a short
             // phone, and an unscrollable Column clips the last entry.
             Expanded(
               child: ListView(
