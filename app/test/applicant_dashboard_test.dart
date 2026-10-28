@@ -7,6 +7,7 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teamak_app/api/api_client.dart';
 import 'package:teamak_app/app.dart';
+import 'package:teamak_app/pages/applicant_dashboard_page.dart';
 
 /// What `POST /track` answers for the fixture pair below, in the trimmed
 /// shape the endpoint returns: the applicant's own answers plus public
@@ -24,6 +25,9 @@ const String _tracked = '''
     "areaCommunity": "Ojoo",
     "nin": "12345678901",
     "parkAssociationName": "Ojoo Okada Park",
+    "amountToCommit": "650000",
+    "sourceOfFunds": ["personal_savings", "business_income"],
+    "expectedDepositDate": "2026-11-01",
     "hasPassportPhotograph": true,
     "hasTwoPassportPhotographs": false,
     "hasGovernmentIdOrNinSlip": true,
@@ -137,6 +141,25 @@ void main() {
     expect(find.text('Checks underway — keep your phone reachable.'), findsOneWidget);
     expect(find.text('Your plan'), findsOneWidget);
     expect(find.text('₦650,000 deposit'), findsOneWidget);
+    expect(find.text('Your commitment'), findsOneWidget);
+    expect(
+      find.text('₦650,000'),
+      findsOneWidget,
+      reason: 'the funding step answers should read back as the commitment',
+    );
+    expect(
+      find.text('One deposit only — no further payment for the vehicle.'),
+      findsOneWidget,
+      reason: 'the honesty line: one deposit, nothing further for the vehicle',
+    );
+    expect(find.text('Expected deposit date'), findsOneWidget);
+    expect(find.text('01/11/2026'), findsOneWidget);
+    expect(find.text('Source of funds'), findsOneWidget);
+    expect(
+      find.text('Personal savings, Business income'),
+      findsOneWidget,
+      reason: 'the saved fund chips should read back as words',
+    );
     expect(find.text('Quick actions'), findsOneWidget);
     expect(find.text('Invite a rider'), findsOneWidget);
     expect(find.text('FAQ & help'), findsOneWidget);
@@ -162,6 +185,44 @@ void main() {
       find.text('Chat on WhatsApp'),
       findsOneWidget,
       reason: 'the WhatsApp channel should lead the dashboard actions',
+    );
+  });
+
+  testWidgets('tapping the application number copies it', (tester) async {
+    await pumpDashboard(
+      tester,
+      storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
+    );
+
+    await tester.tap(find.byIcon(Icons.copy_rounded));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('$_number copied'),
+      findsOneWidget,
+      reason: 'the copy should confirm with the number itself',
+    );
+  });
+
+  test('deposit countdown reads the days in chip words', () {
+    DateTime at(int y, int m, int d) => DateTime(y, m, d);
+
+    expect(
+      depositCountdown(at(2026, 11, 1), now: at(2026, 10, 27)),
+      'in 5 days',
+    );
+    expect(
+      depositCountdown(at(2026, 11, 1), now: at(2026, 10, 31)),
+      'due tomorrow',
+    );
+    expect(
+      depositCountdown(at(2026, 11, 1), now: at(2026, 11, 1)),
+      'due today',
+    );
+    expect(
+      depositCountdown(at(2026, 11, 1), now: at(2026, 11, 5)),
+      isNull,
+      reason: 'a passed date shows no countdown, only the date itself',
     );
   });
 

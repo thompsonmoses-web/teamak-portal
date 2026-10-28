@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -323,6 +324,8 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
             const SizedBox(height: 20),
             _PlanCard(programmeId: detail.programmeId),
             const SizedBox(height: 20),
+            _CommitmentCard(application: application),
+            const SizedBox(height: 20),
             _NextStepsCard(
               status: detail.status,
               phone: _value(application, 'phoneNumber'),
@@ -609,20 +612,74 @@ class _HeaderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
+          // The number is both the applicant's credential and what they
+          // quote to us on WhatsApp — one tap copies it.
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: TeamakColors.accent),
-            ),
-            child: Text(
-              detail.applicationNo,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.5,
-                color: TeamakColors.accent,
+              onTap: () {
+                // Confirm first: the number is on screen either way, so a
+                // platform without a clipboard still gets its message —
+                // and a test binding that never answers the channel does
+                // not stall the feedback.
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${detail.applicationNo} copied'),
+                  ),
+                );
+                Clipboard.setData(
+                  ClipboardData(text: detail.applicationNo),
+                ).ignore();
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 11,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: TeamakColors.accent),
+                    ),
+                    child: Text(
+                      detail.applicationNo,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.5,
+                        color: TeamakColors.accent,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 2),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Icon(
+                          Icons.copy_rounded,
+                          size: 13,
+                          color: Colors.white.withValues(alpha: 0.7),
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            'Tap the number to copy it',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -953,18 +1010,21 @@ class _PlanCard extends StatelessWidget {
             const SizedBox(height: 14),
             Row(
               children: <Widget>[
+                // The machine itself, not a generic icon — the same renders
+                // the landing page showcases for this tier.
                 Container(
                   width: 52,
                   height: 52,
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
                     color: TeamakColors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(
+                  child: Image.asset(
                     programmeId.startsWith('maruwa')
-                        ? Icons.local_shipping_outlined
-                        : Icons.two_wheeler_outlined,
-                    color: TeamakColors.primary,
+                        ? 'assets/slides/tricycle.png'
+                        : 'assets/slides/motorcycle.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -1015,6 +1075,228 @@ class _PlanCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// What the applicant committed to in the funding step: the one-time
+/// deposit figure, the date they expect to pay it and how they plan to
+/// raise it — their own answers, kept in view while the application is
+/// under review.
+class _CommitmentCard extends StatelessWidget {
+  const _CommitmentCard({required this.application});
+
+  final Map<String, dynamic> application;
+
+  /// The wizard stores the figure either as the programme's deposit number
+  /// or as the string form of it; either way it reads back as whole naira.
+  int? get _amount {
+    final raw = application['amountToCommit'];
+    if (raw is num) return raw.toInt();
+    final digits = '${raw ?? ''}'.replaceAll(RegExp(r'[^0-9]'), '');
+    return digits.isEmpty ? null : int.tryParse(digits);
+  }
+
+  DateTime? get _due =>
+      DateTime.tryParse('${application['expectedDepositDate'] ?? ''}');
+
+  /// The wizard's chips save codes; older records carry the plain words
+  /// already. Both read back as one line.
+  String? get _sources {
+    final raw = application['sourceOfFunds'];
+    final labels = <String>[];
+    if (raw is List) {
+      for (final item in raw) {
+        final key = '$item';
+        if (key == 'other') {
+          final extra = '${application['sourceOfFundsOther'] ?? ''}'.trim();
+          labels.add(extra.isEmpty ? 'Other' : extra);
+        } else {
+          labels.add(_fundSources[key] ?? key);
+        }
+      }
+    } else {
+      final text = '${raw ?? ''}'.trim();
+      if (text.isNotEmpty) labels.add(text);
+    }
+    return labels.isEmpty ? null : labels.join(', ');
+  }
+
+  static const _fundSources = <String, String>{
+    'personal_savings': 'Personal savings',
+    'business_income': 'Business income',
+    'family_support': 'Family support',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final amount = _amount;
+    final due = _due;
+    final sources = _sources;
+    // Nothing promised without a figure or a date: records that predate
+    // the funding step simply carry no card.
+    if (amount == null && due == null) return const SizedBox.shrink();
+
+    final countdown = due == null ? null : depositCountdown(due);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Expanded(
+                  child: Text(
+                    'Your commitment',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                // Same gold pill the plan's duration badge wears.
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: TeamakColors.accent.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: TeamakColors.accent),
+                  ),
+                  child: const Text(
+                    'One-time',
+                    style: TextStyle(
+                      color: TeamakColors.primaryDark,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (amount != null) ...<Widget>[
+              const SizedBox(height: 12),
+              Text(
+                '₦${_group('$amount')}',
+                style: const TextStyle(
+                  fontSize: 27,
+                  fontWeight: FontWeight.w800,
+                  color: TeamakColors.primaryDark,
+                  height: 1.1,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'One deposit only — no further payment for the vehicle.',
+                style: TextStyle(
+                  color: TeamakColors.subtle,
+                  fontSize: 13.5,
+                  height: 1.4,
+                ),
+              ),
+            ],
+            if (due != null) ...<Widget>[
+              const SizedBox(height: 16),
+              const Divider(height: 1),
+              const SizedBox(height: 14),
+              _FundingRow(
+                icon: Icons.event_outlined,
+                label: 'Expected deposit date',
+                value: displayDate(isoDate(due)),
+                chip: countdown,
+              ),
+            ],
+            if (due != null && sources != null) const SizedBox(height: 12),
+            if (sources != null)
+              _FundingRow(
+                icon: Icons.account_balance_wallet_outlined,
+                label: 'Source of funds',
+                value: sources,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One funding fact: icon, label and value, with an optional countdown
+/// pill whose fixed width shrinks the text beside it, never the row.
+class _FundingRow extends StatelessWidget {
+  const _FundingRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.chip,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final String? chip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Icon(icon, size: 20, color: TeamakColors.primary),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                label,
+                style: const TextStyle(
+                  color: TeamakColors.subtle,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      value,
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  if (chip != null) ...<Widget>[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: TeamakColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        chip!,
+                        style: const TextStyle(
+                          color: TeamakColors.primary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1387,6 +1669,22 @@ String _group(String digits) {
     buffer.write(digits[i]);
   }
   return buffer.toString();
+}
+
+/// Whole days to the deposit date, in the words the funding card's chip
+/// reads: nothing once the date has passed — the row still shows the date
+/// itself, plainly.
+String? depositCountdown(DateTime due, {DateTime? now}) {
+  final ref = now ?? DateTime.now();
+  final days = DateTime(due.year, due.month, due.day)
+      .difference(DateTime(ref.year, ref.month, ref.day))
+      .inDays;
+  return switch (days) {
+    0 => 'due today',
+    1 => 'due tomorrow',
+    > 1 => 'in $days days',
+    _ => null,
+  };
 }
 
 /// 'Okada ownership — ₦650,000 / 3 months' → 'Okada ownership': the short
