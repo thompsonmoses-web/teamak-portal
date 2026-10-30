@@ -38,6 +38,8 @@ dependencies:
   go_router: ^18.0.2
   shared_preferences: ^2.5.6
   url_launcher: ^6.3.1
+  # Typed DOM access for the receipt download on the web build.
+  web: ^1.1.0
 
 dev_dependencies:
   flutter_test:

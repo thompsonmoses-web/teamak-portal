@@ -7,6 +7,7 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teamak_app/api/api_client.dart';
 import 'package:teamak_app/app.dart';
+import 'package:teamak_app/models/models.dart';
 import 'package:teamak_app/pages/applicant_dashboard_page.dart';
 
 /// What `POST /track` answers for the fixture pair below, in the trimmed
@@ -223,6 +224,57 @@ void main() {
       depositCountdown(at(2026, 11, 1), now: at(2026, 11, 5)),
       isNull,
       reason: 'a passed date shows no countdown, only the date itself',
+    );
+  });
+
+  test('the WhatsApp follow-up speaks to the status', () {
+    expect(
+      followUpText(_number, 'pending'),
+      'Hello Teamak, I am following up on my application $_number '
+      '(Under review).',
+    );
+    expect(
+      followUpText(_number, 'approved'),
+      contains('ready for the deposit and handover'),
+    );
+    expect(
+      followUpText(_number, 'not_approved'),
+      contains('when I may apply again'),
+    );
+  });
+
+  test('the saved receipt carries the submission, never the NIN', () {
+    final detail = ApplicationDetail.fromJson(
+      jsonDecode(_tracked) as Map<String, dynamic>,
+    );
+    final receipt = receiptText(detail);
+
+    expect(receipt, contains('Application no:'));
+    expect(receipt, contains(_number));
+    expect(receipt, contains('Under review'));
+    expect(receipt, contains('Adebayo Ogundele'));
+    expect(receipt, contains('Ojoo Okada Park'));
+    expect(
+      receipt,
+      isNot(contains('12345678901')),
+      reason: 'a shared file must not carry the NIN',
+    );
+  });
+
+  testWidgets('saving the receipt works, or the page says why', (tester) async {
+    await pumpDashboard(
+      tester,
+      storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
+    );
+
+    // This test binding has no downloads (the stub throws), so the page
+    // should explain rather than fail.
+    await tester.tap(find.text('Save receipt'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('screenshot this dashboard'),
+      findsOneWidget,
     );
   });
 

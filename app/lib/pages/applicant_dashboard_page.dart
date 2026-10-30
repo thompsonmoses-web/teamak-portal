@@ -10,6 +10,8 @@ import '../api/api_client.dart';
 import '../form/form_utils.dart';
 import '../models/models.dart';
 import '../theme.dart';
+import '../util/download_stub.dart'
+    if (dart.library.js_interop) '../util/download_web.dart';
 import '../widgets/shell.dart';
 
 /// Status value → the words both staff pages and the applicant's dashboard
@@ -344,7 +346,7 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
             _QuickActionsCard(
               onWhatsApp: _chatOnWhatsApp,
               onInvite: _inviteRider,
-              onPrint: _printReceipt,
+              onSave: _saveReceipt,
               onTrackAnother: _forget,
               showTrackAnother: !fresh,
             ),
@@ -381,15 +383,27 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
     );
   }
 
-  void _printReceipt() {
-    // Printing is platform specific; fall back to a friendly message on web.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Use your browser\'s print dialog (Ctrl+P) to save this receipt.',
+  void _saveReceipt() {
+    final detail = _detail;
+    if (detail == null) return;
+    final filename = 'Teamak-${detail.applicationNo}.txt';
+    try {
+      saveTextDownload(filename, receiptText(detail));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Receipt saved — $filename')),
+      );
+    } catch (_) {
+      // No downloads here (or the browser blocked one): the dashboard
+      // itself is the receipt, so say so rather than fail.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'This device cannot save files — screenshot this dashboard '
+            'instead.',
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   /// Opens WhatsApp with the application number already in the draft message
@@ -401,8 +415,7 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
       text: detail == null
           ? 'Hello Teamak, I have a question about the Rider Ownership '
               'Programme.'
-          : 'Hello Teamak, I am following up on my application '
-              '${detail.applicationNo} (${statusLabel(detail.status)}).',
+          : followUpText(detail.applicationNo, detail.status),
     );
   }
 
@@ -1414,14 +1427,14 @@ class _QuickActionsCard extends StatelessWidget {
   const _QuickActionsCard({
     required this.onWhatsApp,
     required this.onInvite,
-    required this.onPrint,
+    required this.onSave,
     required this.onTrackAnother,
     this.showTrackAnother = true,
   });
 
   final VoidCallback onWhatsApp;
   final VoidCallback onInvite;
-  final VoidCallback onPrint;
+  final VoidCallback onSave;
   final VoidCallback onTrackAnother;
   final bool showTrackAnother;
 
@@ -1464,9 +1477,9 @@ class _QuickActionsCard extends StatelessWidget {
                   label: const Text('Invite a rider'),
                 ),
                 OutlinedButton.icon(
-                  onPressed: onPrint,
-                  icon: const Icon(Icons.print),
-                  label: const Text('Print receipt'),
+                  onPressed: onSave,
+                  icon: const Icon(Icons.save_alt_outlined),
+                  label: const Text('Save receipt'),
                 ),
                 OutlinedButton.icon(
                   onPressed: () => context.go('/faq'),
@@ -1685,6 +1698,57 @@ String? depositCountdown(DateTime due, {DateTime? now}) {
     > 1 => 'in $days days',
     _ => null,
   };
+}
+
+/// The follow-up a status implies, ready to send: an approved rider
+/// announces readiness for the deposit and handover, a declined one asks
+/// for the reason and the next intake, everyone else simply follows up.
+String followUpText(String applicationNo, String status) {
+  final head = 'Hello Teamak, I am following up on my application '
+      '$applicationNo (${statusLabel(status)}).';
+  return switch (status) {
+    'approved' => '$head I am ready for the deposit and handover — '
+        'please tell me the next step.',
+    'not_approved' => '$head Please, can you tell me why, and when '
+        'I may apply again?',
+    _ => head,
+  };
+}
+
+/// A plain-text receipt the applicant can keep and forward: what the team
+/// holds and where it stands, in tidy label/value lines. The NIN stays
+/// out — this file is the one thing on the dashboard meant to leave the
+/// device, and it travels to park chairmen and family chats.
+String receiptText(ApplicationDetail detail) {
+  final app = detail.application;
+  String cell(String key) => '${app[key] ?? ''}'.trim();
+
+  final amount = cell('amountToCommit').replaceAll(RegExp(r'[^0-9]'), '');
+  final dueDate = cell('expectedDepositDate');
+  final lines = <String>[
+    'TEAMAK RIDER OWNERSHIP PROGRAMME',
+    'Application receipt',
+    '',
+    '${'Application no:'.padRight(20)}${detail.applicationNo}',
+    '${'Submitted:'.padRight(20)}${_stamp(detail.createdAt)}',
+    '${'Status:'.padRight(20)}${statusLabel(detail.status)}',
+    '${'Programme:'.padRight(20)}${programmeLabel(detail.programmeId)}',
+    '${'Deposit amount:'.padRight(20)}'
+        '${amount.isEmpty ? '—' : '₦${_group(amount)}'}',
+    '${'Deposit date:'.padRight(20)}'
+        '${dueDate.isEmpty ? '—' : displayDate(dueDate)}',
+    '',
+    '${'Applicant:'.padRight(20)}${cell('fullName')}',
+    '${'Phone:'.padRight(20)}${cell('phoneNumber')}',
+    '${'Area / Community:'.padRight(20)}${cell('areaCommunity')}',
+    '${'Park / Association:'.padRight(20)}${cell('parkAssociationName')}',
+    '',
+    'Questions? Call or WhatsApp +234 802 344 9126 with your',
+    'application number.',
+    '',
+    'Teamak Global Solution',
+  ];
+  return lines.join('\n');
 }
 
 /// 'Okada ownership — ₦650,000 / 3 months' → 'Okada ownership': the short
