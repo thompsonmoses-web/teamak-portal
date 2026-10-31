@@ -41,12 +41,21 @@ String programmeLabel(String programmeId) => switch (programmeId) {
 /// fresh browser. A refresh that loses `extra` falls back to the stored pair
 /// instead of crashing on a missing route argument.
 class ApplicantDashboardPage extends StatefulWidget {
-  const ApplicantDashboardPage({super.key, required this.api, this.detail});
+  const ApplicantDashboardPage({
+    super.key,
+    required this.api,
+    this.detail,
+    this.prefillNumber,
+  });
 
   final ApiClient api;
 
   /// Freshly submitted application from the wizard; null when opened cold.
   final ApplicationDetail? detail;
+
+  /// Carried by a shared tracking link so the form opens with the number
+  /// already filled in — the phone check still happens on every device.
+  final String? prefillNumber;
 
   @override
   State<ApplicantDashboardPage> createState() => _ApplicantDashboardPageState();
@@ -66,13 +75,31 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
   bool _viaForm = false;
   String? _error;
 
+  /// Where the device lock lives, beside the stored pair.
+  static const String _pinKey = 'teamak_dashboard_pin';
+
+  /// Whether this device holds the stored pair — the account card says so.
+  bool _remembered = false;
+
+  /// The device-only dashboard lock; null means no PIN has been set.
+  String? _pin;
+
+  /// A PIN-protected session opens locked — except straight from the
+  /// wizard, where the fresh applicant has just proven themselves by
+  /// filing the form.
+  bool _pinUnlocked = true;
+
   @override
   void initState() {
     super.initState();
+    // A shared tracking link fills the number so only the phone check
+    // remains for the visitor on the receiving end.
+    _number.text = widget.prefillNumber ?? '';
     final seed = widget.detail;
     if (seed != null) {
       _detail = seed;
       _remember(seed);
+      _loadPinFlag();
     } else {
       _restore();
     }
@@ -88,6 +115,9 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
   Future<void> _remember(ApplicationDetail detail) async {
     final phone = '${detail.application['phoneNumber'] ?? ''}';
     if (phone.isEmpty) return;
+    // Optimistic: the catch below corrects it if storage refuses, and the
+    // next build of the account card picks the flag up either way.
+    _remembered = true;
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
@@ -97,6 +127,7 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
     } catch (_) {
       // Storage is a convenience: a browser that refuses it only means the
       // applicant retypes the pair next visit, never a broken dashboard.
+      _remembered = false;
     }
   }
 
@@ -111,8 +142,11 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
     setState(() {
       _detail = null;
       _error = null;
+      _remembered = false;
       _number.clear();
       _phone.clear();
+      // A forgotten device still opens links that carry their number.
+      _number.text = widget.prefillNumber ?? '';
     });
   }
 
@@ -123,10 +157,14 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       stored = prefs.getString(_refKey);
+      _pin = prefs.getString(_pinKey);
     } catch (_) {
       stored = null;
     }
+    // A saved pair plus a saved PIN means the dashboard opens locked.
+    _pinUnlocked = _pin == null;
     if (stored == null || !mounted) return;
+    _remembered = true;
 
     try {
       final ref = jsonDecodeRef(stored);
@@ -143,6 +181,52 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
             'enter your details below.';
       });
     }
+  }
+
+  /// Reads whether a lock exists, for the account card on a fresh visit.
+  Future<void> _loadPinFlag() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final pin = prefs.getString(_pinKey);
+      if (!mounted) return;
+      setState(() => _pin = pin);
+    } catch (_) {
+      // No storage, no lock.
+    }
+  }
+
+  Future<void> _setPin(String pin) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_pinKey, pin);
+    } catch (_) {
+      // The session still holds it for this visit even without storage.
+    }
+    if (!mounted) return;
+    setState(() {
+      _pin = pin;
+      _pinUnlocked = true;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('PIN lock saved for this device.')),
+    );
+  }
+
+  Future<void> _clearPin() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_pinKey);
+    } catch (_) {
+      // Nothing stored is nothing to clear.
+    }
+    if (!mounted) return;
+    setState(() {
+      _pin = null;
+      _pinUnlocked = true;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('PIN lock turned off for this device.')),
+    );
   }
 
   Future<void> _track({
@@ -193,6 +277,13 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
     );
   }
 
+  /// The lock in front of a PIN-protected dashboard on this device.
+  Widget _buildPinGate() => _PinGate(
+        pin: _pin!,
+        onUnlocked: () => setState(() => _pinUnlocked = true),
+        onRemovePin: _clearPin,
+      );
+
   @override
   Widget build(BuildContext context) {
     final detail = _detail;
@@ -200,7 +291,9 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
     return AppShell(
       title: 'Application dashboard',
       child: detail != null
-          ? _buildDashboard(context, detail)
+          ? (!_pinUnlocked && _pin != null)
+              ? _buildPinGate()
+              : _buildDashboard(context, detail)
           : _loading && !_viaForm
               ? const Center(
                   child: Padding(
@@ -351,6 +444,22 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
               showTrackAnother: !fresh,
             ),
             const SizedBox(height: 20),
+            _AccountCard(
+              applicationNo: detail.applicationNo,
+              remembered: _remembered,
+              pin: _pin,
+              onForget: _forget,
+              onSetPin: () async {
+                final saved = await showDialog<String>(
+                  context: context,
+                  builder: (_) => _PinSetupDialog(change: _pin != null),
+                );
+                if (saved == null || !mounted) return;
+                await _setPin(saved);
+              },
+              onClearPin: _clearPin,
+            ),
+            const SizedBox(height: 20),
             Card(
               child: Padding(
                 padding: EdgeInsets.all(wide ? 24 : 18),
@@ -373,6 +482,7 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
                     _Row(label: 'Park / Association', value: _value(application, 'parkAssociationName')),
                     _Row(label: 'Submitted', value: _stamp(detail.createdAt)),
                     _Row(label: 'Status', value: statusLabel(detail.status)),
+                    ..._riderGroup(application),
                   ],
                 ),
               ),
@@ -421,11 +531,12 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
 
   /// Passes the portal on to another rider — the referral move every
   /// investment-club app keeps one tap from the dashboard. The link is
-  /// built from the current origin, so it points at whichever deployment
-  /// the reader is actually on.
+  /// resolved against the current page, so it keeps this deployment's
+  /// base path instead of falling to the domain root.
   Future<void> _inviteRider() => _openWhatsApp(
         text: 'Riders wanted: apply for the Teamak Rider Ownership '
-            'Programme and own your machine. ${Uri.base.origin}/apply',
+            'Programme and own your machine. '
+            '${Uri.base.resolve('#/apply')}',
       );
 
   Future<void> _openWhatsApp({String number = '', required String text}) async {
@@ -1630,6 +1741,418 @@ class _NextStepsCard extends StatelessWidget {
   }
 }
 
+/// Links, device memory and the PIN lock: the account half of a member
+/// profile, built from what the dashboard already knows about itself.
+class _AccountCard extends StatelessWidget {
+  const _AccountCard({
+    required this.applicationNo,
+    required this.remembered,
+    required this.pin,
+    required this.onForget,
+    required this.onSetPin,
+    required this.onClearPin,
+  });
+
+  final String applicationNo;
+  final bool remembered;
+  final String? pin;
+  final VoidCallback onForget;
+  final VoidCallback onSetPin;
+  final VoidCallback onClearPin;
+
+  /// The applicant's own tracking form with the number pre-filled: the
+  /// link a rider saves to their WhatsApp so a new phone opens to it.
+  String get _link =>
+      Uri.base.resolve('#/dashboard?no=$applicationNo').toString();
+
+  @override
+  Widget build(BuildContext context) {
+    const labelStyle = TextStyle(
+      color: TeamakColors.subtle,
+      fontSize: 12.5,
+      fontWeight: FontWeight.w600,
+    );
+    const valueStyle = TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Text(
+              'Account & security',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Your links, this device and the lock on it.',
+              style: TextStyle(color: TeamakColors.subtle),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: <Widget>[
+                const Icon(
+                  Icons.smartphone,
+                  size: 20,
+                  color: TeamakColors.primary,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      const Text('This device', style: labelStyle),
+                      const SizedBox(height: 2),
+                      Text(
+                        remembered
+                            ? 'Remembers $applicationNo'
+                            : 'Nothing saved',
+                        style: valueStyle,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (remembered)
+              Padding(
+                padding: const EdgeInsets.only(left: 30, top: 2),
+                child: TextButton(
+                  onPressed: onForget,
+                  child: const Text('Forget'),
+                ),
+              ),
+            const SizedBox(height: 10),
+            const Text('Tracking link', style: labelStyle),
+            const SizedBox(height: 6),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () {
+                  // Confirm first: a test binding (or a locked-down
+                  // browser) that never answers the clipboard channel must
+                  // not stall the feedback.
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Tracking link copied')),
+                  );
+                  Clipboard.setData(ClipboardData(text: _link)).ignore();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: TeamakColors.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: TeamakColors.border),
+                  ),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          _link,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            color: TeamakColors.ink,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Icon(
+                        Icons.link,
+                        size: 16,
+                        color: TeamakColors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Copy it to open your tracking form on another phone — your '
+              'number comes filled in, and every device still checks your '
+              'phone number.',
+              style: TextStyle(
+                color: TeamakColors.subtle,
+                fontSize: 12.5,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            Row(
+              children: <Widget>[
+                const Icon(
+                  Icons.lock_outline,
+                  size: 20,
+                  color: TeamakColors.primary,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      const Text('Dashboard PIN', style: labelStyle),
+                      const SizedBox(height: 2),
+                      Text(
+                        pin != null ? 'On for this device' : 'Off',
+                        style: valueStyle,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (pin == null)
+              OutlinedButton(
+                onPressed: onSetPin,
+                child: const Text('Turn on'),
+              )
+            else
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: <Widget>[
+                  OutlinedButton(
+                    onPressed: onSetPin,
+                    child: const Text('Change'),
+                  ),
+                  TextButton(
+                    onPressed: onClearPin,
+                    child: const Text('Turn off'),
+                  ),
+                ],
+              ),
+            const SizedBox(height: 6),
+            const Text(
+              'A 4-digit lock for this device only — not your Teamak '
+              'account password.',
+              style: TextStyle(color: TeamakColors.subtle, fontSize: 12.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Asks for the four digits twice, so a slip of the finger cannot set a
+/// PIN the rider then cannot open with.
+class _PinSetupDialog extends StatefulWidget {
+  const _PinSetupDialog({required this.change});
+
+  /// True when a lock already exists — the title then promises a change.
+  final bool change;
+
+  @override
+  State<_PinSetupDialog> createState() => _PinSetupDialogState();
+}
+
+class _PinSetupDialogState extends State<_PinSetupDialog> {
+  final _pin = TextEditingController();
+  final _confirm = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _pin.dispose();
+    _confirm.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final first = _pin.text.trim();
+    final second = _confirm.text.trim();
+    setState(() {
+      _error = first.length != 4 || second.length != 4
+          ? 'Enter 4 digits in both fields.'
+          : first != second
+              ? 'PINs do not match.'
+              : null;
+    });
+    if (_error == null) Navigator.of(context).pop(first);
+  }
+
+  Widget _field(
+    TextEditingController controller,
+    String label, {
+    bool showErrors = false,
+  }) =>
+      TextField(
+        controller: controller,
+        obscureText: true,
+        maxLength: 4,
+        keyboardType: TextInputType.number,
+        inputFormatters: <TextInputFormatter>[
+          FilteringTextInputFormatter.digitsOnly,
+        ],
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 20, letterSpacing: 6),
+        decoration: InputDecoration(
+          labelText: label,
+          counterText: '',
+          // One place to read the problem: under the confirm field.
+          errorText: showErrors ? _error : null,
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        widget.change ? 'Change your dashboard PIN' : 'Set a dashboard PIN',
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          _field(_pin, 'New 4-digit PIN'),
+          const SizedBox(height: 12),
+          _field(_confirm, 'Confirm PIN', showErrors: true),
+        ],
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(onPressed: _save, child: const Text('Save PIN')),
+      ],
+    );
+  }
+}
+
+/// What a PIN-protected dashboard shows first on this device.
+class _PinGate extends StatefulWidget {
+  const _PinGate({
+    required this.pin,
+    required this.onUnlocked,
+    required this.onRemovePin,
+  });
+
+  final String pin;
+  final VoidCallback onUnlocked;
+  final VoidCallback onRemovePin;
+
+  @override
+  State<_PinGate> createState() => _PinGateState();
+}
+
+class _PinGateState extends State<_PinGate> {
+  final _controller = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _unlock() {
+    if (_controller.text == widget.pin) {
+      widget.onUnlocked();
+      return;
+    }
+    setState(() {
+      _error = 'Incorrect PIN — try again.';
+      _controller.clear();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: TeamakColors.primary.withValues(alpha: 0.08),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: TeamakColors.accent),
+                    ),
+                    child: const Icon(
+                      Icons.lock_rounded,
+                      color: TeamakColors.primary,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Dashboard locked',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Enter the 4-digit PIN set for this device.',
+                    style: TextStyle(color: TeamakColors.subtle),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _controller,
+                    obscureText: true,
+                    maxLength: 4,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 22, letterSpacing: 8),
+                    decoration: InputDecoration(
+                      labelText: 'PIN',
+                      counterText: '',
+                      errorText: _error,
+                    ),
+                    onSubmitted: (_) => _unlock(),
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _unlock,
+                      icon: const Icon(Icons.lock_open_rounded),
+                      label: const Text('Unlock'),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: widget.onRemovePin,
+                    child: const Text('Forgot PIN? Remove it'),
+                  ),
+                  const Text(
+                    'This PIN locks the dashboard on this device only — '
+                    'it is not your Teamak password.',
+                    style: TextStyle(
+                      color: TeamakColors.subtle,
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _Row extends StatelessWidget {
   const _Row({required this.label, required this.value});
 
@@ -1667,6 +2190,53 @@ String _value(Map<String, dynamic> map, String key) {
   final text = '${map[key] ?? ''}';
   return text.isEmpty ? '—' : text;
 }
+
+/// The Section B answers, when the applicant gave them: a ruled-off group
+/// under the summary so the account reads like the profile it is.
+List<Widget> _riderGroup(Map<String, dynamic> app) {
+  final rows = <Widget>[];
+  void add(String key, String label, String Function(String) format) {
+    final raw = '${app[key] ?? ''}'.trim();
+    if (raw.isEmpty) return;
+    rows.add(_Row(label: label, value: format(raw)));
+  }
+
+  add('dateOfBirth', 'Date of birth', displayDate);
+  add('operationType', 'Type of operation', _operationLabel);
+  add('ridingExperience', 'Riding experience', _experienceLabel);
+  add('vehicleMakeModel', 'Vehicle', (value) => value);
+  add('parkRouteOperatingArea', 'Park / route', (value) => value);
+  add('averageWorkingDaysPerWeek', 'Working days / week', (value) => value);
+  if (rows.isEmpty) return const <Widget>[];
+
+  return <Widget>[
+    const SizedBox(height: 12),
+    const Divider(height: 1),
+    const SizedBox(height: 12),
+    const Text(
+      'Riding details',
+      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+    ),
+    const SizedBox(height: 2),
+    ...rows,
+  ];
+}
+
+/// Section B codes → the wizard's own words; values already written in
+/// readable form pass through untouched.
+String _operationLabel(String raw) => switch (raw) {
+      'okada' => 'Okada (motorcycle)',
+      'maruwa' => 'Maruwa (tricycle)',
+      _ => raw,
+    };
+
+String _experienceLabel(String raw) => switch (raw) {
+      'lt1' => 'Less than 1 year',
+      'y1_3' => '1–3 years',
+      'y4_6' => '4–6 years',
+      'y7_plus' => '7+ years',
+      _ => raw,
+    };
 
 /// Renders an ISO timestamp as `YYYY-MM-DD HH:MM`, tolerating short values.
 String _stamp(Object? raw) {

@@ -125,6 +125,9 @@ class _TeamakAppState extends State<TeamakApp> {
               detail: state.extra is ApplicationDetail
                   ? state.extra! as ApplicationDetail
                   : null,
+              // A shared tracking link carries the number so the form
+              // opens with it filled in; the phone check still stands.
+              prefillNumber: state.uri.queryParameters['no'],
             ),
           ),
           GoRoute(

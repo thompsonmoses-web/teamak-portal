@@ -26,6 +26,12 @@ const String _tracked = '''
     "areaCommunity": "Ojoo",
     "nin": "12345678901",
     "parkAssociationName": "Ojoo Okada Park",
+    "dateOfBirth": "1990-05-14",
+    "operationType": "okada",
+    "ridingExperience": "y4_6",
+    "vehicleMakeModel": "Bajaj Boxer 150",
+    "parkRouteOperatingArea": "Ojoo - UI Gate",
+    "averageWorkingDaysPerWeek": 6,
     "amountToCommit": "650000",
     "sourceOfFunds": ["personal_savings", "business_income"],
     "expectedDepositDate": "2026-11-01",
@@ -78,20 +84,25 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  Future<void> pumpDashboard(WidgetTester tester, {String? storedRef}) async {
+  Future<void> pumpDashboard(
+    WidgetTester tester, {
+    String? storedRef,
+    String? pin,
+    String initialPath = '/dashboard',
+  }) async {
     // The dashboard is one long scroll, so mount it on a viewport tall
     // enough to hold it: off-screen children of a ListView are not built,
-    // and finders would silently miss the summary below the hero.
-    tester.view.physicalSize = const Size(800, 3000);
+    // and finders would silently miss the summary below the hero. Height
+    // grows with every card — keep it clear of the current total.
+    tester.view.physicalSize = const Size(800, 4800);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
-    if (storedRef != null) {
-      SharedPreferences.setMockInitialValues(<String, Object>{
-        'teamak_applicant_ref': storedRef,
-      });
-    }
-    await tester.pumpWidget(TeamakApp(initialPath: '/dashboard', api: _api()));
+    final saved = <String, Object>{};
+    if (storedRef != null) saved['teamak_applicant_ref'] = storedRef;
+    if (pin != null) saved['teamak_dashboard_pin'] = pin;
+    SharedPreferences.setMockInitialValues(saved);
+    await tester.pumpWidget(TeamakApp(initialPath: initialPath, api: _api()));
     await tester.pumpAndSettle();
   }
 
@@ -161,6 +172,16 @@ void main() {
       findsOneWidget,
       reason: 'the saved fund chips should read back as words',
     );
+    expect(find.text('Riding details'), findsOneWidget);
+    expect(
+      find.text('Okada (motorcycle)'),
+      findsOneWidget,
+      reason: 'Section B codes should read in the wizard\u2019s own words',
+    );
+    expect(find.text('4–6 years'), findsOneWidget);
+    expect(find.text('Bajaj Boxer 150'), findsOneWidget);
+    expect(find.text('Ojoo - UI Gate'), findsOneWidget);
+    expect(find.text('14/05/1990'), findsOneWidget);
     expect(find.text('Quick actions'), findsOneWidget);
     expect(find.text('Invite a rider'), findsOneWidget);
     expect(find.text('FAQ & help'), findsOneWidget);
@@ -276,6 +297,112 @@ void main() {
       find.textContaining('screenshot this dashboard'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('a tracking link opens the form with the number filled in',
+      (tester) async {
+    await pumpDashboard(tester, initialPath: '/dashboard?no=$_number');
+
+    expect(find.text('Find your application'), findsOneWidget);
+    expect(
+      find.text(_number),
+      findsWidgets,
+      reason: 'the link should spare the rider retyping their number',
+    );
+    expect(
+      find.text(_phone),
+      findsNothing,
+      reason: 'the phone check still happens on every device',
+    );
+  });
+
+  testWidgets('a device PIN locks the dashboard until it is entered',
+      (tester) async {
+    await pumpDashboard(
+      tester,
+      storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
+      pin: '1234',
+    );
+
+    expect(find.text('Dashboard locked'), findsOneWidget);
+    expect(find.text('Welcome back, Adebayo'), findsNothing);
+
+    await tester.enterText(find.byType(TextField), '9999');
+    await tester.tap(find.text('Unlock'));
+    await tester.pumpAndSettle();
+    expect(find.text('Incorrect PIN — try again.'), findsOneWidget);
+    expect(find.text('Dashboard locked'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), '1234');
+    await tester.tap(find.text('Unlock'));
+    await tester.pumpAndSettle();
+    expect(find.text('Welcome back, Adebayo'), findsOneWidget);
+  });
+
+  testWidgets('forgot PIN turns the lock off rather than blocking',
+      (tester) async {
+    await pumpDashboard(
+      tester,
+      storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
+      pin: '1234',
+    );
+
+    await tester.tap(find.text('Forgot PIN? Remove it'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Welcome back, Adebayo'), findsOneWidget);
+    expect(find.text('PIN lock turned off for this device.'), findsOneWidget);
+  });
+
+  testWidgets('the account card copies the tracking link', (tester) async {
+    await pumpDashboard(
+      tester,
+      storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
+    );
+
+    expect(find.text('Account & security'), findsOneWidget);
+    expect(find.textContaining('no=$_number'), findsOneWidget);
+    expect(find.text('Remembers $_number'), findsOneWidget);
+    expect(find.text('Off'), findsOneWidget);
+
+    await tester.tap(find.textContaining('no=$_number'));
+    await tester.pumpAndSettle();
+    expect(find.text('Tracking link copied'), findsOneWidget);
+  });
+
+  testWidgets('the PIN can be turned on and off from the account card',
+      (tester) async {
+    await pumpDashboard(
+      tester,
+      storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
+    );
+
+    await tester.tap(find.text('Turn on'));
+    await tester.pumpAndSettle();
+    expect(find.text('Set a dashboard PIN'), findsOneWidget);
+
+    // The dialog's fields are plain TextFields (obscured, digits only).
+    await tester.enterText(find.byType(TextField).first, '1234');
+    await tester.enterText(find.byType(TextField).last, '1235');
+    await tester.tap(find.text('Save PIN'));
+    await tester.pumpAndSettle();
+    expect(find.text('PINs do not match.'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).last, '1234');
+    await tester.tap(find.text('Save PIN'));
+    await tester.pumpAndSettle();
+    expect(find.text('PIN lock saved for this device.'), findsOneWidget);
+    expect(find.text('On for this device'), findsOneWidget);
+
+    // Snackbar confirmations queue their turn: let the save message play
+    // out before the next action produces its own.
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Turn off'));
+    await tester.pumpAndSettle();
+    expect(find.text('PIN lock turned off for this device.'), findsOneWidget);
+    expect(find.text('Off'), findsOneWidget);
   });
 
   testWidgets('typing the pair reaches the same dashboard', (tester) async {
