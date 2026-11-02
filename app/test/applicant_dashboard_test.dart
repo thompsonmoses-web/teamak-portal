@@ -174,6 +174,11 @@ void main() {
     );
     expect(find.text('Riding details'), findsOneWidget);
     expect(
+      find.textContaining('Checked'),
+      findsOneWidget,
+      reason: 'the account says when its data was last pulled',
+    );
+    expect(
       find.text('Okada (motorcycle)'),
       findsOneWidget,
       reason: 'Section B codes should read in the wizard\u2019s own words',
@@ -403,6 +408,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('PIN lock turned off for this device.'), findsOneWidget);
     expect(find.text('Off'), findsOneWidget);
+  });
+
+  testWidgets('the dashboard can pull a fresh copy of itself', (tester) async {
+    await pumpDashboard(
+      tester,
+      storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
+    );
+
+    expect(find.textContaining('Checked'), findsOneWidget);
+    expect(find.byIcon(Icons.refresh_rounded), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.refresh_rounded));
+    await tester.pumpAndSettle();
+
+    // The same record comes back — the dashboard stays up, re-checked.
+    expect(find.text('Welcome back, Adebayo'), findsOneWidget);
+    expect(find.textContaining('Checked'), findsOneWidget);
   });
 
   testWidgets('typing the pair reaches the same dashboard', (tester) async {

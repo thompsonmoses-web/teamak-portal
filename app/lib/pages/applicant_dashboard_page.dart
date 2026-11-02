@@ -89,6 +89,9 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
   /// filing the form.
   bool _pinUnlocked = true;
 
+  /// When the record on screen was last pulled from the API.
+  DateTime? _checkedAt;
+
   @override
   void initState() {
     super.initState();
@@ -248,6 +251,7 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
       setState(() {
         _detail = detail;
         _loading = false;
+        _checkedAt = DateTime.now();
       });
       _remember(detail);
     } on ApiException catch (error) {
@@ -265,6 +269,34 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
         _error = 'Could not reach the server. Check your connection and '
             'try again.';
       });
+    }
+  }
+
+  /// Pulls the record again — the same pair, a fresh answer. The old
+  /// data stays on screen if the network refuses.
+  Future<void> _refresh() async {
+    final detail = _detail;
+    if (detail == null || _loading) return;
+    setState(() => _loading = true);
+    try {
+      final fresh = await widget.api.trackApplication(
+        applicationNo: detail.applicationNo,
+        phone: '${detail.application['phoneNumber'] ?? ''}',
+      );
+      if (!mounted) return;
+      setState(() {
+        _detail = fresh;
+        _loading = false;
+        _checkedAt = DateTime.now();
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not refresh — showing the last details loaded.'),
+        ),
+      );
     }
   }
 
@@ -466,12 +498,44 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const Text(
-                      'Your application',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Row(
+                      children: <Widget>[
+                        const Expanded(
+                          child: Text(
+                            'Your application',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        if (_checkedAt != null)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 4),
+                            child: Text(
+                              'Checked ${_clock(_checkedAt!)}',
+                              style: const TextStyle(
+                                color: TeamakColors.subtle,
+                                fontSize: 12.5,
+                              ),
+                            ),
+                          ),
+                        IconButton(
+                          onPressed: _loading ? null : _refresh,
+                          iconSize: 20,
+                          visualDensity: VisualDensity.compact,
+                          tooltip: 'Refresh',
+                          icon: _loading
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.refresh_rounded),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     _Row(label: 'Applicant', value: _value(application, 'fullName')),
@@ -2243,6 +2307,11 @@ String _stamp(Object? raw) {
   final text = '${raw ?? ''}'.replaceAll('T', ' ');
   return text.length >= 16 ? text.substring(0, 16) : (text.isEmpty ? '—' : text);
 }
+
+/// 14:05 → `14:05` — the clock time the record on screen was checked.
+String _clock(DateTime time) =>
+    '${time.hour.toString().padLeft(2, '0')}:'
+    '${time.minute.toString().padLeft(2, '0')}';
 
 /// 650000 → 650,000, without pulling in number formatting for one field.
 String _group(String digits) {
