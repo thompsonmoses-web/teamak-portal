@@ -8,6 +8,8 @@ import '../../api/api_client.dart';
 import '../../form/form_utils.dart';
 import '../../models/models.dart';
 import '../../theme.dart';
+import '../../util/open_tab_stub.dart'
+    if (dart.library.js_interop) '../../util/open_tab_web.dart';
 import '../../widgets/shell.dart';
 import '../applicant_dashboard_page.dart' show statusLabel;
 
@@ -107,6 +109,12 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
     final detail = _detail;
     if (detail == null) return;
 
+    // A blank tab, born inside the Confirm tap below: browsers only
+    // allow a window.open that rides a user gesture, and the save's
+    // await would otherwise spend it. It is filled in the moment the
+    // save lands and closed again if it never does.
+    CarrierTab? carrier;
+
     if (confirmMessage != null) {
       final confirmed = await showDialog<bool>(
         context: context,
@@ -119,7 +127,10 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
               child: const Text('Cancel'),
             ),
             FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
+              onPressed: () {
+                if (status == 'approved') carrier = openBlankTab();
+                Navigator.of(context).pop(true);
+              },
               child: const Text('Confirm'),
             ),
           ],
@@ -140,16 +151,38 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
         approvedAmount: int.tryParse(_approvedAmount.text.replaceAll(',', '')),
         expectedDeliveryDate: _deliveryDate.text,
       );
+      if (status == 'approved') {
+        // Hand the carrier its destination while nothing can take it
+        // away: steering a tab that already exists needs no gesture.
+        final tab = carrier;
+        carrier = null;
+        if (tab != null) {
+          // The tab Confirm opened now shows the rider's screen.
+          tab.fill(
+            applicantViewUri(
+              base: Uri.base,
+              applicationNo: updated.applicationNo,
+              phone: '${updated.application['phoneNumber'] ?? ''}',
+            ).toString(),
+          );
+        } else {
+          // No carrier (tests, or a browser that refused one): the
+          // best-effort launch, its snackbar action always carrying a
+          // fresh gesture of its own.
+          unawaited(_openApplicantView(updated));
+        }
+      }
       if (!mounted) return;
       setState(() => _detail = updated);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Status set to ${statusLabel(status)}.')),
       );
-      // Approval is the moment the rider cares about: show them their
-      // screen. Best-effort — a blocked popup falls back to a snackbar
-      // action, which always carries a fresh user gesture.
-      if (status == 'approved') unawaited(_openApplicantView(updated));
     } catch (error) {
+      // A save that failed leaves no rider-facing news to show: the
+      // carrier tab closes before anything else runs.
+      final tab = carrier;
+      carrier = null;
+      if (tab != null) tab.close();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('$error')),
