@@ -258,10 +258,12 @@ const String _trackedApplication = '''
 }
 ''';
 
-ApiClient _trackedApi() => ApiClient(
+ApiClient _trackedApi({String? fixture}) => ApiClient(
       client: MockClient((request) async {
         return http.Response(
-          request.url.path == '/track' ? _trackedApplication : '{}',
+          request.url.path == '/track'
+              ? (fixture ?? _trackedApplication)
+              : '{}',
           200,
           headers: <String, String>{'content-type': 'application/json'},
         );
@@ -480,6 +482,25 @@ void main() {
         width,
         path: '/dashboard',
         api: _trackedApi(),
+        storedApplicantRef:
+            '{"applicationNo":"TRP-2026-0042","phone":"08023449126"}',
+      );
+    });
+
+    testWidgets('approved dashboard fits a ${width}px viewport',
+        (tester) async {
+      // The handover card exists only for approved records — sweep it at
+      // every width with the figures staff record at approval.
+      await _checkRoute(
+        tester,
+        width,
+        path: '/dashboard',
+        api: _trackedApi(
+          fixture: _trackedApplication.replaceFirst(
+            '"status": "pending"',
+            '"status": "approved"',
+          ),
+        ),
         storedApplicantRef:
             '{"applicationNo":"TRP-2026-0042","phone":"08023449126"}',
       );

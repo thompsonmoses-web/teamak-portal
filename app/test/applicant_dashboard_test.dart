@@ -58,7 +58,7 @@ const String _phone = '08023449126';
 
 /// Stands in for the tracking endpoint: the fixture pair answers with the
 /// record, everything else gets the API's 404.
-ApiClient _api() => ApiClient(
+ApiClient _api({String? fixture}) => ApiClient(
       client: MockClient((request) async {
         const jsonHeaders = <String, String>{'content-type': 'application/json'};
         if (request.url.path != '/track') {
@@ -75,8 +75,27 @@ ApiClient _api() => ApiClient(
             headers: jsonHeaders,
           );
         }
-        return http.Response(_tracked, 200, headers: jsonHeaders);
+        return http.Response(fixture ?? _tracked, 200, headers: jsonHeaders);
       }),
+    );
+
+/// The same record moved to approved, carrying the Section I answers
+/// staff record at that point — derived so it cannot drift from the base.
+String get _approved => _tracked
+    .replaceFirst('"status": "pending"', '"status": "approved"')
+    .replaceFirst(
+      '"official": {"expectedDeliveryDate": "2026-12-01"}',
+      '"official": {"verificationDate": "2026-10-20", '
+          '"approvedAmount": "700000", "expectedDeliveryDate": "2030-06-15"}',
+    );
+
+/// Approved before staff record any outcome: the card must wait with
+/// the rider instead of inventing a date or a figure.
+String get _approvedBare => _tracked
+    .replaceFirst('"status": "pending"', '"status": "approved"')
+    .replaceFirst(
+      '"official": {"expectedDeliveryDate": "2026-12-01"}',
+      '"official": {}',
     );
 
 void main() {
@@ -88,6 +107,7 @@ void main() {
     WidgetTester tester, {
     String? storedRef,
     String? pin,
+    String? fixture,
     String initialPath = '/dashboard',
   }) async {
     // The dashboard is one long scroll, so mount it on a viewport tall
@@ -102,7 +122,9 @@ void main() {
     if (storedRef != null) saved['teamak_applicant_ref'] = storedRef;
     if (pin != null) saved['teamak_dashboard_pin'] = pin;
     SharedPreferences.setMockInitialValues(saved);
-    await tester.pumpWidget(TeamakApp(initialPath: initialPath, api: _api()));
+    await tester.pumpWidget(
+      TeamakApp(initialPath: initialPath, api: _api(fixture: fixture)),
+    );
     await tester.pumpAndSettle();
   }
 
@@ -231,23 +253,23 @@ void main() {
     );
   });
 
-  test('deposit countdown reads the days in chip words', () {
+  test('due countdown reads the days in chip words', () {
     DateTime at(int y, int m, int d) => DateTime(y, m, d);
 
     expect(
-      depositCountdown(at(2026, 11, 1), now: at(2026, 10, 27)),
+      dueCountdown(at(2026, 11, 1), now: at(2026, 10, 27)),
       'in 5 days',
     );
     expect(
-      depositCountdown(at(2026, 11, 1), now: at(2026, 10, 31)),
+      dueCountdown(at(2026, 11, 1), now: at(2026, 10, 31)),
       'due tomorrow',
     );
     expect(
-      depositCountdown(at(2026, 11, 1), now: at(2026, 11, 1)),
+      dueCountdown(at(2026, 11, 1), now: at(2026, 11, 1)),
       'due today',
     );
     expect(
-      depositCountdown(at(2026, 11, 1), now: at(2026, 11, 5)),
+      dueCountdown(at(2026, 11, 1), now: at(2026, 11, 5)),
       isNull,
       reason: 'a passed date shows no countdown, only the date itself',
     );
@@ -425,6 +447,52 @@ void main() {
     // The same record comes back — the dashboard stays up, re-checked.
     expect(find.text('Welcome back, Adebayo'), findsOneWidget);
     expect(find.textContaining('Checked'), findsOneWidget);
+  });
+
+  testWidgets('an approved application gets the handover card',
+      (tester) async {
+    await pumpDashboard(
+      tester,
+      storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
+      fixture: _approved,
+    );
+
+    expect(find.text('Your handover'), findsOneWidget);
+    expect(find.text('Expected delivery'), findsOneWidget);
+    expect(find.text('15/06/2030'), findsWidgets,
+        reason: 'the date shows in the milestone tile and the handover row');
+    expect(
+      find.text('Approved amount'),
+      findsOneWidget,
+      reason: 'the handover card holds it — the record card must not repeat it',
+    );
+    expect(find.text('₦700,000'), findsOneWidget);
+    expect(find.text("Tell them I'm ready"), findsOneWidget);
+    // The chip counts in the pure function's own words for that date.
+    expect(find.text(dueCountdown(DateTime(2030, 6, 15))!), findsOneWidget);
+    // What already happened stays in the record card.
+    expect(find.text('Verification date'), findsOneWidget);
+    expect(find.text('20/10/2026'), findsOneWidget);
+  });
+
+  testWidgets('approved with nothing recorded waits instead of inventing',
+      (tester) async {
+    await pumpDashboard(
+      tester,
+      storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
+      fixture: _approvedBare,
+    );
+
+    expect(find.text('Your handover'), findsOneWidget);
+    expect(
+      find.text(
+        'Our team will confirm your delivery date — keep your phone reachable.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Expected delivery'), findsNothing);
+    expect(find.text('Approved amount'), findsNothing);
+    expect(find.text("Tell them I'm ready"), findsOneWidget);
   });
 
   testWidgets('typing the pair reaches the same dashboard', (tester) async {

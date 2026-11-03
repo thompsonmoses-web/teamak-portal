@@ -453,6 +453,15 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
             const SizedBox(height: 20),
             _CommitmentCard(application: application),
             const SizedBox(height: 20),
+            // The approved rider's forward view — money and timing for
+            // the handover — sits beside the commitment it pays into.
+            if (detail.status == 'approved') ...<Widget>[
+              _HandoverCard(
+                official: official,
+                onReady: _chatOnWhatsApp,
+              ),
+              const SizedBox(height: 20),
+            ],
             _NextStepsCard(
               status: detail.status,
               phone: _value(application, 'phoneNumber'),
@@ -465,7 +474,7 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
             ],
             if (_hasOutcome(official)) ...<Widget>[
               const SizedBox(height: 20),
-              _OutcomeCard(official: official),
+              _OutcomeCard(official: official, status: detail.status),
             ],
             const SizedBox(height: 20),
             _QuickActionsCard(
@@ -1325,7 +1334,7 @@ class _CommitmentCard extends StatelessWidget {
     // the funding step simply carry no card.
     if (amount == null && due == null) return const SizedBox.shrink();
 
-    final countdown = due == null ? null : depositCountdown(due);
+    final countdown = due == null ? null : dueCountdown(due);
 
     return Card(
       child: Padding(
@@ -1689,6 +1698,103 @@ class _QuickActionsCard extends StatelessWidget {
 /// Section I outcomes worth showing on an applicant's dashboard. A fresh
 /// application has none of them, so the "From our team" card stays hidden
 /// until staff records one.
+/// The approved rider's forward view: what the team has recorded for the
+/// handover and one tap to say they are ready. Every figure here is a
+/// staff answer — when nothing is recorded yet, the card waits with the
+/// rider instead of inventing a date or an amount.
+class _HandoverCard extends StatelessWidget {
+  const _HandoverCard({required this.official, required this.onReady});
+
+  final Map<String, dynamic> official;
+  final VoidCallback onReady;
+
+  bool _present(String key) =>
+      official[key] != null && '${official[key]}'.isNotEmpty;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasDelivery = _present('expectedDeliveryDate');
+    final delivery = hasDelivery
+        ? displayDate('${official['expectedDeliveryDate']}')
+        : null;
+    final due = hasDelivery
+        ? DateTime.tryParse('${official['expectedDeliveryDate']}')
+        : null;
+    final countdown = due == null ? null : dueCountdown(due);
+    final amount = _present('approvedAmount')
+        ? '₦${_group('${official['approvedAmount']}')}'
+        : null;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Expanded(
+                  child: Text(
+                    'Your handover',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                // Same gold pill the commitment card wears, counting to
+                // the delivery instead of the deposit.
+                if (countdown != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: TeamakColors.accent.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      countdown,
+                      style: const TextStyle(
+                        color: TeamakColors.accentDark,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (delivery != null)
+              _Row(label: 'Expected delivery', value: delivery)
+            else
+              const Text(
+                'Our team will confirm your delivery date — keep your phone '
+                    'reachable.',
+                style: TextStyle(color: TeamakColors.subtle, height: 1.5),
+              ),
+            if (amount != null) ...<Widget>[
+              const SizedBox(height: 6),
+              _Row(label: 'Approved amount', value: amount),
+            ],
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF25D366),
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: onReady,
+                icon: const Icon(Icons.chat_rounded),
+                label: const Text("Tell them I'm ready"),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 bool _hasOutcome(Map<String, dynamic> official) => const <String>[
       'verificationDate',
       'approvedProgrammeId',
@@ -1697,22 +1803,27 @@ bool _hasOutcome(Map<String, dynamic> official) => const <String>[
     ].any((key) => official[key] != null && '${official[key]}'.isNotEmpty);
 
 class _OutcomeCard extends StatelessWidget {
-  const _OutcomeCard({required this.official});
+  const _OutcomeCard({required this.official, required this.status});
 
   final Map<String, dynamic> official;
+
+  /// Once approved, the forward-looking figures move to the handover
+  /// card — this record card keeps only what has already happened.
+  final String status;
 
   bool _present(String key) => official[key] != null && '${official[key]}'.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
+    final isApproved = status == 'approved';
     final rows = <(String, String)>[
       if (_present('verificationDate'))
         ('Verification date', displayDate('${official['verificationDate']}')),
       if (_present('approvedProgrammeId'))
         ('Approved programme', programmeLabel('${official['approvedProgrammeId']}')),
-      if (_present('approvedAmount'))
+      if (!isApproved && _present('approvedAmount'))
         ('Approved amount', '₦${_group('${official['approvedAmount']}')}'),
-      if (_present('expectedDeliveryDate'))
+      if (!isApproved && _present('expectedDeliveryDate'))
         ('Expected delivery', displayDate('${official['expectedDeliveryDate']}')),
     ];
     if (rows.isEmpty) return const SizedBox.shrink();
@@ -2323,10 +2434,11 @@ String _group(String digits) {
   return buffer.toString();
 }
 
-/// Whole days to the deposit date, in the words the funding card's chip
-/// reads: nothing once the date has passed — the row still shows the date
-/// itself, plainly.
-String? depositCountdown(DateTime due, {DateTime? now}) {
+/// Whole days to a due date, in the words the chips read: nothing once
+/// the date has passed — the row still shows the date itself, plainly.
+/// The commitment card counts to the deposit; the handover card counts
+/// to the delivery.
+String? dueCountdown(DateTime due, {DateTime? now}) {
   final ref = now ?? DateTime.now();
   final days = DateTime(due.year, due.month, due.day)
       .difference(DateTime(ref.year, ref.month, ref.day))
