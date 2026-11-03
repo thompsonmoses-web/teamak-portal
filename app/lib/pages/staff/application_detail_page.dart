@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../api/api_client.dart';
 import '../../form/form_utils.dart';
@@ -7,6 +10,24 @@ import '../../models/models.dart';
 import '../../theme.dart';
 import '../../widgets/shell.dart';
 import '../applicant_dashboard_page.dart' show statusLabel;
+
+/// The URL that shows an application exactly as its applicant sees it.
+///
+/// Demo builds carry the whole pair so a showcase link opens the record
+/// it names outright — the way to hand someone a screen and let them
+/// simply look. Real builds carry only the number: the phone is half the
+/// credential and has no business sitting in a URL or a browser history —
+/// there, the viewer types it themselves.
+Uri applicantViewUri({
+  required Uri base,
+  required String applicationNo,
+  String? phone,
+  bool demo = const String.fromEnvironment('API_BASE') == demoApiBase,
+}) =>
+    base.replace(
+      fragment: '/dashboard?no=$applicationNo'
+          '${demo && (phone ?? '').isNotEmpty ? '&phone=$phone' : ''}',
+    );
 
 class ApplicationDetailPage extends StatefulWidget {
   const ApplicationDetailPage({
@@ -124,6 +145,10 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Status set to ${statusLabel(status)}.')),
       );
+      // Approval is the moment the rider cares about: show them their
+      // screen. Best-effort — a blocked popup falls back to a snackbar
+      // action, which always carries a fresh user gesture.
+      if (status == 'approved') unawaited(_openApplicantView(updated));
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -132,6 +157,33 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  /// Opens what the newly approved rider will see — their own dashboard —
+  /// in a new tab. Best-effort: browsers may block a popup raised after
+  /// an await, and then the snackbar's action opens it on a real tap.
+  Future<void> _openApplicantView(ApplicationDetail detail) async {
+    final uri = applicantViewUri(
+      base: Uri.base,
+      applicationNo: detail.applicationNo,
+      phone: '${detail.application['phoneNumber'] ?? ''}',
+    );
+    var opened = false;
+    try {
+      opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      opened = false;
+    }
+    if (opened || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('See ${detail.applicationNo} as the applicant.'),
+        action: SnackBarAction(
+          label: 'Open',
+          onPressed: () => launchUrl(uri, mode: LaunchMode.externalApplication),
+        ),
+      ),
+    );
   }
 
   @override

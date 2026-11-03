@@ -5,6 +5,7 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teamak_app/api/api_client.dart';
 import 'package:teamak_app/app.dart';
+import 'package:teamak_app/pages/staff/application_detail_page.dart';
 
 /// The console is a working area holding every applicant's details, so the
 /// rules that decide who reaches it are worth pinning down: an administrator
@@ -63,6 +64,35 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(milliseconds: 400));
   }
+
+  test('the applicant view link carries the pair only on demo builds', () {
+    final base = Uri.parse(
+      'https://example.org/teamak-portal/#/admin/applications/app-1',
+    );
+
+    expect(
+      applicantViewUri(
+        base: base,
+        applicationNo: 'TRP-2026-0002',
+        phone: '08031234567',
+        demo: true,
+      ).toString(),
+      'https://example.org/teamak-portal/'
+      '#/dashboard?no=TRP-2026-0002&phone=08031234567',
+      reason: 'a demo showcase link opens the record outright',
+    );
+    expect(
+      applicantViewUri(
+        base: base,
+        applicationNo: 'TRP-2026-0002',
+        phone: '08031234567',
+        demo: false,
+      ).toString(),
+      'https://example.org/teamak-portal/#/dashboard?no=TRP-2026-0002',
+      reason: 'a real build never puts the phone — half the credential — '
+          'into a URL or a browser history',
+    );
+  });
 
   testWidgets('an administrator reaches the console', (tester) async {
     await openAt(tester, '/admin', role: 'admin');
