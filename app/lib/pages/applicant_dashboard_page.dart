@@ -46,6 +46,7 @@ class ApplicantDashboardPage extends StatefulWidget {
     required this.api,
     this.detail,
     this.prefillNumber,
+    this.prefillPhone,
   });
 
   final ApiClient api;
@@ -56,6 +57,10 @@ class ApplicantDashboardPage extends StatefulWidget {
   /// Carried by a shared tracking link so the form opens with the number
   /// already filled in — the phone check still happens on every device.
   final String? prefillNumber;
+
+  /// Demo showcase links only: the route drops this on real builds, so
+  /// the pair check can never be skipped by a crafted URL there.
+  final String? prefillPhone;
 
   @override
   State<ApplicantDashboardPage> createState() => _ApplicantDashboardPageState();
@@ -103,6 +108,33 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
       _detail = seed;
       _remember(seed);
       _loadPinFlag();
+    } else if (widget.prefillPhone != null &&
+        (widget.prefillNumber ?? '').isNotEmpty) {
+      // A demo showcase link carries the whole pair, so a shared demo URL
+      // opens the record it names with no typing. Only demo builds pass a
+      // phone at all — the route drops it on real builds — and the pair
+      // is still checked, against the API: a wrong pair falls back to the
+      // form with both fields filled and the answer on screen.
+      _phone.text = widget.prefillPhone!;
+      // Silent-loading before the first frame: the spinner shows, never a
+      // flash of the form. The fetch waits for that frame to finish, and
+      // a device lock is honoured before the record is drawn.
+      _loading = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          _pin = prefs.getString(_pinKey);
+          _pinUnlocked = _pin == null;
+        } catch (_) {
+          // No storage, no lock.
+        }
+        if (!mounted) return;
+        await _track(
+          applicationNo: widget.prefillNumber!,
+          phone: widget.prefillPhone!,
+        );
+      });
     } else {
       _restore();
     }
@@ -148,8 +180,9 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
       _remembered = false;
       _number.clear();
       _phone.clear();
-      // A forgotten device still opens links that carry their number.
+      // A forgotten device still opens links that carry their pair.
       _number.text = widget.prefillNumber ?? '';
+      _phone.text = widget.prefillPhone ?? '';
     });
   }
 

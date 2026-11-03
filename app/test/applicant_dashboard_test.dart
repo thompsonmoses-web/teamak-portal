@@ -343,6 +343,21 @@ void main() {
     );
   });
 
+  testWidgets('a real build never reads a phone from the URL', (tester) async {
+    // Tests (and any non-demo build) run without API_BASE=demo, so the
+    // showcase shortcut is inert there: the number may fill in, the phone
+    // never does, and no record opens itself.
+    await pumpDashboard(
+      tester,
+      initialPath: '/dashboard?no=$_number&phone=0123456789',
+    );
+
+    expect(find.text('Find your application'), findsOneWidget);
+    expect(find.text(_number), findsWidgets);
+    expect(find.text('0123456789'), findsNothing);
+    expect(find.textContaining('Welcome back'), findsNothing);
+  });
+
   testWidgets('a device PIN locks the dashboard until it is entered',
       (tester) async {
     await pumpDashboard(

@@ -128,6 +128,13 @@ class _TeamakAppState extends State<TeamakApp> {
               // A shared tracking link carries the number so the form
               // opens with it filled in; the phone check still stands.
               prefillNumber: state.uri.queryParameters['no'],
+              // Demo builds may also carry the phone, so a showcase link
+              // opens the record outright — real builds drop it and the
+              // pair check stays on the device.
+              prefillPhone:
+                  const String.fromEnvironment('API_BASE') == demoApiBase
+                      ? state.uri.queryParameters['phone']
+                      : null,
             ),
           ),
           GoRoute(
