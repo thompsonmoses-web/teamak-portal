@@ -22,7 +22,11 @@ CarrierTab? openBlankTab() {
       fill: (String url) {
         tab.location.href = url;
       },
-      close: tab.close,
+      // A closure, not a tear-off: dart2js refuses to turn an interop
+      // member into a function value, though calling it is fine.
+      close: () {
+        tab.close();
+      },
     );
   } catch (_) {
     return null;
