@@ -476,9 +476,16 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
         child: ListView(
           padding: EdgeInsets.all(wide ? 32 : 16),
           children: <Widget>[
-            _HeaderCard(detail: detail, fresh: fresh),
-            const SizedBox(height: 16),
+            _OverviewHeader(detail: detail, fresh: fresh),
+            const SizedBox(height: 18),
             _StatStrip(detail: detail),
+            const SizedBox(height: 16),
+            // What is happening right now sits directly under the numbers,
+            // before the deeper cards — the reference layout's order.
+            _NextStepsCard(
+              status: detail.status,
+              phone: _value(application, 'phoneNumber'),
+            ),
             const SizedBox(height: 20),
             _JourneyCard(status: detail.status),
             const SizedBox(height: 20),
@@ -495,11 +502,6 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
               ),
               const SizedBox(height: 20),
             ],
-            _NextStepsCard(
-              status: detail.status,
-              phone: _value(application, 'phoneNumber'),
-            ),
-            const SizedBox(height: 20),
             _ProgressCard(detail: detail),
             if (_PreparationCard.appliesTo(application)) ...<Widget>[
               const SizedBox(height: 20),
@@ -756,224 +758,99 @@ class _PreparationRow extends StatelessWidget {
   }
 }
 
-class _HeaderCard extends StatelessWidget {
-  const _HeaderCard({required this.detail, required this.fresh});
+/// The reference layout's opening — a greeting, a two-tone headline and
+/// one line of orientation, unboxed so the page reads as a member
+/// overview rather than a receipt.
+class _OverviewHeader extends StatelessWidget {
+  const _OverviewHeader({required this.detail, required this.fresh});
 
   final ApplicationDetail detail;
   final bool fresh;
 
   @override
   Widget build(BuildContext context) {
-    final status = detail.status;
-    // The returning applicant gets a personal welcome; a fresh submission
-    // still headlines its receipt.
     final name = '${detail.application['fullName'] ?? ''}'.trim();
     final firstName = name.isEmpty ? '' : name.split(RegExp(r'\s+')).first;
-    final title = fresh
-        ? 'Application received'
-        : firstName.isEmpty
-            ? statusLabel(status)
-            : 'Welcome back, $firstName';
+    // The returning applicant is greeted by name; a fresh submission is
+    // welcomed into the same journey.
+    final lead = firstName.isEmpty
+        ? (fresh ? 'Welcome' : 'Welcome back')
+        : fresh
+            ? 'Welcome, '
+            : 'Welcome back, ';
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: TeamakColors.gradPrimary,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: TeamakColors.accent.withValues(alpha: 0.55),
-        ),
-      ),
-      padding: const EdgeInsets.all(24),
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: TeamakColors.accent, width: 2),
-                ),
-                child: Icon(
-                  switch (status) {
-                    'approved' => Icons.verified_rounded,
-                    'not_approved' => Icons.cancel_rounded,
-                    'further_review' => Icons.search_rounded,
-                    _ => fresh
-                        ? Icons.check_rounded
-                        : Icons.hourglass_top_rounded,
-                  },
-                  color: Colors.white,
-                  size: 34,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 23,
-                        fontWeight: FontWeight.w800,
-                        height: 1.15,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      fresh
-                          ? 'Your application number is'
-                          : 'Application number',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.75),
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // The number is both the applicant's credential and what they
-          // quote to us on WhatsApp — one tap copies it.
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(10),
-              onTap: () {
-                // Confirm first: the number is on screen either way, so a
-                // platform without a clipboard still gets its message —
-                // and a test binding that never answers the channel does
-                // not stall the feedback.
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${detail.applicationNo} copied'),
-                  ),
-                );
-                Clipboard.setData(
-                  ClipboardData(text: detail.applicationNo),
-                ).ignore();
-              },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 11,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: TeamakColors.accent),
-                    ),
-                    child: Text(
-                      detail.applicationNo,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.5,
-                        color: TeamakColors.accent,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 7),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 2),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Icon(
-                          Icons.copy_rounded,
-                          size: 13,
-                          color: Colors.white.withValues(alpha: 0.7),
-                        ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            'Tap the number to copy it',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.7),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
+          // Greeting: a gray lead-in with the member's name in brand
+          // blue — the reference's coloured name, in Teamak's palette.
+          // Wrap, not Row: a long name drops to its own line at 320px
+          // instead of pushing past the edge.
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 4,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: <Widget>[
-              // Gold pill on the dark hero: the status reads at a glance,
-              // same weight the preview banner gives its own strip.
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 7,
+              Text(
+                lead,
+                style: const TextStyle(
+                  color: TeamakColors.subtle,
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w600,
                 ),
-                decoration: BoxDecoration(
-                  color: TeamakColors.accent,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  statusLabel(status),
+              ),
+              if (firstName.isNotEmpty)
+                Text(
+                  firstName,
                   style: const TextStyle(
-                    color: TeamakColors.primaryDark,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13.5,
+                    color: TeamakColors.primary,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.25),
-                  ),
-                ),
-                child: Text(
-                  'Submitted ${_stamp(detail.createdAt).split(' ').first}',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
             ],
           ),
-          if (fresh) ...<Widget>[
-            const SizedBox(height: 12),
-            Text(
-              'Keep this number safe. Our team will contact you for '
-              'verification before any approval.',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.75),
-                fontSize: 13.5,
-                height: 1.4,
-              ),
+          const SizedBox(height: 8),
+          // The headline: the programme leads in ink, the promise is the
+          // coloured word — same two-tone construction as the reference.
+          Text.rich(
+            TextSpan(
+              children: <TextSpan>[
+                const TextSpan(
+                  text: 'Your Teamak ',
+                  style: TextStyle(
+                    color: TeamakColors.ink,
+                    fontSize: 27,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                ),
+                const TextSpan(
+                  text: 'Journey',
+                  style: TextStyle(
+                    color: TeamakColors.primary,
+                    fontSize: 27,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            fresh
+                ? 'Keep this number safe. Our team will contact you for '
+                    'verification before any approval.'
+                : 'Track your application from submission to rider '
+                    'ownership.',
+            style: const TextStyle(
+              color: TeamakColors.subtle,
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
         ],
       ),
     );
@@ -1534,6 +1411,11 @@ class _FundingRow extends StatelessWidget {
 /// The four numbers an applicant checks first: where it stands, on what,
 /// since when, and what comes next — the glanceable row that member
 /// dashboards are built around.
+/// The four numbers the reference layout leads with — status, the number
+/// the applicant quotes to us, when they applied, and what comes next —
+/// as white cards with a tinted icon, an uppercase label and a bold
+/// value. Nothing is invented: a figure the record does not hold is
+/// simply not drawn.
 class _StatStrip extends StatelessWidget {
   const _StatStrip({required this.detail});
 
@@ -1557,85 +1439,176 @@ class _StatStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= 680;
-    final tiles = <(String, String, Color)>[
-      ('Status', statusLabel(detail.status), TeamakColors.primary),
-      (
-        'Programme',
-        _shortProgramme(programmeLabel(detail.programmeId)),
-        TeamakColors.ink,
+    final kpis = <_Kpi>[
+      _Kpi(
+        icon: switch (detail.status) {
+          'approved' => Icons.verified_rounded,
+          'not_approved' => Icons.cancel_rounded,
+          'further_review' => Icons.search_rounded,
+          _ => Icons.hourglass_top_rounded,
+        },
+        tint: TeamakColors.primary,
+        label: 'APPLICATION STATUS',
+        value: statusLabel(detail.status),
+        valueColor: TeamakColors.primary,
       ),
-      (
-        'Submitted',
-        _stamp(detail.createdAt).split(' ').first,
-        TeamakColors.ink,
+      _Kpi(
+        icon: Icons.badge_rounded,
+        tint: TeamakColors.accentDark,
+        label: 'APPLICATION NUMBER',
+        value: detail.applicationNo,
+        copy: detail.applicationNo,
       ),
-      ('Next milestone', _milestone, TeamakColors.accentDark),
+      _Kpi(
+        icon: Icons.event_rounded,
+        tint: TeamakColors.subtle,
+        label: 'SUBMITTED',
+        value: _stamp(detail.createdAt).split(' ').first,
+      ),
+      _Kpi(
+        icon: Icons.flag_rounded,
+        tint: TeamakColors.accentDark,
+        label: 'NEXT MILESTONE',
+        value: _milestone,
+        valueColor: TeamakColors.accentDark,
+      ),
     ];
 
-    Widget tile((String, String, Color) data) => Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-            decoration: BoxDecoration(
-              color: TeamakColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: TeamakColors.border),
+    Widget card(_Kpi kpi) {
+      final box = Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: TeamakColors.border),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: TeamakColors.primary.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Row(
               children: <Widget>[
-                Text(
-                  data.$1,
-                  style: const TextStyle(
-                    color: TeamakColors.subtle,
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  data.$2,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                    height: 1.25,
-                    color: data.$3,
-                  ),
-                ),
+                Icon(kpi.icon, color: kpi.tint, size: 24),
+                const Spacer(),
+                // A copy glyph on the number card — the affordance the
+                // old hero gave its own tap-to-copy chip.
+                if (kpi.copy != null)
+                  Icon(Icons.copy_rounded, size: 15, color: TeamakColors.dim),
               ],
             ),
+            const SizedBox(height: 12),
+            // Labels are allowed to wrap to two lines, the way the
+            // reference's longest label does; IntrinsicHeight keeps the
+            // cards in a row the same height regardless.
+            Text(
+              kpi.label,
+              style: const TextStyle(
+                color: TeamakColors.subtle,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 6),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                kpi.value,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 16.5,
+                  fontWeight: FontWeight.w800,
+                  height: 1.2,
+                  color: kpi.valueColor ?? TeamakColors.ink,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      // The number is both the applicant's credential and what they
+      // quote to us on WhatsApp — one tap copies it, feedback first so a
+      // platform without a clipboard still gets its message.
+      if (kpi.copy == null) return box;
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('${kpi.copy} copied')),
+            );
+            Clipboard.setData(ClipboardData(text: kpi.copy!)).ignore();
+          },
+          child: box,
+        ),
+      );
+    }
+
+    Widget pair(_Kpi first, _Kpi second) => IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(child: card(first)),
+              const SizedBox(width: 12),
+              Expanded(child: card(second)),
+            ],
           ),
         );
 
-    // Two tiles per row on a phone; one row of four on anything wider.
+    // Two cards per row on a phone; one row of four on anything wider.
     if (wide) {
-      return Row(
-        children: <Widget>[
-          for (var i = 0; i < tiles.length; i++) ...<Widget>[
-            if (i > 0) const SizedBox(width: 12),
-            tile(tiles[i]),
+      return IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            for (var i = 0; i < kpis.length; i++) ...<Widget>[
+              if (i > 0) const SizedBox(width: 12),
+              Expanded(child: card(kpis[i])),
+            ],
           ],
-        ],
+        ),
       );
     }
     return Column(
       children: <Widget>[
-        Row(
-          children: <Widget>[
-            tile(tiles[0]),
-            const SizedBox(width: 12),
-            tile(tiles[1]),
-          ],
-        ),
+        pair(kpis[0], kpis[1]),
         const SizedBox(height: 12),
-        Row(
-          children: <Widget>[
-            tile(tiles[2]),
-            const SizedBox(width: 12),
-            tile(tiles[3]),
-          ],
-        ),
+        pair(kpis[2], kpis[3]),
       ],
     );
   }
+}
+
+/// One KPI card: a tinted icon, an uppercase label, a bold value, and an
+/// optional value to copy when the card is tapped.
+class _Kpi {
+  const _Kpi({
+    required this.icon,
+    required this.tint,
+    required this.label,
+    required this.value,
+    this.valueColor,
+    this.copy,
+  });
+
+  final IconData icon;
+  final Color tint;
+  final String label;
+  final String value;
+  final Color? valueColor;
+  final String? copy;
 }
 
 /// Everything an applicant can do from the dashboard, gathered into one
@@ -1927,20 +1900,57 @@ class _NextStepsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final copy = _copy;
 
+    // The reference's status banner: a tinted icon chip beside a bold
+    // line and its explanation — what is happening right now, sitting
+    // directly under the numbers.
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
+        padding: const EdgeInsets.all(20),
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(
-              copy.title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: TeamakColors.primary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                switch (status) {
+                  'approved' => Icons.verified_rounded,
+                  'not_approved' => Icons.cancel_rounded,
+                  'further_review' => Icons.search_rounded,
+                  _ => Icons.hourglass_top_rounded,
+                },
+                color: TeamakColors.primary,
+                size: 24,
+              ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              copy.body,
-              style: const TextStyle(color: TeamakColors.subtle, height: 1.5),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    copy.title,
+                    style: const TextStyle(
+                      fontSize: 16.5,
+                      fontWeight: FontWeight.w800,
+                      color: TeamakColors.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    copy.body,
+                    style: const TextStyle(
+                      color: TeamakColors.subtle,
+                      fontSize: 13.5,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -2538,7 +2548,6 @@ String receiptText(ApplicationDetail detail) {
 /// 'Okada ownership — ₦650,000 / 3 months' → 'Okada ownership': the short
 /// form the dashboard's stat tiles carry; the full line lives in the
 /// summary below them.
-String _shortProgramme(String label) => label.split(' — ').first;
 
 /// Parses the stored `{applicationNo, phone}` pair, rejecting anything else
 /// so a corrupted value falls back to the tracking form instead of a map of

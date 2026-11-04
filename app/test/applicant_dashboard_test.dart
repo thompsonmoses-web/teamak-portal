@@ -149,13 +149,13 @@ void main() {
       findsWidgets,
       reason: 'the application number should headline the dashboard',
     );
-    expect(find.text('Welcome back, Adebayo'), findsOneWidget);
+    expect(find.textContaining('Welcome back'), findsOneWidget);
     expect(
       find.text('Under review'),
       findsWidgets,
-      reason: 'the status shows in the hero pill, the stat tile and more',
+      reason: 'the status leads the KPI card, the banner and the record rows',
     );
-    expect(find.text('Next milestone'), findsOneWidget);
+    expect(find.text('NEXT MILESTONE'), findsOneWidget);
     expect(
       find.text('01/12/2026'),
       findsWidgets,
@@ -164,7 +164,7 @@ void main() {
     expect(
       find.text('Okada ownership'),
       findsWidgets,
-      reason: 'the plan name shows in the stat tile and the plan card',
+      reason: 'the plan name shows in the plan card',
     );
     expect(find.text('Application journey'), findsOneWidget);
     expect(
@@ -367,7 +367,7 @@ void main() {
     );
 
     expect(find.text('Dashboard locked'), findsOneWidget);
-    expect(find.text('Welcome back, Adebayo'), findsNothing);
+    expect(find.textContaining('Welcome back'), findsNothing);
 
     await tester.enterText(find.byType(TextField), '9999');
     await tester.tap(find.text('Unlock'));
@@ -378,7 +378,7 @@ void main() {
     await tester.enterText(find.byType(TextField), '1234');
     await tester.tap(find.text('Unlock'));
     await tester.pumpAndSettle();
-    expect(find.text('Welcome back, Adebayo'), findsOneWidget);
+    expect(find.textContaining('Welcome back'), findsOneWidget);
   });
 
   testWidgets('forgot PIN turns the lock off rather than blocking',
@@ -392,7 +392,7 @@ void main() {
     await tester.tap(find.text('Forgot PIN? Remove it'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Welcome back, Adebayo'), findsOneWidget);
+    expect(find.textContaining('Welcome back'), findsOneWidget);
     expect(find.text('PIN lock turned off for this device.'), findsOneWidget);
   });
 
@@ -460,7 +460,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // The same record comes back — the dashboard stays up, re-checked.
-    expect(find.text('Welcome back, Adebayo'), findsOneWidget);
+    expect(find.textContaining('Welcome back'), findsOneWidget);
     expect(find.textContaining('Checked'), findsOneWidget);
   });
 
