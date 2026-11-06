@@ -17,21 +17,21 @@ import '../widgets/shell.dart';
 /// Status value → the words both staff pages and the applicant's dashboard
 /// show for it.
 String statusLabel(String status) => switch (status) {
-      'submitted' => 'Submitted',
-      'pending' => 'Under review',
-      'approved' => 'Approved',
-      'not_approved' => 'Not approved',
-      'further_review' => 'Further review',
-      _ => status,
-    };
+  'submitted' => 'Submitted',
+  'pending' => 'Under review',
+  'approved' => 'Approved',
+  'not_approved' => 'Not approved',
+  'further_review' => 'Further review',
+  _ => status,
+};
 
 /// Programme id → the display line used on receipts and dashboards.
 String programmeLabel(String programmeId) => switch (programmeId) {
-      'okada_650' => 'Okada ownership — ₦650,000 / 3 months',
-      'okada_400' => 'Okada ownership — ₦400,000 / 6 months',
-      'maruwa_2300' => 'Maruwa ownership — ₦2,300,000 / 3 months',
-      _ => programmeId,
-    };
+  'okada_650' => 'Okada ownership — ₦650,000 / 3 months',
+  'okada_400' => 'Okada ownership — ₦400,000 / 6 months',
+  'maruwa_2300' => 'Maruwa ownership — ₦2,300,000 / 3 months',
+  _ => programmeId,
+};
 
 /// What the applicant sees after applying: their receipt, live status, the
 /// history of changes and what happens next.
@@ -96,6 +96,22 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
 
   /// When the record on screen was last pulled from the API.
   DateTime? _checkedAt;
+
+  /// Which rail entry is lit — the section it last jumped to.
+  String _navId = 'overview';
+
+  /// One key per real section card, so the desktop rail can scroll the
+  /// page to it. Every entry the rail offers exists as a card below;
+  /// nothing is navigable that is not on the screen.
+  final Map<String, GlobalKey> _anchors = <String, GlobalKey>{
+    'overview': GlobalKey(),
+    'journey': GlobalKey(),
+    'plan': GlobalKey(),
+    'handover': GlobalKey(),
+    'history': GlobalKey(),
+    'support': GlobalKey(),
+    'account': GlobalKey(),
+  };
 
   @override
   void initState() {
@@ -213,7 +229,8 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
       await _forget();
       if (!mounted) return;
       setState(() {
-        _error = 'We could not load your saved application — '
+        _error =
+            'We could not load your saved application — '
             'enter your details below.';
       });
     }
@@ -299,7 +316,8 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = 'Could not reach the server. Check your connection and '
+        _error =
+            'Could not reach the server. Check your connection and '
             'try again.';
       });
     }
@@ -333,6 +351,54 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
     }
   }
 
+  /// Lights the tapped rail entry and brings its section into view. The
+  /// body builds eagerly, so every anchor has a context to scroll to.
+  void _jumpTo(String id) {
+    setState(() => _navId = id);
+    final anchor = _anchors[id]?.currentContext;
+    if (anchor == null) return;
+    Scrollable.ensureVisible(
+      anchor,
+      duration: const Duration(milliseconds: 380),
+      curve: Curves.easeOutCubic,
+      alignment: 0.05,
+    );
+  }
+
+  /// The member's first initial, for the rail and top-bar avatars.
+  String get _initial {
+    final name = '${_detail?.application['fullName'] ?? ''}'.trim();
+    return name.isEmpty ? '' : name.substring(0, 1).toUpperCase();
+  }
+
+  /// Signing out only drops this device's pointer — the application stays
+  /// with Teamak — so the confirmation says exactly that, and the same
+  /// forget the form offers does the work.
+  Future<void> _confirmSignOut() async {
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Sign out of this device?'),
+        content: const Text(
+          'Your application stays with Teamak — this device just stops '
+          'remembering it. You can track it again with your number and '
+          'your phone number.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Stay'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Sign out'),
+          ),
+        ],
+      ),
+    );
+    if (leave == true && mounted) await _forget();
+  }
+
   Future<void> _submitForm() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     await _track(
@@ -344,31 +410,69 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
 
   /// The lock in front of a PIN-protected dashboard on this device.
   Widget _buildPinGate() => _PinGate(
-        pin: _pin!,
-        onUnlocked: () => setState(() => _pinUnlocked = true),
-        onRemovePin: _clearPin,
-      );
+    pin: _pin!,
+    onUnlocked: () => setState(() => _pinUnlocked = true),
+    onRemovePin: _clearPin,
+  );
 
   @override
   Widget build(BuildContext context) {
     final detail = _detail;
+    final locked = detail != null && !_pinUnlocked && _pin != null;
+
+    // The loaded, unlocked dashboard wears the reference's app shell on a
+    // desktop — member rail, white top bar, tinted canvas. The tracking
+    // form, the loading spinner and the PIN lock keep the site chrome:
+    // they are ways in, not the overview itself.
+    if (detail != null && !locked && MediaQuery.sizeOf(context).width >= 1024) {
+      return _buildFrame(detail);
+    }
 
     return AppShell(
       title: 'Application dashboard',
       child: detail != null
-          ? (!_pinUnlocked && _pin != null)
-              ? _buildPinGate()
-              : _buildDashboard(context, detail)
+          ? locked
+                ? _buildPinGate()
+                : _dashboardBody(context, detail)
           : _loading && !_viaForm
-              ? const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(48),
-                    child: CircularProgressIndicator(),
-                  ),
-                )
-              : _buildForm(context),
+          ? const Center(
+              child: Padding(
+                padding: EdgeInsets.all(48),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          : _buildForm(context),
     );
   }
+
+  /// The desktop chrome: a fixed member rail, a white top bar and the
+  /// overview on its tinted canvas — the layout the reference screenshots
+  /// show, built only from navigation this page really has.
+  Widget _buildFrame(ApplicationDetail detail) => Scaffold(
+    body: Row(
+      children: <Widget>[
+        _SideNav(
+          detail: detail,
+          selected: _navId,
+          onSelect: _jumpTo,
+          onSignOut: _confirmSignOut,
+        ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              _TopBar(
+                loading: _loading,
+                onRefresh: _refresh,
+                initial: _initial,
+              ),
+              Expanded(child: _dashboardBody(context, detail)),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 
   // ── Tracking form ──────────────────────────────────────────────────────
 
@@ -443,10 +547,14 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(Icons.search),
-                        label: Text(_loading ? 'Searching…' : 'Track application'),
+                        label: Text(
+                          _loading ? 'Searching…' : 'Track application',
+                        ),
                       ),
                     ],
                   ),
@@ -461,7 +569,10 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
 
   // ── Dashboard ──────────────────────────────────────────────────────────
 
-  Widget _buildDashboard(BuildContext context, ApplicationDetail detail) {
+  /// The overview itself — greeting, numbers, banner and every card — on
+  /// the tinted canvas the reference uses. One eagerly built scroll body,
+  /// so the desktop rail's jump-to-section always finds its anchor.
+  Widget _dashboardBody(BuildContext context, ApplicationDetail detail) {
     final application = detail.application;
     final official = detail.official;
     final width = MediaQuery.sizeOf(context).width;
@@ -470,132 +581,180 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
     // greet the applicant as a fresh submission.
     final fresh = widget.detail != null;
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 760),
-        child: ListView(
-          padding: EdgeInsets.all(wide ? 32 : 16),
-          children: <Widget>[
-            _OverviewHeader(detail: detail, fresh: fresh),
-            const SizedBox(height: 18),
-            _StatStrip(detail: detail),
-            const SizedBox(height: 16),
-            // What is happening right now sits directly under the numbers,
-            // before the deeper cards — the reference layout's order.
-            _NextStepsCard(
-              status: detail.status,
-              phone: _value(application, 'phoneNumber'),
-            ),
-            const SizedBox(height: 20),
-            _JourneyCard(status: detail.status),
-            const SizedBox(height: 20),
-            _PlanCard(programmeId: detail.programmeId),
-            const SizedBox(height: 20),
-            _CommitmentCard(application: application),
-            const SizedBox(height: 20),
-            // The approved rider's forward view — money and timing for
-            // the handover — sits beside the commitment it pays into.
-            if (detail.status == 'approved') ...<Widget>[
-              _HandoverCard(
-                official: official,
-                onReady: _chatOnWhatsApp,
-              ),
-              const SizedBox(height: 20),
-            ],
-            _ProgressCard(detail: detail),
-            if (_PreparationCard.appliesTo(application)) ...<Widget>[
-              const SizedBox(height: 20),
-              _PreparationCard(application: application),
-            ],
-            if (_hasOutcome(official)) ...<Widget>[
-              const SizedBox(height: 20),
-              _OutcomeCard(official: official, status: detail.status),
-            ],
-            const SizedBox(height: 20),
-            _QuickActionsCard(
-              onWhatsApp: _chatOnWhatsApp,
-              onInvite: _inviteRider,
-              onSave: _saveReceipt,
-              onTrackAnother: _forget,
-              showTrackAnother: !fresh,
-            ),
-            const SizedBox(height: 20),
-            _AccountCard(
-              applicationNo: detail.applicationNo,
-              remembered: _remembered,
-              pin: _pin,
-              onForget: _forget,
-              onSetPin: () async {
-                final saved = await showDialog<String>(
-                  context: context,
-                  builder: (_) => _PinSetupDialog(change: _pin != null),
-                );
-                if (saved == null || !mounted) return;
-                await _setPin(saved);
-              },
-              onClearPin: _clearPin,
-            ),
-            const SizedBox(height: 20),
-            Card(
-              child: Padding(
-                padding: EdgeInsets.all(wide ? 24 : 18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
+    return Container(
+      color: _dashboardCanvas,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 760),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(wide ? 32 : 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                KeyedSubtree(
+                  key: _anchors['overview'],
+                  child: _OverviewHeader(detail: detail, fresh: fresh),
+                ),
+                const SizedBox(height: 18),
+                _StatStrip(detail: detail),
+                const SizedBox(height: 16),
+                // What is happening right now sits directly under the numbers,
+                // before the deeper cards — the reference layout's order.
+                _NextStepsCard(
+                  status: detail.status,
+                  phone: _value(application, 'phoneNumber'),
+                ),
+                const SizedBox(height: 20),
+                KeyedSubtree(
+                  key: _anchors['journey'],
+                  child: _JourneyCard(status: detail.status),
+                ),
+                const SizedBox(height: 20),
+                KeyedSubtree(
+                  key: _anchors['plan'],
+                  child: _PlanCard(programmeId: detail.programmeId),
+                ),
+                const SizedBox(height: 20),
+                _CommitmentCard(application: application),
+                const SizedBox(height: 20),
+                // The approved rider's forward view — money and timing for
+                // the handover — sits beside the commitment it pays into.
+                if (detail.status == 'approved') ...<Widget>[
+                  KeyedSubtree(
+                    key: _anchors['handover'],
+                    child: _HandoverCard(
+                      official: official,
+                      onReady: _chatOnWhatsApp,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+                KeyedSubtree(
+                  key: _anchors['history'],
+                  child: _ProgressCard(detail: detail),
+                ),
+                if (_PreparationCard.appliesTo(application)) ...<Widget>[
+                  const SizedBox(height: 20),
+                  _PreparationCard(application: application),
+                ],
+                if (_hasOutcome(official)) ...<Widget>[
+                  const SizedBox(height: 20),
+                  _OutcomeCard(official: official, status: detail.status),
+                ],
+                const SizedBox(height: 20),
+                KeyedSubtree(
+                  key: _anchors['support'],
+                  child: _QuickActionsCard(
+                    onWhatsApp: _chatOnWhatsApp,
+                    onInvite: _inviteRider,
+                    onSave: _saveReceipt,
+                    onTrackAnother: _forget,
+                    showTrackAnother: !fresh,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                KeyedSubtree(
+                  key: _anchors['account'],
+                  child: _AccountCard(
+                    applicationNo: detail.applicationNo,
+                    remembered: _remembered,
+                    pin: _pin,
+                    onForget: _forget,
+                    onSetPin: () async {
+                      final saved = await showDialog<String>(
+                        context: context,
+                        builder: (_) => _PinSetupDialog(change: _pin != null),
+                      );
+                      if (saved == null || !mounted) return;
+                      await _setPin(saved);
+                    },
+                    onClearPin: _clearPin,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(wide ? 24 : 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        const Expanded(
-                          child: Text(
-                            'Your application',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        if (_checkedAt != null)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 4),
-                            child: Text(
-                              'Checked ${_clock(_checkedAt!)}',
-                              style: const TextStyle(
-                                color: TeamakColors.subtle,
-                                fontSize: 12.5,
+                        Row(
+                          children: <Widget>[
+                            const Expanded(
+                              child: Text(
+                                'Your application',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
-                          ),
-                        IconButton(
-                          onPressed: _loading ? null : _refresh,
-                          iconSize: 20,
-                          visualDensity: VisualDensity.compact,
-                          tooltip: 'Refresh',
-                          icon: _loading
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
+                            if (_checkedAt != null)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: Text(
+                                  'Checked ${_clock(_checkedAt!)}',
+                                  style: const TextStyle(
+                                    color: TeamakColors.subtle,
+                                    fontSize: 12.5,
                                   ),
-                                )
-                              : const Icon(Icons.refresh_rounded),
+                                ),
+                              ),
+                            IconButton(
+                              onPressed: _loading ? null : _refresh,
+                              iconSize: 20,
+                              visualDensity: VisualDensity.compact,
+                              tooltip: 'Refresh',
+                              icon: _loading
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.refresh_rounded),
+                            ),
+                          ],
                         ),
+                        const SizedBox(height: 12),
+                        _Row(
+                          label: 'Applicant',
+                          value: _value(application, 'fullName'),
+                        ),
+                        _Row(
+                          label: 'Phone',
+                          value: _value(application, 'phoneNumber'),
+                        ),
+                        _Row(
+                          label: 'Area / Community',
+                          value: _value(application, 'areaCommunity'),
+                        ),
+                        _Row(label: 'NIN', value: _value(application, 'nin')),
+                        _Row(
+                          label: 'Programme',
+                          value: programmeLabel(detail.programmeId),
+                        ),
+                        _Row(
+                          label: 'Park / Association',
+                          value: _value(application, 'parkAssociationName'),
+                        ),
+                        _Row(
+                          label: 'Submitted',
+                          value: _stamp(detail.createdAt),
+                        ),
+                        _Row(
+                          label: 'Status',
+                          value: statusLabel(detail.status),
+                        ),
+                        ..._riderGroup(application),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    _Row(label: 'Applicant', value: _value(application, 'fullName')),
-                    _Row(label: 'Phone', value: _value(application, 'phoneNumber')),
-                    _Row(label: 'Area / Community', value: _value(application, 'areaCommunity')),
-                    _Row(label: 'NIN', value: _value(application, 'nin')),
-                    _Row(label: 'Programme', value: programmeLabel(detail.programmeId)),
-                    _Row(label: 'Park / Association', value: _value(application, 'parkAssociationName')),
-                    _Row(label: 'Submitted', value: _stamp(detail.createdAt)),
-                    _Row(label: 'Status', value: statusLabel(detail.status)),
-                    ..._riderGroup(application),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -607,9 +766,8 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
     final filename = 'Teamak-${detail.applicationNo}.txt';
     try {
       saveTextDownload(filename, receiptText(detail));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Receipt saved — $filename')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Receipt saved — $filename')));
     } catch (_) {
       // No downloads here (or the browser blocked one): the dashboard
       // itself is the receipt, so say so rather than fail.
@@ -632,7 +790,7 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
       number: '2348023449126',
       text: detail == null
           ? 'Hello Teamak, I have a question about the Rider Ownership '
-              'Programme.'
+                'Programme.'
           : followUpText(detail.applicationNo, detail.status),
     );
   }
@@ -642,10 +800,11 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
   /// resolved against the current page, so it keeps this deployment's
   /// base path instead of falling to the domain root.
   Future<void> _inviteRider() => _openWhatsApp(
-        text: 'Riders wanted: apply for the Teamak Rider Ownership '
-            'Programme and own your machine. '
-            '${Uri.base.resolve('#/apply')}',
-      );
+    text:
+        'Riders wanted: apply for the Teamak Rider Ownership '
+        'Programme and own your machine. '
+        '${Uri.base.resolve('#/apply')}',
+  );
 
   Future<void> _openWhatsApp({String number = '', required String text}) async {
     final uri = Uri.parse(
@@ -670,6 +829,391 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
 
 // ── Pieces ───────────────────────────────────────────────────────────────
 
+/// The overview canvas — the reference's soft tint, in Teamak blue: on it
+/// the white cards read as cards instead of dissolving into the page.
+const Color _dashboardCanvas = Color(0xFFEDF3FC);
+
+/// The desktop rail: who is signed in, where to jump to, and the way out.
+/// Every entry scrolls a real card of this page into view — the rail
+/// navigates within one page, exactly like the reference layout, and
+/// offers no destination the dashboard does not contain.
+class _SideNav extends StatelessWidget {
+  const _SideNav({
+    required this.detail,
+    required this.selected,
+    required this.onSelect,
+    required this.onSignOut,
+  });
+
+  final ApplicationDetail detail;
+  final String selected;
+  final ValueChanged<String> onSelect;
+  final VoidCallback onSignOut;
+
+  /// MAIN — the overview's own sections, in the order they appear.
+  static const List<(String, IconData, String)> _main =
+      <(String, IconData, String)>[
+        ('overview', Icons.dashboard_outlined, 'Overview'),
+        ('journey', Icons.route_outlined, 'Journey'),
+        ('plan', Icons.directions_bike_outlined, 'My plan'),
+        ('history', Icons.timeline_outlined, 'Status history'),
+      ];
+
+  /// ACCOUNT — what this page lets the member do.
+  static const List<(String, IconData, String)> _account =
+      <(String, IconData, String)>[
+        ('support', Icons.support_agent_outlined, 'Support'),
+        ('account', Icons.settings_outlined, 'Account'),
+      ];
+
+  /// The status dot: brand blue while it moves, gold while it waits, red
+  /// once it stops — the reference's live dot, in Teamak's colours.
+  Color get _dot => switch (detail.status) {
+    'approved' => TeamakColors.primary,
+    'not_approved' => TeamakColors.danger,
+    _ => TeamakColors.accent,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final name = '${detail.application['fullName'] ?? ''}'.trim();
+    final initial = name.isEmpty ? '' : name.substring(0, 1).toUpperCase();
+    // Handover is a real card only on an approved record, so the rail
+    // offers the jump only then.
+    final entries = <(String, IconData, String)>[
+      ..._main,
+      if (detail.status == 'approved')
+        ('handover', Icons.local_shipping_outlined, 'Handover'),
+    ];
+
+    return Container(
+      width: 264,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(right: BorderSide(color: TeamakColors.border)),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // At normal window heights the rail fits whole and stays a plain
+          // column — which keeps the overview's own scroll view first in
+          // the tree. Only a short window scrolls the rail itself.
+          final bounded = constraints.hasBoundedHeight;
+          final fits = !bounded || constraints.maxHeight >= 680;
+          final column = Column(
+            mainAxisSize: bounded && fits ? MainAxisSize.max : MainAxisSize.min,
+            children: <Widget>[
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 20, 20, 16),
+                child: Row(
+                  children: <Widget>[
+                    _RailLogo(),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'TEAMAK GLOBAL\nSOLUTIONS',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          height: 1.15,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              // The member chip: avatar, name, the number they quote to
+              // us, and the live status dot.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+                child: Row(
+                  children: <Widget>[
+                    _Avatar(initial: initial, size: 42),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            name.isEmpty ? 'Applicant' : name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            detail.applicationNo,
+                            style: const TextStyle(
+                              color: TeamakColors.subtle,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: _dot,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const _RailSection('MAIN'),
+              for (final entry in entries)
+                _RailItem(entry: entry, selected: selected, onSelect: onSelect),
+              const _RailSection('ACCOUNT'),
+              for (final entry in _account)
+                _RailItem(entry: entry, selected: selected, onSelect: onSelect),
+              if (bounded && fits) const Spacer(),
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              _SignOutTile(onSignOut: onSignOut),
+            ],
+          );
+          if (fits) return column;
+          return SingleChildScrollView(child: column);
+        },
+      ),
+    );
+  }
+}
+
+/// One caps heading in the rail's navigation.
+class _RailSection extends StatelessWidget {
+  const _RailSection(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: TeamakColors.subtle,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+}
+
+/// One jump in the rail: the lit entry wears the brand tint, the rest
+/// stay quiet ink — the reference's active pill, in Teamak's palette.
+class _RailItem extends StatelessWidget {
+  const _RailItem({
+    required this.entry,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  final (String, IconData, String) entry;
+  final String selected;
+  final ValueChanged<String> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final on = selected == entry.$1;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      child: Material(
+        color: on
+            ? TeamakColors.primary.withValues(alpha: 0.08)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () => onSelect(entry.$1),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  entry.$2,
+                  size: 20,
+                  color: on ? TeamakColors.primary : TeamakColors.subtle,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    entry.$3,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: on ? FontWeight.w700 : FontWeight.w600,
+                      color: on ? TeamakColors.primaryDark : TeamakColors.ink,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The way out — dropping this device's pointer, after a confirmation
+/// that says the application itself stays put.
+class _SignOutTile extends StatelessWidget {
+  const _SignOutTile({required this.onSignOut});
+
+  final VoidCallback onSignOut;
+
+  @override
+  Widget build(BuildContext context) {
+    // Its own transparent Material: the rail's white background would
+    // otherwise swallow the tile's ink splash.
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        leading: const Icon(
+          Icons.logout_rounded,
+          size: 20,
+          color: TeamakColors.subtle,
+        ),
+        title: const Text(
+          'Sign out',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        onTap: onSignOut,
+      ),
+    );
+  }
+}
+
+/// The member's first initial in a circle — gold-ringed where the
+/// reference rings its avatar, plain beside the name in the rail.
+class _Avatar extends StatelessWidget {
+  const _Avatar({required this.initial, this.size = 40, this.ring = false});
+
+  final String initial;
+  final double size;
+  final bool ring;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: TeamakColors.primary,
+        border: Border.all(
+          color: ring ? TeamakColors.accent : Colors.transparent,
+          width: 2,
+        ),
+      ),
+      child: initial.isEmpty
+          ? Icon(Icons.person_rounded, color: Colors.white, size: size * 0.5)
+          : Text(
+              initial,
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: size * 0.4,
+              ),
+            ),
+    );
+  }
+}
+
+class _RailLogo extends StatelessWidget {
+  const _RailLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        color: TeamakColors.primary.withValues(alpha: 0.06),
+        padding: const EdgeInsets.all(3),
+        child: Image.asset(
+          'assets/teamak_logo.png',
+          height: 30,
+          width: 30,
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+}
+
+/// The reference's top bar: page title left, round controls right — ours
+/// carries only the real ones: refresh, and the member's avatar.
+class _TopBar extends StatelessWidget {
+  const _TopBar({
+    required this.loading,
+    required this.onRefresh,
+    required this.initial,
+  });
+
+  final bool loading;
+  final VoidCallback onRefresh;
+  final String initial;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 68,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: TeamakColors.border)),
+      ),
+      child: Row(
+        children: <Widget>[
+          const Text(
+            'Dashboard',
+            style: TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w800,
+              color: TeamakColors.ink,
+              letterSpacing: 0.2,
+            ),
+          ),
+          const Spacer(),
+          IconButton(
+            onPressed: loading ? null : onRefresh,
+            tooltip: 'Refresh',
+            icon: loading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh_rounded, size: 20),
+            style: IconButton.styleFrom(
+              fixedSize: const Size(40, 40),
+              backgroundColor: Colors.white,
+              foregroundColor: TeamakColors.ink,
+              side: const BorderSide(color: TeamakColors.border),
+              shape: const CircleBorder(),
+            ),
+          ),
+          const SizedBox(width: 12),
+          _Avatar(initial: initial, size: 40, ring: true),
+        ],
+      ),
+    );
+  }
+}
+
 /// The Section E checklist the applicant answered in the wizard, read back
 /// as visit preparation: what they told us is already sorted, and what
 /// still needs arranging before staff check the originals.
@@ -693,8 +1237,9 @@ class _PreparationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final answered =
-        _items.where((item) => application.containsKey(item.$1)).toList();
+    final answered = _items
+        .where((item) => application.containsKey(item.$1))
+        .toList();
 
     return Card(
       child: Padding(
@@ -776,8 +1321,8 @@ class _OverviewHeader extends StatelessWidget {
     final lead = firstName.isEmpty
         ? (fresh ? 'Welcome' : 'Welcome back')
         : fresh
-            ? 'Welcome, '
-            : 'Welcome back, ';
+        ? 'Welcome, '
+        : 'Welcome back, ';
 
     return Padding(
       padding: const EdgeInsets.only(top: 6, bottom: 2),
@@ -812,8 +1357,9 @@ class _OverviewHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          // The headline: the programme leads in ink, the promise is the
-          // coloured word — same two-tone construction as the reference.
+          // The headline: the programme leads in ink, the coloured word
+          // is the view itself — the same two-tone construction as the
+          // reference's "Your … Overview".
           Text.rich(
             TextSpan(
               children: <TextSpan>[
@@ -827,7 +1373,7 @@ class _OverviewHeader extends StatelessWidget {
                   ),
                 ),
                 const TextSpan(
-                  text: 'Journey',
+                  text: 'Overview',
                   style: TextStyle(
                     color: TeamakColors.primary,
                     fontSize: 27,
@@ -842,9 +1388,9 @@ class _OverviewHeader extends StatelessWidget {
           Text(
             fresh
                 ? 'Keep this number safe. Our team will contact you for '
-                    'verification before any approval.'
+                      'verification before any approval.'
                 : 'Track your application from submission to rider '
-                    'ownership.',
+                      'ownership.',
             style: const TextStyle(
               color: TeamakColors.subtle,
               fontSize: 14,
@@ -867,9 +1413,7 @@ class _ProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final events = detail.events.whereType<Map>().toList();
-    final lastTo = events.isEmpty
-        ? null
-        : '${events.last['toStatus'] ?? ''}';
+    final lastTo = events.isEmpty ? null : '${events.last['toStatus'] ?? ''}';
     // The current status is worth its own entry only when the recorded
     // history has not already ended on it.
     final showCurrent = lastTo == null || lastTo != detail.status;
@@ -898,7 +1442,6 @@ class _ProgressCard extends StatelessWidget {
                 when: _stamp(detail.createdAt),
                 current: true,
               ),
-
           ],
         ),
       ),
@@ -981,41 +1524,41 @@ class _JourneyCard extends StatelessWidget {
   ({double progress, int step, String stage, String hint}) get _journey =>
       switch (status) {
         'submitted' => (
-            progress: 0.15,
-            step: 1,
-            stage: 'Submitted',
-            hint: 'Received — queued for the team\u2019s first look.',
-          ),
+          progress: 0.15,
+          step: 1,
+          stage: 'Submitted',
+          hint: 'Received — queued for the team\u2019s first look.',
+        ),
         'pending' => (
-            progress: 0.4,
-            step: 2,
-            stage: 'Under review',
-            hint: 'Checks underway — keep your phone reachable.',
-          ),
+          progress: 0.4,
+          step: 2,
+          stage: 'Under review',
+          hint: 'Checks underway — keep your phone reachable.',
+        ),
         'further_review' => (
-            progress: 0.65,
-            step: 3,
-            stage: 'Further review',
-            hint: 'A little more time is needed to finish our checks.',
-          ),
+          progress: 0.65,
+          step: 3,
+          stage: 'Further review',
+          hint: 'A little more time is needed to finish our checks.',
+        ),
         'approved' => (
-            progress: 1,
-            step: 4,
-            stage: 'Approved',
-            hint: 'Deposit and handover are next — we will call you.',
-          ),
+          progress: 1,
+          step: 4,
+          stage: 'Approved',
+          hint: 'Deposit and handover are next — we will call you.',
+        ),
         'not_approved' => (
-            progress: 1,
-            step: 4,
-            stage: 'Not approved',
-            hint: 'Not this time — the next intake is always open.',
-          ),
+          progress: 1,
+          step: 4,
+          stage: 'Not approved',
+          hint: 'Not this time — the next intake is always open.',
+        ),
         _ => (
-            progress: 0.15,
-            step: 1,
-            stage: statusLabel(status),
-            hint: 'We will update this as your application moves.',
-          ),
+          progress: 0.15,
+          step: 1,
+          stage: statusLabel(status),
+          hint: 'We will update this as your application moves.',
+        ),
       };
 
   @override
@@ -1040,10 +1583,7 @@ class _JourneyCard extends StatelessWidget {
                 const Expanded(
                   child: Text(
                     'Application journey',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                   ),
                 ),
                 Text(
@@ -1069,10 +1609,7 @@ class _JourneyCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               journey.stage,
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 15,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
             ),
             const SizedBox(height: 4),
             Text(
@@ -1257,10 +1794,7 @@ class _CommitmentCard extends StatelessWidget {
                 const Expanded(
                   child: Text(
                     'Your commitment',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                   ),
                 ),
                 // Same gold pill the plan's duration badge wears.
@@ -1454,20 +1988,20 @@ class _StatStrip extends StatelessWidget {
       ),
       _Kpi(
         icon: Icons.badge_rounded,
-        tint: TeamakColors.accentDark,
+        tint: TeamakColors.accent,
         label: 'APPLICATION NUMBER',
         value: detail.applicationNo,
         copy: detail.applicationNo,
       ),
       _Kpi(
         icon: Icons.event_rounded,
-        tint: TeamakColors.subtle,
+        tint: TeamakColors.primaryDark,
         label: 'SUBMITTED',
         value: _stamp(detail.createdAt).split(' ').first,
       ),
       _Kpi(
         icon: Icons.flag_rounded,
-        tint: TeamakColors.accentDark,
+        tint: TeamakColors.accent,
         label: 'NEXT MILESTONE',
         value: _milestone,
         valueColor: TeamakColors.accentDark,
@@ -1496,7 +2030,18 @@ class _StatStrip extends StatelessWidget {
           children: <Widget>[
             Row(
               children: <Widget>[
-                Icon(kpi.icon, color: kpi.tint, size: 24),
+                // The reference's circular icon chip — solid brand tint
+                // with a white glyph, alternating blue and gold down the
+                // row.
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: kpi.tint,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(kpi.icon, color: Colors.white, size: 22),
+                ),
                 const Spacer(),
                 // A copy glyph on the number card — the affordance the
                 // old hero gave its own tap-to-copy chip.
@@ -1546,9 +2091,8 @@ class _StatStrip extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('${kpi.copy} copied')),
-            );
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text('${kpi.copy} copied')));
             Clipboard.setData(ClipboardData(text: kpi.copy!)).ignore();
           },
           child: box,
@@ -1557,15 +2101,15 @@ class _StatStrip extends StatelessWidget {
     }
 
     Widget pair(_Kpi first, _Kpi second) => IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Expanded(child: card(first)),
-              const SizedBox(width: 12),
-              Expanded(child: card(second)),
-            ],
-          ),
-        );
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Expanded(child: card(first)),
+          const SizedBox(width: 12),
+          Expanded(child: card(second)),
+        ],
+      ),
+    );
 
     // Two cards per row on a phone; one row of four on anything wider.
     if (wide) {
@@ -1774,7 +2318,7 @@ class _HandoverCard extends StatelessWidget {
             else
               const Text(
                 'Our team will confirm your delivery date — keep your phone '
-                    'reachable.',
+                'reachable.',
                 style: TextStyle(color: TeamakColors.subtle, height: 1.5),
               ),
             if (amount != null) ...<Widget>[
@@ -1802,11 +2346,11 @@ class _HandoverCard extends StatelessWidget {
 }
 
 bool _hasOutcome(Map<String, dynamic> official) => const <String>[
-      'verificationDate',
-      'approvedProgrammeId',
-      'approvedAmount',
-      'expectedDeliveryDate',
-    ].any((key) => official[key] != null && '${official[key]}'.isNotEmpty);
+  'verificationDate',
+  'approvedProgrammeId',
+  'approvedAmount',
+  'expectedDeliveryDate',
+].any((key) => official[key] != null && '${official[key]}'.isNotEmpty);
 
 class _OutcomeCard extends StatelessWidget {
   const _OutcomeCard({required this.official, required this.status});
@@ -1817,7 +2361,8 @@ class _OutcomeCard extends StatelessWidget {
   /// card — this record card keeps only what has already happened.
   final String status;
 
-  bool _present(String key) => official[key] != null && '${official[key]}'.isNotEmpty;
+  bool _present(String key) =>
+      official[key] != null && '${official[key]}'.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -1826,11 +2371,17 @@ class _OutcomeCard extends StatelessWidget {
       if (_present('verificationDate'))
         ('Verification date', displayDate('${official['verificationDate']}')),
       if (_present('approvedProgrammeId'))
-        ('Approved programme', programmeLabel('${official['approvedProgrammeId']}')),
+        (
+          'Approved programme',
+          programmeLabel('${official['approvedProgrammeId']}'),
+        ),
       if (!isApproved && _present('approvedAmount'))
         ('Approved amount', '₦${_group('${official['approvedAmount']}')}'),
       if (!isApproved && _present('expectedDeliveryDate'))
-        ('Expected delivery', displayDate('${official['expectedDeliveryDate']}')),
+        (
+          'Expected delivery',
+          displayDate('${official['expectedDeliveryDate']}'),
+        ),
     ];
     if (rows.isEmpty) return const SizedBox.shrink();
 
@@ -1845,8 +2396,7 @@ class _OutcomeCard extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 12),
-            for (final (label, value) in rows)
-              _Row(label: label, value: value),
+            for (final (label, value) in rows) _Row(label: label, value: value),
           ],
         ),
       ),
@@ -1861,40 +2411,40 @@ class _NextStepsCard extends StatelessWidget {
   final String phone;
 
   ({String title, String body}) get _copy => switch (status) {
-        'pending' => (
-            title: 'Under review',
-            body:
-                'Your application is with our verification team. Please keep '
-                    'your phone reachable on $phone — we will call to confirm '
-                    'your details.',
-          ),
-        'further_review' => (
-            title: 'More time needed',
-            body:
-                'We need a little more time to complete our checks. We will '
-                    'reach out if we need anything from you.',
-          ),
-        'approved' => (
-            title: 'Approved',
-            body:
-                'Congratulations — your application has been approved. Our '
-                    'team will contact you about your deposit and the '
-                    'handover of your vehicle.',
-          ),
-        'not_approved' => (
-            title: 'Not approved',
-            body:
-                'This time we could not approve your application. Contact us '
-                    'if you would like to know why, or apply again when the '
-                    'next intake opens.',
-          ),
-        _ => (
-            title: 'Application received',
-            body:
-                'Our team is reviewing your application. We will contact you '
-                    'on $phone for verification before any approval.',
-          ),
-      };
+    'pending' => (
+      title: 'Under review',
+      body:
+          'Your application is with our verification team. Please keep '
+          'your phone reachable on $phone — we will call to confirm '
+          'your details.',
+    ),
+    'further_review' => (
+      title: 'More time needed',
+      body:
+          'We need a little more time to complete our checks. We will '
+          'reach out if we need anything from you.',
+    ),
+    'approved' => (
+      title: 'Approved',
+      body:
+          'Congratulations — your application has been approved. Our '
+          'team will contact you about your deposit and the '
+          'handover of your vehicle.',
+    ),
+    'not_approved' => (
+      title: 'Not approved',
+      body:
+          'This time we could not approve your application. Contact us '
+          'if you would like to know why, or apply again when the '
+          'next intake opens.',
+    ),
+    _ => (
+      title: 'Application received',
+      body:
+          'Our team is reviewing your application. We will contact you '
+          'on $phone for verification before any approval.',
+    ),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -2129,10 +2679,7 @@ class _AccountCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             if (pin == null)
-              OutlinedButton(
-                onPressed: onSetPin,
-                child: const Text('Turn on'),
-              )
+              OutlinedButton(onPressed: onSetPin, child: const Text('Turn on'))
             else
               Wrap(
                 spacing: 8,
@@ -2192,8 +2739,8 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
       _error = first.length != 4 || second.length != 4
           ? 'Enter 4 digits in both fields.'
           : first != second
-              ? 'PINs do not match.'
-              : null;
+          ? 'PINs do not match.'
+          : null;
     });
     if (_error == null) Navigator.of(context).pop(first);
   }
@@ -2202,24 +2749,23 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
     TextEditingController controller,
     String label, {
     bool showErrors = false,
-  }) =>
-      TextField(
-        controller: controller,
-        obscureText: true,
-        maxLength: 4,
-        keyboardType: TextInputType.number,
-        inputFormatters: <TextInputFormatter>[
-          FilteringTextInputFormatter.digitsOnly,
-        ],
-        textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 20, letterSpacing: 6),
-        decoration: InputDecoration(
-          labelText: label,
-          counterText: '',
-          // One place to read the problem: under the confirm field.
-          errorText: showErrors ? _error : null,
-        ),
-      );
+  }) => TextField(
+    controller: controller,
+    obscureText: true,
+    maxLength: 4,
+    keyboardType: TextInputType.number,
+    inputFormatters: <TextInputFormatter>[
+      FilteringTextInputFormatter.digitsOnly,
+    ],
+    textAlign: TextAlign.center,
+    style: const TextStyle(fontSize: 20, letterSpacing: 6),
+    decoration: InputDecoration(
+      labelText: label,
+      counterText: '',
+      // One place to read the problem: under the confirm field.
+      errorText: showErrors ? _error : null,
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -2443,23 +2989,25 @@ List<Widget> _riderGroup(Map<String, dynamic> app) {
 /// Section B codes → the wizard's own words; values already written in
 /// readable form pass through untouched.
 String _operationLabel(String raw) => switch (raw) {
-      'okada' => 'Okada (motorcycle)',
-      'maruwa' => 'Maruwa (tricycle)',
-      _ => raw,
-    };
+  'okada' => 'Okada (motorcycle)',
+  'maruwa' => 'Maruwa (tricycle)',
+  _ => raw,
+};
 
 String _experienceLabel(String raw) => switch (raw) {
-      'lt1' => 'Less than 1 year',
-      'y1_3' => '1–3 years',
-      'y4_6' => '4–6 years',
-      'y7_plus' => '7+ years',
-      _ => raw,
-    };
+  'lt1' => 'Less than 1 year',
+  'y1_3' => '1–3 years',
+  'y4_6' => '4–6 years',
+  'y7_plus' => '7+ years',
+  _ => raw,
+};
 
 /// Renders an ISO timestamp as `YYYY-MM-DD HH:MM`, tolerating short values.
 String _stamp(Object? raw) {
   final text = '${raw ?? ''}'.replaceAll('T', ' ');
-  return text.length >= 16 ? text.substring(0, 16) : (text.isEmpty ? '—' : text);
+  return text.length >= 16
+      ? text.substring(0, 16)
+      : (text.isEmpty ? '—' : text);
 }
 
 /// 14:05 → `14:05` — the clock time the record on screen was checked.
@@ -2483,9 +3031,11 @@ String _group(String digits) {
 /// to the delivery.
 String? dueCountdown(DateTime due, {DateTime? now}) {
   final ref = now ?? DateTime.now();
-  final days = DateTime(due.year, due.month, due.day)
-      .difference(DateTime(ref.year, ref.month, ref.day))
-      .inDays;
+  final days = DateTime(
+    due.year,
+    due.month,
+    due.day,
+  ).difference(DateTime(ref.year, ref.month, ref.day)).inDays;
   return switch (days) {
     0 => 'due today',
     1 => 'due tomorrow',
@@ -2498,13 +3048,16 @@ String? dueCountdown(DateTime due, {DateTime? now}) {
 /// announces readiness for the deposit and handover, a declined one asks
 /// for the reason and the next intake, everyone else simply follows up.
 String followUpText(String applicationNo, String status) {
-  final head = 'Hello Teamak, I am following up on my application '
+  final head =
+      'Hello Teamak, I am following up on my application '
       '$applicationNo (${statusLabel(status)}).';
   return switch (status) {
-    'approved' => '$head I am ready for the deposit and handover — '
-        'please tell me the next step.',
-    'not_approved' => '$head Please, can you tell me why, and when '
-        'I may apply again?',
+    'approved' =>
+      '$head I am ready for the deposit and handover — '
+          'please tell me the next step.',
+    'not_approved' =>
+      '$head Please, can you tell me why, and when '
+          'I may apply again?',
     _ => head,
   };
 }

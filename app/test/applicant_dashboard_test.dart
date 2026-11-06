@@ -59,25 +59,23 @@ const String _phone = '08023449126';
 /// Stands in for the tracking endpoint: the fixture pair answers with the
 /// record, everything else gets the API's 404.
 ApiClient _api({String? fixture}) => ApiClient(
-      client: MockClient((request) async {
-        const jsonHeaders = <String, String>{'content-type': 'application/json'};
-        if (request.url.path != '/track') {
-          return http.Response('{"error":"Not found."}', 404,
-              headers: jsonHeaders);
-        }
-        final body = jsonDecode(request.body) as Map<String, dynamic>;
-        final ok = body['applicationNo'] == _number &&
-            body['phone'] == _phone;
-        if (!ok) {
-          return http.Response(
-            '{"error":"No application matches that number and phone number."}',
-            404,
-            headers: jsonHeaders,
-          );
-        }
-        return http.Response(fixture ?? _tracked, 200, headers: jsonHeaders);
-      }),
-    );
+  client: MockClient((request) async {
+    const jsonHeaders = <String, String>{'content-type': 'application/json'};
+    if (request.url.path != '/track') {
+      return http.Response('{"error":"Not found."}', 404, headers: jsonHeaders);
+    }
+    final body = jsonDecode(request.body) as Map<String, dynamic>;
+    final ok = body['applicationNo'] == _number && body['phone'] == _phone;
+    if (!ok) {
+      return http.Response(
+        '{"error":"No application matches that number and phone number."}',
+        404,
+        headers: jsonHeaders,
+      );
+    }
+    return http.Response(fixture ?? _tracked, 200, headers: jsonHeaders);
+  }),
+);
 
 /// The same record moved to approved, carrying the Section I answers
 /// staff record at that point — derived so it cannot drift from the base.
@@ -109,12 +107,13 @@ void main() {
     String? pin,
     String? fixture,
     String initialPath = '/dashboard',
+    Size size = const Size(800, 4800),
   }) async {
     // The dashboard is one long scroll, so mount it on a viewport tall
-    // enough to hold it: off-screen children of a ListView are not built,
-    // and finders would silently miss the summary below the hero. Height
+    // enough to hold it: a tap has to hit-test its target, and the
+    // tracking form's list still builds its children lazily. Height
     // grows with every card — keep it clear of the current total.
-    tester.view.physicalSize = const Size(800, 4800);
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
@@ -123,7 +122,10 @@ void main() {
     if (pin != null) saved['teamak_dashboard_pin'] = pin;
     SharedPreferences.setMockInitialValues(saved);
     await tester.pumpWidget(
-      TeamakApp(initialPath: initialPath, api: _api(fixture: fixture)),
+      TeamakApp(
+        initialPath: initialPath,
+        api: _api(fixture: fixture),
+      ),
     );
     await tester.pumpAndSettle();
   }
@@ -137,8 +139,9 @@ void main() {
     expect(find.text('Phone number'), findsOneWidget);
   });
 
-  testWidgets('a stored reference returns straight to the dashboard',
-      (tester) async {
+  testWidgets('a stored reference returns straight to the dashboard', (
+    tester,
+  ) async {
     await pumpDashboard(
       tester,
       storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
@@ -172,7 +175,10 @@ void main() {
       findsOneWidget,
       reason: 'a pending application sits on the second of four steps',
     );
-    expect(find.text('Checks underway — keep your phone reachable.'), findsOneWidget);
+    expect(
+      find.text('Checks underway — keep your phone reachable.'),
+      findsOneWidget,
+    );
     expect(find.text('Your plan'), findsOneWidget);
     expect(find.text('₦650,000 deposit'), findsOneWidget);
     expect(find.text('Your commitment'), findsOneWidget);
@@ -256,18 +262,12 @@ void main() {
   test('due countdown reads the days in chip words', () {
     DateTime at(int y, int m, int d) => DateTime(y, m, d);
 
-    expect(
-      dueCountdown(at(2026, 11, 1), now: at(2026, 10, 27)),
-      'in 5 days',
-    );
+    expect(dueCountdown(at(2026, 11, 1), now: at(2026, 10, 27)), 'in 5 days');
     expect(
       dueCountdown(at(2026, 11, 1), now: at(2026, 10, 31)),
       'due tomorrow',
     );
-    expect(
-      dueCountdown(at(2026, 11, 1), now: at(2026, 11, 1)),
-      'due today',
-    );
+    expect(dueCountdown(at(2026, 11, 1), now: at(2026, 11, 1)), 'due today');
     expect(
       dueCountdown(at(2026, 11, 1), now: at(2026, 11, 5)),
       isNull,
@@ -320,14 +320,12 @@ void main() {
     await tester.tap(find.text('Save receipt'));
     await tester.pumpAndSettle();
 
-    expect(
-      find.textContaining('screenshot this dashboard'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('screenshot this dashboard'), findsOneWidget);
   });
 
-  testWidgets('a tracking link opens the form with the number filled in',
-      (tester) async {
+  testWidgets('a tracking link opens the form with the number filled in', (
+    tester,
+  ) async {
     await pumpDashboard(tester, initialPath: '/dashboard?no=$_number');
 
     expect(find.text('Find your application'), findsOneWidget);
@@ -358,8 +356,9 @@ void main() {
     expect(find.textContaining('Welcome back'), findsNothing);
   });
 
-  testWidgets('a device PIN locks the dashboard until it is entered',
-      (tester) async {
+  testWidgets('a device PIN locks the dashboard until it is entered', (
+    tester,
+  ) async {
     await pumpDashboard(
       tester,
       storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
@@ -381,8 +380,9 @@ void main() {
     expect(find.textContaining('Welcome back'), findsOneWidget);
   });
 
-  testWidgets('forgot PIN turns the lock off rather than blocking',
-      (tester) async {
+  testWidgets('forgot PIN turns the lock off rather than blocking', (
+    tester,
+  ) async {
     await pumpDashboard(
       tester,
       storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
@@ -412,8 +412,9 @@ void main() {
     expect(find.text('Tracking link copied'), findsOneWidget);
   });
 
-  testWidgets('the PIN can be turned on and off from the account card',
-      (tester) async {
+  testWidgets('the PIN can be turned on and off from the account card', (
+    tester,
+  ) async {
     await pumpDashboard(
       tester,
       storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
@@ -464,8 +465,7 @@ void main() {
     expect(find.textContaining('Checked'), findsOneWidget);
   });
 
-  testWidgets('an approved application gets the handover card',
-      (tester) async {
+  testWidgets('an approved application gets the handover card', (tester) async {
     await pumpDashboard(
       tester,
       storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
@@ -474,8 +474,11 @@ void main() {
 
     expect(find.text('Your handover'), findsOneWidget);
     expect(find.text('Expected delivery'), findsOneWidget);
-    expect(find.text('15/06/2030'), findsWidgets,
-        reason: 'the date shows in the milestone tile and the handover row');
+    expect(
+      find.text('15/06/2030'),
+      findsWidgets,
+      reason: 'the date shows in the milestone tile and the handover row',
+    );
     expect(
       find.text('Approved amount'),
       findsOneWidget,
@@ -490,8 +493,9 @@ void main() {
     expect(find.text('20/10/2026'), findsOneWidget);
   });
 
-  testWidgets('approved with nothing recorded waits instead of inventing',
-      (tester) async {
+  testWidgets('approved with nothing recorded waits instead of inventing', (
+    tester,
+  ) async {
     await pumpDashboard(
       tester,
       storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
@@ -535,16 +539,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text(
-        'No application matches that number and phone number.',
-      ),
+      find.text('No application matches that number and phone number.'),
       findsOneWidget,
     );
     expect(find.text('Find your application'), findsOneWidget);
   });
 
-  testWidgets('a phone that fails validation never reaches the API',
-      (tester) async {
+  testWidgets('a phone that fails validation never reaches the API', (
+    tester,
+  ) async {
     await pumpDashboard(tester);
 
     final fields = find.byType(TextFormField);
@@ -558,5 +561,88 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Find your application'), findsOneWidget);
+  });
+
+  testWidgets('a desktop viewport wears the rail, the top bar and the '
+      'tinted canvas', (tester) async {
+    await pumpDashboard(
+      tester,
+      storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
+      size: const Size(1280, 900),
+    );
+
+    // The reference's chrome: a top-bar title, sectioned rail, and the
+    // way out — every entry a real section of this one page.
+    expect(find.text('Dashboard'), findsOneWidget);
+    expect(find.text('MAIN'), findsOneWidget);
+    expect(find.text('ACCOUNT'), findsOneWidget);
+    expect(find.text('Overview'), findsOneWidget);
+    expect(find.text('Journey'), findsOneWidget);
+    expect(find.text('My plan'), findsOneWidget);
+    expect(find.text('Status history'), findsOneWidget);
+    expect(find.text('Support'), findsOneWidget);
+    expect(find.text('Account'), findsOneWidget);
+    expect(find.text('Sign out'), findsOneWidget);
+
+    // The rail's short labels must not shadow the cards they jump to:
+    // each card keeps its own title, exactly once.
+    expect(find.text('Your plan'), findsOneWidget);
+    expect(find.text('Quick actions'), findsOneWidget);
+    expect(find.text('Progress'), findsOneWidget);
+    expect(find.text('Account & security'), findsOneWidget);
+
+    // The member chip carries the real name and number, and the KPI
+    // row still headlines its four labels.
+    expect(find.text('Adebayo Ogundele'), findsWidgets);
+    expect(find.text(_number), findsWidgets);
+    expect(find.text('APPLICATION STATUS'), findsOneWidget);
+    expect(find.text('NEXT MILESTONE'), findsOneWidget);
+  });
+
+  testWidgets('a rail entry scrolls its section into view', (tester) async {
+    await pumpDashboard(
+      tester,
+      storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
+      size: const Size(1280, 900),
+    );
+
+    final scrollable = tester.state<ScrollableState>(
+      find.byType(Scrollable).first,
+    );
+    final before = scrollable.position.pixels;
+    expect(before, 0);
+
+    await tester.tap(find.text('Account'));
+    await tester.pumpAndSettle();
+
+    expect(
+      scrollable.position.pixels,
+      greaterThan(before),
+      reason: 'the rail should bring the account section into view',
+    );
+  });
+
+  testWidgets('the rail signs out only after a confirmation', (tester) async {
+    await pumpDashboard(
+      tester,
+      storedRef: '{"applicationNo":"$_number","phone":"$_phone"}',
+      size: const Size(1280, 900),
+    );
+
+    await tester.tap(find.text('Sign out'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign out of this device?'), findsOneWidget);
+    expect(
+      find.textContaining('this device just stops remembering'),
+      findsOneWidget,
+    );
+
+    // Staying changes nothing: the overview is still on screen.
+    await tester.tap(find.text('Stay'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign out of this device?'), findsNothing);
+    expect(find.text('MAIN'), findsOneWidget);
   });
 }
