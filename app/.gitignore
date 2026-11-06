@@ -48,6 +48,7 @@ app.*.map.json
 **/android/local.properties
 **/android/.gradle/
 **/android/.cxx/
+**/android/.kotlin/
 
 # Widget Preview related
 .widget_preview/
