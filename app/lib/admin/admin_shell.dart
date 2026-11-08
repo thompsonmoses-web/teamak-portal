@@ -115,13 +115,25 @@ class AdminShell extends StatelessWidget {
     final wide = MediaQuery.sizeOf(context).width >= 900;
 
     return Scaffold(
-      drawer: wide ? null : Drawer(child: _Sidebar(session: session, currentPath: currentPath, badges: badges)),
-      backgroundColor: TeamakColors.surface,
+      drawer: wide
+          ? null
+          : Drawer(
+              child: _Sidebar(
+                session: session,
+                currentPath: currentPath,
+                badges: badges,
+              ),
+            ),
+      backgroundColor: TeamakColors.surface2,
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           if (wide)
-            _Sidebar(session: session, currentPath: currentPath, badges: badges),
+            _Sidebar(
+              session: session,
+              currentPath: currentPath,
+              badges: badges,
+            ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -176,7 +188,11 @@ class _Sidebar extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(20, 20, 20, 18),
               child: Row(
                 children: <Widget>[
-                  Icon(Icons.local_shipping_rounded, color: TeamakColors.accent, size: 26),
+                  Icon(
+                    Icons.local_shipping_rounded,
+                    color: TeamakColors.accent,
+                    size: 26,
+                  ),
                   SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -343,15 +359,22 @@ class _SidebarTile extends StatelessWidget {
                 ),
                 if (badge != null && badge! > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
-                      color: active ? TeamakColors.primaryDark : TeamakColors.accent,
+                      color: active
+                          ? TeamakColors.primaryDark
+                          : TeamakColors.accent,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       '$badge',
                       style: TextStyle(
-                        color: active ? TeamakColors.accent : TeamakColors.primaryDark,
+                        color: active
+                            ? TeamakColors.accent
+                            : TeamakColors.primaryDark,
                         fontWeight: FontWeight.w800,
                         fontSize: 11,
                       ),
@@ -399,8 +422,10 @@ class _TopBar extends StatelessWidget {
                 isDense: true,
                 filled: true,
                 fillColor: Colors.white,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(999),
                   borderSide: const BorderSide(color: TeamakColors.border),
@@ -434,7 +459,10 @@ class _TopBar extends StatelessWidget {
               Expanded(
                 child: Text(
                   title!,
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               )
@@ -463,18 +491,36 @@ class _TopBar extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
-              const PopupMenuItem<String>(value: 'public', child: Text('View public site')),
-              const PopupMenuItem<String>(value: 'signout', child: Text('Sign out')),
+              const PopupMenuItem<String>(
+                value: 'public',
+                child: Text('View public site'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'signout',
+                child: Text('Sign out'),
+              ),
             ],
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: TeamakColors.primary,
-              child: Text(
-                _initials(staff?.fullName),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
+            child: Container(
+              // Gold ring, like the member dashboard's avatar: the
+              // account is the same person-centred brand cue.
+              padding: const EdgeInsets.all(2),
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+                border: Border.fromBorderSide(
+                  BorderSide(color: TeamakColors.accent, width: 2),
+                ),
+              ),
+              child: CircleAvatar(
+                radius: 14,
+                backgroundColor: TeamakColors.primary,
+                child: Text(
+                  _initials(staff?.fullName),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ),
@@ -525,18 +571,27 @@ class AdminPageHeader extends StatelessWidget {
       children: <Widget>[
         Text(
           title,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, height: 1.2),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            height: 1.2,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           subtitle,
-          style: const TextStyle(color: TeamakColors.subtle, height: 1.4),
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.78),
+            height: 1.4,
+          ),
         ),
       ],
     );
 
-    if (actions.isEmpty) return heading;
-    return wide
+    final body = actions.isEmpty
+        ? heading
+        : wide
         ? Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -553,5 +608,75 @@ class AdminPageHeader extends StatelessWidget {
               Wrap(spacing: 8, runSpacing: 8, children: actions),
             ],
           );
+
+    // The console opens on the same gradient block the member's
+    // dashboard wears — brand blue into deep blue, soft bubbles behind
+    // the words, gold and white for whatever actions the page passes.
+    return Theme(
+      data: Theme.of(context).copyWith(
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            backgroundColor: TeamakColors.accent,
+            foregroundColor: TeamakColors.primaryDark,
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.white,
+            side: const BorderSide(color: Colors.white54),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(foregroundColor: Colors.white),
+        ),
+      ),
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: <Color>[TeamakColors.primary, TeamakColors.primaryDark],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: TeamakColors.primary.withValues(alpha: 0.25),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: <Widget>[
+            Positioned(
+              top: -34,
+              right: -14,
+              child: Container(
+                width: 130,
+                height: 130,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.07),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -40,
+              right: 96,
+              child: Container(
+                width: 84,
+                height: 84,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.05),
+                ),
+              ),
+            ),
+            Padding(padding: EdgeInsets.all(wide ? 24 : 18), child: body),
+          ],
+        ),
+      ),
+    );
   }
 }

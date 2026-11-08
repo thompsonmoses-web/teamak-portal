@@ -31,7 +31,8 @@ class AdminSettingsPage extends StatelessWidget {
         children: <Widget>[
           const AdminPageHeader(
             title: 'Settings',
-            subtitle: 'The registered details riders see, and your own account.',
+            subtitle:
+                'The registered details riders see, and your own account.',
           ),
           const SizedBox(height: 18),
           _InfoCard(
@@ -54,7 +55,10 @@ class AdminSettingsPage extends StatelessWidget {
               ('Okada ownership', '₦650,000 one-time deposit · 3 months'),
               ('Okada ownership', '₦400,000 one-time deposit · 6 months'),
               ('Maruwa ownership', '₦2,300,000 one-time deposit · 3 months'),
-              ('Vehicle', '1 brand-new Bajaj motorcycle or approved Maruwa tricycle'),
+              (
+                'Vehicle',
+                '1 brand-new Bajaj motorcycle or approved Maruwa tricycle',
+              ),
               (
                 'Further payment',
                 'None — the deposit covers the machine under the '
@@ -160,7 +164,9 @@ class _InfoCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: TeamakColors.accent.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: TeamakColors.accent.withValues(alpha: 0.4)),
+                  border: Border.all(
+                    color: TeamakColors.accent.withValues(alpha: 0.4),
+                  ),
                 ),
                 child: Text(
                   note!,
@@ -173,7 +179,10 @@ class _InfoCard extends StatelessWidget {
                 ),
               ),
             ],
-            if (footer != null) ...<Widget>[const SizedBox(height: 12), footer!],
+            if (footer != null) ...<Widget>[
+              const SizedBox(height: 12),
+              footer!,
+            ],
           ],
         ),
       ),
@@ -204,11 +213,7 @@ class _SettingRow extends StatelessWidget {
     if (!wide) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          labelWidget,
-          const SizedBox(height: 2),
-          valueWidget,
-        ],
+        children: <Widget>[labelWidget, const SizedBox(height: 2), valueWidget],
       );
     }
     return Row(

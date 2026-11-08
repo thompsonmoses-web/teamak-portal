@@ -55,7 +55,8 @@ class _AdminMessagesPageState extends State<AdminMessagesPage> {
     final number = digits.length > 10 && digits.startsWith('234')
         ? digits
         : '234${digits.replaceFirst(RegExp(r'^0'), '')}';
-    final text = 'Hello ${message.name}, thank you for contacting Teamak '
+    final text =
+        'Hello ${message.name}, thank you for contacting Teamak '
         'about "${message.subject.isEmpty ? 'your enquiry' : message.subject}".';
     final uri = Uri.parse(
       'https://wa.me/$number?text=${Uri.encodeComponent(text)}',
@@ -65,7 +66,9 @@ class _AdminMessagesPageState extends State<AdminMessagesPage> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('WhatsApp could not open — call ${message.phone}.')),
+        SnackBar(
+          content: Text('WhatsApp could not open — call ${message.phone}.'),
+        ),
       );
     }
   }
@@ -77,12 +80,14 @@ class _AdminMessagesPageState extends State<AdminMessagesPage> {
     final filtered = query.isEmpty
         ? _messages
         : _messages
-            .where((message) =>
-                message.name.toLowerCase().contains(query) ||
-                message.subject.toLowerCase().contains(query) ||
-                message.message.toLowerCase().contains(query) ||
-                message.phone.contains(query))
-            .toList();
+              .where(
+                (message) =>
+                    message.name.toLowerCase().contains(query) ||
+                    message.subject.toLowerCase().contains(query) ||
+                    message.message.toLowerCase().contains(query) ||
+                    message.phone.contains(query),
+              )
+              .toList();
 
     return AdminShell(
       session: _session,
@@ -121,7 +126,10 @@ class _AdminMessagesPageState extends State<AdminMessagesPage> {
           if (_error != null)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Text('$_error', style: const TextStyle(color: TeamakColors.danger)),
+              child: Text(
+                '$_error',
+                style: const TextStyle(color: TeamakColors.danger),
+              ),
             ),
           if (_loading)
             const Padding(
@@ -140,11 +148,17 @@ class _AdminMessagesPageState extends State<AdminMessagesPage> {
               padding: const EdgeInsets.only(bottom: 10),
               child: Text(
                 '${filtered.length} message${filtered.length == 1 ? '' : 's'}',
-                style: const TextStyle(color: TeamakColors.subtle, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  color: TeamakColors.subtle,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             for (final message in filtered)
-              _MessageCard(message: message, onWhatsApp: () => _openWhatsApp(message)),
+              _MessageCard(
+                message: message,
+                onWhatsApp: () => _openWhatsApp(message),
+              ),
           ],
           const SizedBox(height: 24),
         ],
@@ -173,20 +187,31 @@ class _MessageCard extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    message.subject.isEmpty ? 'General enquiry' : message.subject,
-                    style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800),
+                    message.subject.isEmpty
+                        ? 'General enquiry'
+                        : message.subject,
+                    style: const TextStyle(
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
                 Text(
                   shortDate(message.createdAt),
-                  style: const TextStyle(color: TeamakColors.subtle, fontSize: 12.5),
+                  style: const TextStyle(
+                    color: TeamakColors.subtle,
+                    fontSize: 12.5,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 4),
             Text(
               message.name,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13.5,
+              ),
             ),
             const SizedBox(height: 10),
             Text(message.message, style: const TextStyle(height: 1.5)),
@@ -203,9 +228,8 @@ class _MessageCard extends StatelessWidget {
                 ),
                 if (message.email.isNotEmpty)
                   OutlinedButton.icon(
-                    onPressed: () => launchUrl(
-                      Uri.parse('mailto:${message.email}'),
-                    ),
+                    onPressed: () =>
+                        launchUrl(Uri.parse('mailto:${message.email}')),
                     icon: const Icon(Icons.mail_outline, size: 18),
                     label: Text(message.email),
                   ),

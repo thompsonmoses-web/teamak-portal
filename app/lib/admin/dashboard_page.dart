@@ -7,6 +7,13 @@ import '../../theme.dart';
 import 'admin_shell.dart';
 import 'widgets.dart';
 
+/// The console's secondary actions: Teamak blue outlines, matching the
+/// member dashboard's quick actions.
+final ButtonStyle _blueOutline = OutlinedButton.styleFrom(
+  foregroundColor: TeamakColors.primary,
+  side: BorderSide(color: TeamakColors.primary.withValues(alpha: 0.45)),
+);
+
 /// The administrator's landing page: the four numbers that matter, the newest
 /// applications, the queue waiting on a decision, and the messages riders
 /// sent.
@@ -65,7 +72,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= 900;
     final counts = _applications?.counts ?? const <String, dynamic>{};
-    final review = (counts['submitted'] as num? ?? 0).toInt() +
+    final review =
+        (counts['submitted'] as num? ?? 0).toInt() +
         (counts['pending'] as num? ?? 0).toInt();
     final padding = EdgeInsets.all(wide ? 26 : 16);
 
@@ -181,7 +189,7 @@ class _StatRow extends StatelessWidget {
         label: 'Messages',
         value: '$messageCount',
         icon: Icons.mail_outline,
-        colour: TeamakColors.primary,
+        colour: TeamakColors.accent,
       ),
     ];
 
@@ -201,7 +209,10 @@ class _StatRow extends StatelessWidget {
         runSpacing: 14,
         children: <Widget>[
           for (final card in cards)
-            SizedBox(width: (MediaQuery.sizeOf(context).width - 60) / 2, child: card),
+            SizedBox(
+              width: (MediaQuery.sizeOf(context).width - 60) / 2,
+              child: card,
+            ),
         ],
       );
     }
@@ -233,10 +244,13 @@ class _PendingPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final waiting = (applications?.results ?? const <ApplicationSummary>[])
-        .where((item) => item.status == 'submitted' || item.status == 'pending')
-        .toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final waiting =
+        (applications?.results ?? const <ApplicationSummary>[])
+            .where(
+              (item) => item.status == 'submitted' || item.status == 'pending',
+            )
+            .toList()
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     final shown = waiting.take(6).toList();
 
     return Card(
@@ -245,23 +259,18 @@ class _PendingPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                const Expanded(
-                  child: Text(
-                    'Waiting for a decision',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
-                  ),
+            AdminCardTitle(
+              'Waiting for a decision',
+              icon: Icons.hourglass_top_rounded,
+              tint: TeamakColors.accentDark,
+              trailing: Text(
+                '$review in the queue',
+                style: const TextStyle(
+                  color: TeamakColors.subtle,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12.5,
                 ),
-                Text(
-                  '$review in the queue',
-                  style: const TextStyle(
-                    color: TeamakColors.subtle,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12.5,
-                  ),
-                ),
-              ],
+              ),
             ),
             const SizedBox(height: 4),
             if (shown.isEmpty)
@@ -280,7 +289,9 @@ class _PendingPanel extends StatelessWidget {
                   contentPadding: EdgeInsets.zero,
                   onTap: () => onOpen(item),
                   leading: CircleAvatar(
-                    backgroundColor: TeamakColors.primary.withValues(alpha: 0.1),
+                    backgroundColor: TeamakColors.primary.withValues(
+                      alpha: 0.1,
+                    ),
                     child: const Icon(
                       Icons.person_outline,
                       color: TeamakColors.primary,
@@ -294,7 +305,10 @@ class _PendingPanel extends StatelessWidget {
                     '${item.applicationNo} · ${item.areaCommunity}',
                     style: const TextStyle(fontSize: 12.5),
                   ),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                    color: TeamakColors.dim,
+                  ),
                 ),
               Align(
                 alignment: Alignment.centerRight,
@@ -327,9 +341,9 @@ class _RecentApplications extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final recent = (applications?.results ?? const <ApplicationSummary>[])
-        .toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final recent =
+        (applications?.results ?? const <ApplicationSummary>[]).toList()
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     final shown = recent.take(6).toList();
 
     return Card(
@@ -338,20 +352,15 @@ class _RecentApplications extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                const Expanded(
-                  child: Text(
-                    'Newest applications',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: onSeeAll,
-                  icon: const Icon(Icons.open_in_new, size: 16),
-                  label: const Text('View all'),
-                ),
-              ],
+            AdminCardTitle(
+              'Newest applications',
+              icon: Icons.fiber_new_outlined,
+              tint: TeamakColors.primary,
+              trailing: TextButton.icon(
+                onPressed: onSeeAll,
+                icon: const Icon(Icons.open_in_new, size: 16),
+                label: const Text('View all'),
+              ),
             ),
             const SizedBox(height: 4),
             if (shown.isEmpty)
@@ -403,20 +412,15 @@ class _RecentMessages extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                const Expanded(
-                  child: Text(
-                    'Latest messages',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: onSeeAll,
-                  icon: const Icon(Icons.open_in_new, size: 16),
-                  label: const Text('View all'),
-                ),
-              ],
+            AdminCardTitle(
+              'Latest messages',
+              icon: Icons.mail_outline,
+              tint: TeamakColors.accent,
+              trailing: TextButton.icon(
+                onPressed: onSeeAll,
+                icon: const Icon(Icons.open_in_new, size: 16),
+                label: const Text('View all'),
+              ),
             ),
             const SizedBox(height: 4),
             if (recent.isEmpty)
@@ -434,12 +438,19 @@ class _RecentMessages extends StatelessWidget {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   onTap: onSeeAll,
-                  leading: const CircleAvatar(
-                    backgroundColor: TeamakColors.surface2,
-                    child: Icon(Icons.mail_outline, color: TeamakColors.primary),
+                  leading: CircleAvatar(
+                    backgroundColor: TeamakColors.accent.withValues(
+                      alpha: 0.14,
+                    ),
+                    child: const Icon(
+                      Icons.mail_outline,
+                      color: TeamakColors.accentDark,
+                    ),
                   ),
                   title: Text(
-                    message.subject.isEmpty ? 'General enquiry' : message.subject,
+                    message.subject.isEmpty
+                        ? 'General enquiry'
+                        : message.subject,
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   subtitle: Text(
@@ -477,31 +488,35 @@ class _QuickActionsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text(
+            const AdminCardTitle(
               'Quick actions',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+              icon: Icons.bolt_rounded,
+              tint: TeamakColors.primaryDark,
             ),
             const SizedBox(height: 14),
             Wrap(
               spacing: 10,
               runSpacing: 10,
               children: <Widget>[
-                FilledButton.tonalIcon(
+                FilledButton.icon(
                   onPressed: onApplicants,
                   icon: const Icon(Icons.groups_outlined),
                   label: const Text('Review applicants'),
                 ),
                 OutlinedButton.icon(
+                  style: _blueOutline,
                   onPressed: onMessages,
                   icon: const Icon(Icons.mail_outline),
                   label: const Text('Read messages'),
                 ),
                 OutlinedButton.icon(
+                  style: _blueOutline,
                   onPressed: onStaff,
                   icon: const Icon(Icons.badge_outlined),
                   label: const Text('Manage staff'),
                 ),
                 OutlinedButton.icon(
+                  style: _blueOutline,
                   onPressed: onPublicSite,
                   icon: const Icon(Icons.public),
                   label: const Text('View public site'),

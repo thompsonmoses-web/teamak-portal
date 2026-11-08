@@ -73,7 +73,8 @@ class _AdminProgrammesPageState extends State<AdminProgrammesPage> {
         children: <Widget>[
           AdminPageHeader(
             title: 'Programmes',
-            subtitle: 'The ownership tracks on offer and how many riders chose each.',
+            subtitle:
+                'The ownership tracks on offer and how many riders chose each.',
             actions: <Widget>[
               OutlinedButton.icon(
                 onPressed: _loading ? null : _load,
@@ -86,7 +87,10 @@ class _AdminProgrammesPageState extends State<AdminProgrammesPage> {
           if (_error != null)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Text('$_error', style: const TextStyle(color: TeamakColors.danger)),
+              child: Text(
+                '$_error',
+                style: const TextStyle(color: TeamakColors.danger),
+              ),
             ),
           if (_loading)
             const Padding(
@@ -97,7 +101,9 @@ class _AdminProgrammesPageState extends State<AdminProgrammesPage> {
             for (final programme in _programmes) ...<Widget>[
               _ProgrammeCard(
                 programme: programme,
-                applications: all.where((item) => item.programmeId == programme.id).toList(),
+                applications: all
+                    .where((item) => item.programmeId == programme.id)
+                    .toList(),
               ),
               const SizedBox(height: 16),
             ],
@@ -117,8 +123,9 @@ class _ProgrammeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final approved =
-        applications.where((item) => item.status == 'approved').length;
+    final approved = applications
+        .where((item) => item.status == 'approved')
+        .length;
     final waiting = applications
         .where((item) => item.status == 'submitted' || item.status == 'pending')
         .length;
@@ -173,10 +180,7 @@ class _ProgrammeCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 14),
-            Text(
-              programme.asset,
-              style: const TextStyle(height: 1.5),
-            ),
+            Text(programme.asset, style: const TextStyle(height: 1.5)),
             const SizedBox(height: 16),
             Wrap(
               spacing: 10,

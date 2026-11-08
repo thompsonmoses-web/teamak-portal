@@ -50,9 +50,11 @@ class _AdminStaffPageState extends State<AdminStaffPage> {
       if (mounted) setState(() => _staff = staff);
     } on ApiException catch (error) {
       if (mounted) {
-        setState(() => _error = error.statusCode == 403
-            ? 'Administrator access is required.'
-            : error.message);
+        setState(
+          () => _error = error.statusCode == 403
+              ? 'Administrator access is required.'
+              : error.message,
+        );
       }
     } catch (error) {
       if (mounted) setState(() => _error = '$error');
@@ -71,8 +73,10 @@ class _AdminStaffPageState extends State<AdminStaffPage> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${created['fullName']} can now sign in as '
-            '${created['role'] == 'admin' ? 'an administrator' : 'a reviewer'}.'),
+        content: Text(
+          '${created['fullName']} can now sign in as '
+          '${created['role'] == 'admin' ? 'an administrator' : 'a reviewer'}.',
+        ),
       ),
     );
   }
@@ -92,7 +96,8 @@ class _AdminStaffPageState extends State<AdminStaffPage> {
         children: <Widget>[
           AdminPageHeader(
             title: 'Staff',
-            subtitle: 'Who can sign in to the review console, and what they can do.',
+            subtitle:
+                'Who can sign in to the review console, and what they can do.',
             actions: <Widget>[
               OutlinedButton.icon(
                 onPressed: _loading ? null : _load,
@@ -117,7 +122,10 @@ class _AdminStaffPageState extends State<AdminStaffPage> {
                   children: <Widget>[
                     Text(
                       'Administrator access required',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     SizedBox(height: 6),
                     Text(
@@ -179,7 +187,8 @@ class _AdminStaffPageState extends State<AdminStaffPage> {
                       for (final member in _staff)
                         _StaffRow(
                           member: member,
-                          isSelf: member['username'] == _session.staff?.username,
+                          isSelf:
+                              member['username'] == _session.staff?.username,
                         ),
                     ],
                   ),
@@ -194,13 +203,20 @@ class _AdminStaffPageState extends State<AdminStaffPage> {
                   children: <Widget>[
                     Text(
                       'Manage accounts',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Add a reviewer, change someone’s role or reset a password. '
                       'A password change ends that person’s sessions.',
-                      style: TextStyle(color: TeamakColors.subtle, fontSize: 13, height: 1.4),
+                      style: TextStyle(
+                        color: TeamakColors.subtle,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     OutlinedButton.icon(
@@ -256,7 +272,9 @@ class _StaffRow extends StatelessWidget {
         isSelf ? '$fullName (you)' : fullName,
         style: const TextStyle(fontWeight: FontWeight.w700),
       ),
-      subtitle: Text('@$username${joined.length >= 10 ? ' · joined ${joined.substring(0, 10)}' : ''}'),
+      subtitle: Text(
+        '@$username${joined.length >= 10 ? ' · joined ${joined.substring(0, 10)}' : ''}',
+      ),
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(

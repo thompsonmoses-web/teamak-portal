@@ -115,7 +115,10 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
           if (_error != null)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Text('$_error', style: const TextStyle(color: TeamakColors.danger)),
+              child: Text(
+                '$_error',
+                style: const TextStyle(color: TeamakColors.danger),
+              ),
             ),
           if (_loading)
             const Padding(
@@ -154,9 +157,17 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
               rows: <(String, int, Color)>[
                 ('Submitted', count('submitted'), statusColour('submitted')),
                 ('Under review', count('pending'), statusColour('pending')),
-                ('Further review', count('further_review'), statusColour('further_review')),
+                (
+                  'Further review',
+                  count('further_review'),
+                  statusColour('further_review'),
+                ),
                 ('Approved', approved, statusColour('approved')),
-                ('Not approved', count('not_approved'), statusColour('not_approved')),
+                (
+                  'Not approved',
+                  count('not_approved'),
+                  statusColour('not_approved'),
+                ),
               ],
               total: total,
             ),
@@ -168,7 +179,9 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                 for (final programme in _programmes)
                   (
                     programme.label,
-                    all.where((item) => item.programmeId == programme.id).length,
+                    all
+                        .where((item) => item.programmeId == programme.id)
+                        .length,
                     isMaruwa(programme.id)
                         ? TeamakColors.accentDark
                         : TeamakColors.primary,
@@ -185,12 +198,18 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                   children: <Widget>[
                     const Text(
                       'Applicants by area',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     const Text(
                       'Where riders told us they live and operate.',
-                      style: TextStyle(color: TeamakColors.subtle, fontSize: 13),
+                      style: TextStyle(
+                        color: TeamakColors.subtle,
+                        fontSize: 13,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     if (areas.isEmpty)
@@ -211,7 +230,9 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                                 flex: 3,
                                 child: Text(
                                   entry.key,
-                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -223,9 +244,10 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                                     value: total == 0 ? 0 : entry.value / total,
                                     minHeight: 8,
                                     backgroundColor: TeamakColors.surface3,
-                                    valueColor: const AlwaysStoppedAnimation<Color>(
-                                      TeamakColors.primary,
-                                    ),
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                          TeamakColors.primary,
+                                        ),
                                   ),
                                 ),
                               ),
@@ -235,7 +257,9 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                                 child: Text(
                                   '${entry.value}',
                                   textAlign: TextAlign.end,
-                                  style: const TextStyle(fontWeight: FontWeight.w800),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
                               ),
                             ],

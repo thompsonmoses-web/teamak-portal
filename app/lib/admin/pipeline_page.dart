@@ -76,7 +76,10 @@ class _AdminPipelinePageState extends State<AdminPipelinePage> {
           if (_error != null)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Text('$_error', style: const TextStyle(color: TeamakColors.danger)),
+              child: Text(
+                '$_error',
+                style: const TextStyle(color: TeamakColors.danger),
+              ),
             ),
           if (_loading)
             const Padding(
@@ -130,17 +133,26 @@ class _StageSection extends StatelessWidget {
                 Container(
                   width: 10,
                   height: 10,
-                  decoration: BoxDecoration(color: colour, shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                    color: colour,
+                    shape: BoxShape.circle,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     statusText(status),
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: colour.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(999),

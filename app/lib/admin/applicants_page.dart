@@ -13,7 +13,11 @@ import 'widgets.dart';
 /// Opening a row hands over to the existing staff review page, so the
 /// decision workflow, audit trail and official section stay in one place.
 class AdminApplicantsPage extends StatefulWidget {
-  const AdminApplicantsPage({super.key, required this.session, this.initialQuery});
+  const AdminApplicantsPage({
+    super.key,
+    required this.session,
+    this.initialQuery,
+  });
 
   final Session session;
 
@@ -123,12 +127,30 @@ class _AdminApplicantsPageState extends State<AdminApplicantsPage> {
                   DropdownButton<String>(
                     value: _status,
                     items: const <DropdownMenuItem<String>>[
-                      DropdownMenuItem<String>(value: '', child: Text('All statuses')),
-                      DropdownMenuItem<String>(value: 'submitted', child: Text('Submitted')),
-                      DropdownMenuItem<String>(value: 'pending', child: Text('Under review')),
-                      DropdownMenuItem<String>(value: 'approved', child: Text('Approved')),
-                      DropdownMenuItem<String>(value: 'further_review', child: Text('Further review')),
-                      DropdownMenuItem<String>(value: 'not_approved', child: Text('Not approved')),
+                      DropdownMenuItem<String>(
+                        value: '',
+                        child: Text('All statuses'),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'submitted',
+                        child: Text('Submitted'),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'pending',
+                        child: Text('Under review'),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'approved',
+                        child: Text('Approved'),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'further_review',
+                        child: Text('Further review'),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'not_approved',
+                        child: Text('Not approved'),
+                      ),
                     ],
                     onChanged: (value) {
                       setState(() => _status = value ?? '');
@@ -143,7 +165,10 @@ class _AdminApplicantsPageState extends State<AdminApplicantsPage> {
           if (_error != null)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Text('$_error', style: const TextStyle(color: TeamakColors.danger)),
+              child: Text(
+                '$_error',
+                style: const TextStyle(color: TeamakColors.danger),
+              ),
             ),
           if (_loading)
             const Padding(
