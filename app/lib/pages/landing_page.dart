@@ -78,7 +78,8 @@ class _LandingPageState extends State<LandingPage> {
             depositNgn: 2300000,
             months: 3,
             asset: '1 Bajaj/approved Maruwa tricycle',
-            summary: '₦2,300,000 one-time deposit → 3 months → approved Maruwa.',
+            summary:
+                '₦2,300,000 one-time deposit → 3 months → approved Maruwa.',
           ),
         ];
 
@@ -113,13 +114,18 @@ class _LandingPageState extends State<LandingPage> {
                   wide: wide,
                   asset: 'assets/slides/motorcycle.png',
                   badge: 'HOT DEAL',
-                  badgeGradient: const <Color>[Color(0xFFE53935), Color(0xFFFF7043)],
+                  badgeGradient: const <Color>[
+                    Color(0xFFE53935),
+                    Color(0xFFFF7043),
+                  ],
                   badgeShadow: const Color(0xFFE53935),
                   title: 'BAJAJ BOXER — LIMITED PROMO',
                   headline: 'Own a brand-new Bajaj Boxer\nfrom just ₦400,000',
-                  mobileHeadline: 'Own a brand-new Bajaj Boxer from just ₦400,000',
+                  mobileHeadline:
+                      'Own a brand-new Bajaj Boxer from just ₦400,000',
                   benefits: 'One-time deposit · 6-month programme · Free rider training',
-                  mobileBenefits: 'One-time deposit · 6-month plan · Free training',
+                  mobileBenefits:
+                      'One-time deposit · 6-month plan · Free training',
                   slots: '⚡ Only 10 slots left',
                   mobileSlots: '⚡ Only 10 slots left this month',
                   deadline: promoEnd,
@@ -134,13 +140,18 @@ class _LandingPageState extends State<LandingPage> {
                   wide: wide,
                   asset: 'assets/slides/motorcycle.png',
                   badge: 'FAST TRACK',
-                  badgeGradient: const <Color>[Color(0xFFF4A81D), Color(0xFFEF6C00)],
+                  badgeGradient: const <Color>[
+                    Color(0xFFF4A81D),
+                    Color(0xFFEF6C00),
+                  ],
                   badgeShadow: const Color(0xFFC98A12),
                   title: 'BAJAJ OKADA — 3 MONTHS TO OWN',
                   headline: 'Own a brand-new Bajaj\nin 3 months — ₦650,000',
-                  mobileHeadline: 'Own a brand-new Bajaj in 3 months — ₦650,000',
+                  mobileHeadline:
+                      'Own a brand-new Bajaj in 3 months — ₦650,000',
                   benefits: 'One-time deposit · 3-month programme · Free rider training',
-                  mobileBenefits: 'One-time deposit · 3-month plan · Free training',
+                  mobileBenefits:
+                      'One-time deposit · 3-month plan · Free training',
                   slots: '⚡ Only 10 slots left',
                   mobileSlots: '⚡ Only 10 slots left this month',
                   deadline: promoEnd,
@@ -154,13 +165,17 @@ class _LandingPageState extends State<LandingPage> {
                   wide: wide,
                   asset: 'assets/slides/tricycle.png',
                   badge: 'POPULAR',
-                  badgeGradient: const <Color>[Color(0xFF00897B), Color(0xFF26A69A)],
+                  badgeGradient: const <Color>[
+                    Color(0xFF00897B),
+                    Color(0xFF26A69A),
+                  ],
                   badgeShadow: const Color(0xFF00897B),
                   title: 'BAJAJ TRICYCLE — FAMILY & BUSINESS',
                   headline: 'Own a Bajaj tricycle\nfrom just ₦2,300,000',
                   mobileHeadline: 'Own a Bajaj tricycle from just ₦2,300,000',
                   benefits: 'One-time deposit · 3-month programme · Free maintenance training',
-                  mobileBenefits: 'One-time deposit · 3-month plan · Free training',
+                  mobileBenefits:
+                      'One-time deposit · 3-month plan · Free training',
                   slots: '⚡ Only 5 slots left',
                   mobileSlots: '⚡ Only 5 slots left this month',
                   deadline: promoEnd,
@@ -174,12 +189,17 @@ class _LandingPageState extends State<LandingPage> {
                   wide: wide,
                   asset: 'assets/slides/solar.png',
                   badge: 'ECO FRIENDLY',
-                  badgeGradient: const <Color>[Color(0xFF2E7D32), Color(0xFF66BB6A)],
+                  badgeGradient: const <Color>[
+                    Color(0xFF2E7D32),
+                    Color(0xFF66BB6A),
+                  ],
                   badgeShadow: const Color(0xFF2E7D32),
                   title: 'SUN KING SOLAR — GO GREEN',
                   headline: 'Sun King solar home system\nfrom just ₦50,000',
-                  mobileHeadline: 'Sun King solar home system from just ₦50,000',
-                  benefits: 'Solar panel · LED lights · Phone charging · TV support',
+                  mobileHeadline:
+                      'Sun King solar home system from just ₦50,000',
+                  benefits:
+                      'Solar panel · LED lights · Phone charging · TV support',
                   mobileBenefits: 'Panel · LED lights · Charging · TV',
                   slots: '⚡ Only 20 slots left',
                   mobileSlots: '⚡ Only 20 slots left this month',
@@ -193,113 +213,111 @@ class _LandingPageState extends State<LandingPage> {
                 child: const _StatsCounter(),
               ),
               const SizedBox(height: 48),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: wide ? 48 : 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const _SectionHeader(
-                  title: 'Choose your ownership programme',
-                  subtitle: 'One-time programme deposit. No further vehicle payment '
-                      'under the stated ownership offer, subject to approval and '
-                      'the final agreement.',
-                ),
-                const SizedBox(height: 28),
-                if (_loading)
-                  const Padding(
-                    padding: EdgeInsets.all(32),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else
-                  Wrap(
-                    spacing: 20,
-                    runSpacing: 20,
-                    children: [
-                      for (var i = 0; i < _tiers.length; i++)
-                        TweenAnimationBuilder<double>(
-                          tween: Tween<double>(begin: 0, end: 1),
-                          duration: Duration(milliseconds: 350 + (i * 80)),
-                          curve: Curves.easeOutCubic,
-                          builder: (context, t, child) => Opacity(
-                            opacity: t,
-                            child: Transform.translate(
-                              offset: Offset(0, 24 * (1 - t)),
-                              child: child,
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: wide ? 48 : 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const _SectionHeader(
+                      title: 'Choose your ownership programme',
+                      subtitle:
+                          'One-time programme deposit. No further vehicle payment '
+                          'under the stated ownership offer, subject to approval and '
+                          'the final agreement.',
+                    ),
+                    const SizedBox(height: 28),
+                    if (_loading)
+                      const Padding(
+                        padding: EdgeInsets.all(32),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else
+                      Wrap(
+                        spacing: 20,
+                        runSpacing: 20,
+                        children: [
+                          for (var i = 0; i < _tiers.length; i++)
+                            TweenAnimationBuilder<double>(
+                              tween: Tween<double>(begin: 0, end: 1),
+                              duration: Duration(milliseconds: 350 + (i * 80)),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, t, child) => Opacity(
+                                opacity: t,
+                                child: Transform.translate(
+                                  offset: Offset(0, 24 * (1 - t)),
+                                  child: child,
+                                ),
+                              ),
+                              child: SizedBox(
+                                width: wide
+                                    ? (width - 96 - 40) / 3
+                                    : width - 40,
+                                child: _TierCard(programme: _tiers[i]),
+                              ),
                             ),
-                          ),
-                          child: SizedBox(
-                            width: wide
-                                ? (width - 96 - 40) / 3
-                                : width - 40,
-                            child: _TierCard(programme: _tiers[i]),
-                          ),
-                        ),
-                    ],
-                  ),
-                const SizedBox(height: 52),
-                const _SectionHeader(
-                  title: 'Our global services',
-                  subtitle: 'Beyond rider ownership, Teamak Global Solutions delivers '
-                      'end-to-end services across mobility, energy, trade and '
-                      'enterprise support.',
+                        ],
+                      ),
+                    const SizedBox(height: 52),
+                    const _SectionHeader(
+                      title: 'Our global services',
+                      subtitle:
+                          'Beyond rider ownership, Teamak Global Solutions delivers '
+                          'end-to-end services across mobility, energy, trade and '
+                          'enterprise support.',
+                    ),
+                    const SizedBox(height: 28),
+                    _GlobalServices(wide: wide),
+                    const SizedBox(height: 52),
+                    const _SectionHeader(
+                      title: 'How it works',
+                      subtitle:
+                          'Four simple steps from application to ownership.',
+                    ),
+                    const SizedBox(height: 24),
+                    _HowItWorks(wide: wide),
+                    const SizedBox(height: 52),
+                    // Trust badges strip.
+                    const _TrustBadges(),
+                    const SizedBox(height: 52),
+                    // Earnings calculator.
+                    const _SectionHeader(
+                      title: 'See what you could earn',
+                      subtitle:
+                          'Estimate your weekly income with a Teamak vehicle.',
+                    ),
+                    const SizedBox(height: 24),
+                    const _EarningsCalculator(),
+                    const SizedBox(height: 52),
+                    // After-sales support.
+                    const _SectionHeader(
+                      title: 'We\'ve got your back',
+                      subtitle: 'Support doesn\'t stop at delivery — we\'re with you long after.',
+                    ),
+                    const SizedBox(height: 24),
+                    _AfterSalesSupport(wide: wide),
+                    const SizedBox(height: 52),
+                    const _SectionHeader(
+                      title: 'What our riders say',
+                      subtitle: 'Real stories from riders who own their vehicles through Teamak.',
+                    ),
+                    const SizedBox(height: 24),
+                    const _Testimonials(),
+                    const SizedBox(height: 52),
+                    _CallToAction(wide: wide),
+                    const SizedBox(height: 48),
+                  ],
                 ),
-                const SizedBox(height: 28),
-                _GlobalServices(wide: wide),
-                const SizedBox(height: 52),
-                const _SectionHeader(
-                  title: 'How it works',
-                  subtitle: 'Four simple steps from application to ownership.',
-                ),
-                const SizedBox(height: 24),
-                _HowItWorks(wide: wide),
-                const SizedBox(height: 52),
-                // Trust badges strip.
-                const _TrustBadges(),
-                const SizedBox(height: 52),
-                // Earnings calculator.
-                const _SectionHeader(
-                  title: 'See what you could earn',
-                  subtitle: 'Estimate your weekly income with a Teamak vehicle.',
-                ),
-                const SizedBox(height: 24),
-                const _EarningsCalculator(),
-                const SizedBox(height: 52),
-                // After-sales support.
-                const _SectionHeader(
-                  title: 'We\'ve got your back',
-                  subtitle: 'Support doesn\'t stop at delivery — we\'re with you long after.',
-                ),
-                const SizedBox(height: 24),
-                _AfterSalesSupport(wide: wide),
-                const SizedBox(height: 52),
-                const _SectionHeader(
-                  title: 'What our riders say',
-                  subtitle: 'Real stories from riders who own their vehicles through Teamak.',
-                ),
-                const SizedBox(height: 24),
-                const _Testimonials(),
-                const SizedBox(height: 52),
-                _CallToAction(wide: wide),
-                const SizedBox(height: 48),
-              ],
-            ),
-          ),
-          const _Footer(),
+              ),
+              const _Footer(),
             ],
           ),
           // Promo pop-up overlay.
           if (_showPromoPopup)
-            _PromoPopup(
-              onClose: () => setState(() => _showPromoPopup = false),
-            ),
+            _PromoPopup(onClose: () => setState(() => _showPromoPopup = false)),
           // Sticky bottom CTA bar.
           const _StickyCtaBar(),
           // WhatsApp-style chat button, fixed to the bottom-right.
-          const Positioned(
-            bottom: 80,
-            right: 16,
-            child: _ChatFab(),
-          ),
+          const Positioned(bottom: 80, right: 16, child: _ChatFab()),
         ],
       ),
     );
@@ -313,8 +331,10 @@ class _LandingPageState extends State<LandingPage> {
 class _HeroGridPainter extends CustomPainter {
   const _HeroGridPainter();
 
-  static const Color _vertical = Color(0x0F0D47A1); // rgba(13,71,161,.06)
-  static const Color _horizontal = Color(0x0BF4A81D); // rgba(244,168,29,.045)
+  // On the navy stage the lattice reads in white and gold instead of the
+  // faint blue/gold it drew over the old pale page colour.
+  static const Color _vertical = Color(0x14FFFFFF); // rgba(255,255,255,.08)
+  static const Color _horizontal = Color(0x1AF4A81D); // rgba(244,168,29,.10)
   static const double _step = 72;
 
   @override
@@ -342,15 +362,17 @@ class _Hero extends StatelessWidget {
 
   final bool wide;
 
-  /// `linear-gradient(115deg, rgba(255,255,255,.55), rgba(245,247,251,.72))`
-  /// laid over the page colour.
-  static const LinearGradient _wash = LinearGradient(
+  /// A faint diagonal sheen over the navy: light gathering at the top-left,
+  /// a touch of depth in the far corner.
+  static const LinearGradient _sheen = LinearGradient(
     begin: Alignment(-1, -0.3),
     end: Alignment(1, 0.35),
     colors: <Color>[
-      Color(0x8CFFFFFF), // rgba(255,255,255,.55)
-      Color(0xB8F5F7FB), // rgba(245,247,251,.72)
+      Color(0x12FFFFFF), // rgba(255,255,255,.07)
+      Color(0x00000000),
+      Color(0x1E000000), // rgba(0,0,0,.12)
     ],
+    stops: <double>[0, 0.55, 1],
   );
 
   @override
@@ -363,20 +385,38 @@ class _Hero extends StatelessWidget {
       width: double.infinity,
       child: Stack(
         children: <Widget>[
-          const Positioned.fill(child: ColoredBox(color: TeamakColors.surface)),
-          const Positioned.fill(child: CustomPaint(painter: _HeroGridPainter())),
-          // Soft radial blobs: blue up-right, gold down-left.
+          // Deep-navy stage: the same midnight blue the stats band, the
+          // closing CTA and the footer wear — the page opens on luxury and
+          // the white dashboard mockup floats straight off it.
+          const Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: <Color>[Color(0xFF04122E), Color(0xFF072E68)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+            ),
+          ),
+          const Positioned.fill(
+            child: CustomPaint(painter: _HeroGridPainter()),
+          ),
+          // Soft radial glows: gold washing behind the mockup, a lighter
+          // blue rising from the bottom-left corner.
           Positioned(
             right: wide ? 20 : -70,
             top: wide ? -70 : -60,
-            child: _blob(320, const Color(0xFF0D47A1), 0.22),
+            child: _blob(320, TeamakColors.accent, 0.2),
           ),
           Positioned(
             left: wide ? -60 : -80,
             bottom: -90,
-            child: _blob(300, const Color(0xFFF4A81D), 0.16),
+            child: _blob(300, TeamakColors.primaryLight, 0.38),
           ),
-          const Positioned.fill(child: DecoratedBox(decoration: BoxDecoration(gradient: _wash))),
+          const Positioned.fill(
+            child: DecoratedBox(decoration: BoxDecoration(gradient: _sheen)),
+          ),
           Padding(
             padding: EdgeInsets.symmetric(
               horizontal: wide ? 56 : 22,
@@ -394,10 +434,7 @@ class _Hero extends StatelessWidget {
                             child: _copy(context, headlineSize, wide: true),
                           ),
                           const SizedBox(width: 44),
-                          const Expanded(
-                            flex: 10,
-                            child: _DashboardMockup(),
-                          ),
+                          const Expanded(flex: 10, child: _DashboardMockup()),
                         ],
                       )
                     : Column(
@@ -422,7 +459,11 @@ class _Hero extends StatelessWidget {
   }
 
   /// Kicker pill → headline → copy → chips → calls to action.
-  Widget _copy(BuildContext context, double headlineSize, {required bool wide}) {
+  Widget _copy(
+    BuildContext context,
+    double headlineSize, {
+    required bool wide,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -438,10 +479,9 @@ class _Hero extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: TeamakColors.border),
                 boxShadow: const <BoxShadow>[
                   BoxShadow(
-                    color: Color(0x0F0E1B33),
+                    color: Color(0x66000000), // black 40%: the box floats
                     blurRadius: 18,
                     offset: Offset(0, 6),
                   ),
@@ -460,7 +500,7 @@ class _Hero extends StatelessWidget {
                 Text(
                   'TEAMAK GLOBAL',
                   style: TextStyle(
-                    color: TeamakColors.ink,
+                    color: Colors.white,
                     fontWeight: FontWeight.w900,
                     fontSize: wide ? 15 : 13,
                     letterSpacing: wide ? 1.8 : 0.6,
@@ -469,7 +509,7 @@ class _Hero extends StatelessWidget {
                 Text(
                   'SOLUTIONS  ·  RC 9907312',
                   style: TextStyle(
-                    color: TeamakColors.accentDark,
+                    color: TeamakColors.accent,
                     fontSize: wide ? 11 : 9.5,
                     letterSpacing: 1.2,
                     fontWeight: FontWeight.w700,
@@ -487,21 +527,27 @@ class _Hero extends StatelessWidget {
             vertical: 7,
           ),
           decoration: BoxDecoration(
-            color: const Color(0x1A0D47A1), // rgba(34,197,94,.10)
+            color: TeamakColors.accent.withValues(alpha: 0.13),
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: const Color(0x400D47A1)), // rgba(34,197,94,.25)
+            border: Border.all(
+              color: TeamakColors.accent.withValues(alpha: 0.45),
+            ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const Icon(Icons.star_rounded, size: 15, color: TeamakColors.primaryDark),
+              const Icon(
+                Icons.star_rounded,
+                size: 15,
+                color: TeamakColors.accent,
+              ),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
                   'FROM RIDER TO OWNER',
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: TeamakColors.primaryDark,
+                    color: TeamakColors.accent,
                     letterSpacing: wide ? 1.6 : 0.3,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -526,17 +572,19 @@ class _Hero extends StatelessWidget {
                 maxLines: 1,
                 softWrap: false,
                 style: TextStyle(
-                  color: TeamakColors.ink,
+                  color: Colors.white,
                   fontSize: headlineSize,
                   fontWeight: FontWeight.w900,
                   height: 1.06,
                   letterSpacing: -0.5,
                 ),
               ),
-              // Key word tinted with the emerald→cyan sweep.
+              // Key word swept in gold — the deep-orange end holds its
+              // contrast against the navy stage where the old blue→gold
+              // tune was written for a pale page.
               ShaderMask(
                 shaderCallback: (bounds) =>
-                    TeamakColors.gradSuccess.createShader(bounds),
+                    TeamakColors.gradGold.createShader(bounds),
                 blendMode: BlendMode.srcIn,
                 child: Text(
                   'SOLUTIONS',
@@ -562,7 +610,7 @@ class _Hero extends StatelessWidget {
             'through a one-time programme deposit. Built for riders '
             'in Ibadan & Environs.',
             style: TextStyle(
-              color: TeamakColors.subtle,
+              color: Colors.white.withValues(alpha: 0.74),
               fontSize: wide ? 17 : 15,
               height: 1.7,
               fontWeight: FontWeight.w400,
@@ -577,7 +625,10 @@ class _Hero extends StatelessWidget {
             _HeroChip(icon: Icons.verified_outlined, label: 'One-time deposit'),
             _HeroChip(icon: Icons.schedule_rounded, label: '3–6 months'),
             _HeroChip(icon: Icons.motorcycle_rounded, label: 'Bajaj & Maruwa'),
-            _HeroChip(icon: Icons.location_on_outlined, label: 'Ibadan & Environs'),
+            _HeroChip(
+              icon: Icons.location_on_outlined,
+              label: 'Ibadan & Environs',
+            ),
           ],
         ),
         const SizedBox(height: 30),
@@ -587,6 +638,12 @@ class _Hero extends StatelessWidget {
           children: <Widget>[
             FilledButton(
               style: FilledButton.styleFrom(
+                // Gold, ink label: the customer's primary action wears the
+                // same colour as every "claim / apply" button down the page.
+                backgroundColor: TeamakColors.accent,
+                foregroundColor: TeamakColors.ink,
+                elevation: 8,
+                shadowColor: TeamakColors.accent.withValues(alpha: 0.5),
                 padding: EdgeInsets.symmetric(
                   // Tighter on phones: 36px a side plus a wide label
                   // overruns a ~276px hero column.
@@ -625,8 +682,8 @@ class _Hero extends StatelessWidget {
                   horizontal: 26,
                   vertical: 19,
                 ),
-                side: const BorderSide(color: TeamakColors.primary),
-                foregroundColor: TeamakColors.primaryDark,
+                side: const BorderSide(color: Colors.white, width: 1.4),
+                foregroundColor: Colors.white,
               ),
               onPressed: () => context.go('/dashboard'),
               child: const Text('Track application'),
@@ -639,18 +696,18 @@ class _Hero extends StatelessWidget {
 
   /// Heavily feathered radial blob — a blurred circle without the blur cost.
   static Widget _blob(double size, Color color, double opacity) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: <Color>[
-              color.withValues(alpha: opacity),
-              color.withValues(alpha: 0),
-            ],
-          ),
-        ),
-      );
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      gradient: RadialGradient(
+        colors: <Color>[
+          color.withValues(alpha: opacity),
+          color.withValues(alpha: 0),
+        ],
+      ),
+    ),
+  );
 }
 
 /// Preview of the member dashboard: status, deposit, plan progress and the
@@ -665,12 +722,12 @@ class _DashboardMockup extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: const <BoxShadow>[
           BoxShadow(
-            color: Color(0x1F072E68),
+            color: Color(0x73000000), // black 45%: lifts off the navy
             blurRadius: 44,
             offset: Offset(0, 18),
           ),
           BoxShadow(
-            color: Color(0x0F0E1B33),
+            color: Color(0x40000000),
             blurRadius: 12,
             offset: Offset(0, 4),
           ),
@@ -769,17 +826,25 @@ class _DashboardMockup extends StatelessWidget {
               const SizedBox(height: 16),
               Row(
                 children: <Widget>[
-                  const Expanded(child: _MiniStat(label: 'Asset', value: 'Bajaj Boxer')),
+                  const Expanded(
+                    child: _MiniStat(label: 'Asset', value: 'Bajaj Boxer'),
+                  ),
                   const SizedBox(width: 8),
-                  const Expanded(child: _MiniStat(label: 'Term', value: '3 months')),
+                  const Expanded(
+                    child: _MiniStat(label: 'Term', value: '3 months'),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
               Row(
                 children: <Widget>[
-                  const Expanded(child: _MiniStat(label: 'Training', value: 'Included')),
+                  const Expanded(
+                    child: _MiniStat(label: 'Training', value: 'Included'),
+                  ),
                   const SizedBox(width: 8),
-                  const Expanded(child: _MiniStat(label: 'Support', value: 'After-sales')),
+                  const Expanded(
+                    child: _MiniStat(label: 'Support', value: 'After-sales'),
+                  ),
                 ],
               ),
               const SizedBox(height: 14),
@@ -892,10 +957,7 @@ class _TrustStrip extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: narrow ? 16 : 48,
-        vertical: 14,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: narrow ? 16 : 48, vertical: 14),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: TeamakColors.border)),
@@ -966,71 +1028,71 @@ class _FeatureCardState extends State<_FeatureCard> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOut,
-          transform: Matrix4.translationValues(0, _hovered ? -5 : 0, 0),
-          // The shadow sits on this outer wrapper, outside the ClipRRect
-          // below, so it can spill past the rounded corners instead of being
-          // clipped away with the card face.
-          decoration: BoxDecoration(
-            borderRadius: _radius,
-            boxShadow: _hovered
-                ? <BoxShadow>[
-                    BoxShadow(
-                      color: TeamakColors.primary.withValues(alpha: 0.22),
-                      blurRadius: 26,
-                      offset: const Offset(0, 12),
-                    ),
-                    BoxShadow(
-                      color: TeamakColors.primary.withValues(alpha: 0.08),
-                      blurRadius: 30,
-                      spreadRadius: 2,
-                    ),
-                  ]
-                : <BoxShadow>[
-                    BoxShadow(
-                      color: TeamakColors.ink.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-          ),
-          child: ClipRRect(
-            borderRadius: _radius,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: <Widget>[
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOut,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: _radius,
-                    border: Border.all(
-                      color: _hovered
-                          ? TeamakColors.primary.withValues(alpha: 0.5)
-                          : TeamakColors.border,
-                      width: 1.2,
-                    ),
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        transform: Matrix4.translationValues(0, _hovered ? -5 : 0, 0),
+        // The shadow sits on this outer wrapper, outside the ClipRRect
+        // below, so it can spill past the rounded corners instead of being
+        // clipped away with the card face.
+        decoration: BoxDecoration(
+          borderRadius: _radius,
+          boxShadow: _hovered
+              ? <BoxShadow>[
+                  BoxShadow(
+                    color: TeamakColors.primary.withValues(alpha: 0.22),
+                    blurRadius: 26,
+                    offset: const Offset(0, 12),
                   ),
-                  child: widget.child,
-                ),
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 3,
-                  child: DecoratedBox(
-                    decoration: const BoxDecoration(
-                      gradient: TeamakColors.gradPrimary,
-                    ),
+                  BoxShadow(
+                    color: TeamakColors.primary.withValues(alpha: 0.08),
+                    blurRadius: 30,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : <BoxShadow>[
+                  BoxShadow(
+                    color: TeamakColors.ink.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+        ),
+        child: ClipRRect(
+          borderRadius: _radius,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: <Widget>[
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOut,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: _radius,
+                  border: Border.all(
+                    color: _hovered
+                        ? TeamakColors.primary.withValues(alpha: 0.5)
+                        : TeamakColors.border,
+                    width: 1.2,
                   ),
                 ),
-              ],
-            ),
+                child: widget.child,
+              ),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 3,
+                child: DecoratedBox(
+                  decoration: const BoxDecoration(
+                    gradient: TeamakColors.gradPrimary,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
+      ),
     );
   }
 }
@@ -1058,7 +1120,9 @@ class _CountdownTimerState extends State<_CountdownTimer> {
 
   void _tick() {
     final diff = widget.deadline.difference(DateTime.now());
-    if (mounted) setState(() => _remaining = diff.isNegative ? Duration.zero : diff);
+    if (mounted) {
+      setState(() => _remaining = diff.isNegative ? Duration.zero : diff);
+    }
   }
 
   @override
@@ -1087,7 +1151,11 @@ class _CountdownTimerState extends State<_CountdownTimer> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.timer_outlined, size: 14, color: TeamakColors.goldLight),
+            const Icon(
+              Icons.timer_outlined,
+              size: 14,
+              color: TeamakColors.goldLight,
+            ),
             const SizedBox(width: 5),
             Text(
               text,
@@ -1108,11 +1176,23 @@ class _CountdownTimerState extends State<_CountdownTimer> {
       children: [
         _timeBox(h, 'HRS'),
         const SizedBox(width: 6),
-        const Text(':', style: TextStyle(color: TeamakColors.dim, fontWeight: FontWeight.w900)),
+        const Text(
+          ':',
+          style: TextStyle(
+            color: TeamakColors.dim,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
         const SizedBox(width: 6),
         _timeBox(m, 'MIN'),
         const SizedBox(width: 6),
-        const Text(':', style: TextStyle(color: TeamakColors.dim, fontWeight: FontWeight.w900)),
+        const Text(
+          ':',
+          style: TextStyle(
+            color: TeamakColors.dim,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
         const SizedBox(width: 6),
         _timeBox(s, 'SEC'),
       ],
@@ -1331,7 +1411,10 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                _CountdownTimer(deadline: widget.deadline, compact: true),
+                                _CountdownTimer(
+                                  deadline: widget.deadline,
+                                  compact: true,
+                                ),
                               ],
                             ),
                             const SizedBox(height: 16),
@@ -1342,7 +1425,9 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                                     backgroundColor: TeamakColors.accent,
                                     foregroundColor: TeamakColors.ink,
                                     elevation: 6,
-                                    shadowColor: TeamakColors.accent.withValues(alpha: 0.5),
+                                    shadowColor: TeamakColors.accent.withValues(
+                                      alpha: 0.5,
+                                    ),
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 28,
                                       vertical: 15,
@@ -1361,7 +1446,10 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                                     children: <Widget>[
                                       Text('Claim this deal'),
                                       SizedBox(width: 6),
-                                      Icon(Icons.arrow_forward_rounded, size: 18),
+                                      Icon(
+                                        Icons.arrow_forward_rounded,
+                                        size: 18,
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -1372,7 +1460,9 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                                     vertical: 8,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: TeamakColors.primary.withValues(alpha: 0.08),
+                                    color: TeamakColors.primary.withValues(
+                                      alpha: 0.08,
+                                    ),
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: TeamakColors.border,
@@ -1453,7 +1543,10 @@ class _VehiclePromoBannerState extends State<_VehiclePromoBanner> {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          _CountdownTimer(deadline: widget.deadline, compact: true),
+                          _CountdownTimer(
+                            deadline: widget.deadline,
+                            compact: true,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 14),
@@ -1511,9 +1604,7 @@ class _PromoPopup extends StatelessWidget {
         // Scrim.
         GestureDetector(
           onTap: onClose,
-          child: Container(
-            color: Colors.black.withValues(alpha: 0.5),
-          ),
+          child: Container(color: Colors.black.withValues(alpha: 0.5)),
         ),
         // Card.
         Center(
@@ -1574,7 +1665,11 @@ class _PromoPopup extends StatelessWidget {
                         onTap: onClose,
                         child: const Padding(
                           padding: EdgeInsets.all(6),
-                          child: Icon(Icons.close_rounded, color: Colors.white, size: 20),
+                          child: Icon(
+                            Icons.close_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ),
@@ -1589,7 +1684,10 @@ class _PromoPopup extends StatelessWidget {
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: <Color>[Color(0xFFE53935), Color(0xFFFF7043)],
+                              colors: <Color>[
+                                Color(0xFFE53935),
+                                Color(0xFFFF7043),
+                              ],
                             ),
                             shape: BoxShape.circle,
                             boxShadow: <BoxShadow>[
@@ -1645,7 +1743,9 @@ class _PromoPopup extends StatelessWidget {
                               backgroundColor: TeamakColors.accent,
                               foregroundColor: TeamakColors.ink,
                               elevation: 8,
-                              shadowColor: TeamakColors.accent.withValues(alpha: 0.55),
+                              shadowColor: TeamakColors.accent.withValues(
+                                alpha: 0.55,
+                              ),
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               textStyle: const TextStyle(
                                 fontWeight: FontWeight.w900,
@@ -1710,12 +1810,13 @@ class _StatsCounterState extends State<_StatsCounter> {
   bool _visible = false;
   final List<double> _values = List<double>.filled(4, 0);
 
-  static const List<(IconData, double, String, String)> _stats = <(IconData, double, String, String)>[
-    (Icons.groups_2_rounded, 500, '+', 'Riders empowered'),
-    (Icons.location_on_rounded, 3, '', 'States covered'),
-    (Icons.payments_rounded, 200, 'M+', 'Naira disbursed'),
-    (Icons.verified_rounded, 95, '%', 'Success rate'),
-  ];
+  static const List<(IconData, double, String, String)> _stats =
+      <(IconData, double, String, String)>[
+        (Icons.groups_2_rounded, 500, '+', 'Riders empowered'),
+        (Icons.location_on_rounded, 3, '', 'States covered'),
+        (Icons.payments_rounded, 200, 'M+', 'Naira disbursed'),
+        (Icons.verified_rounded, 95, '%', 'Success rate'),
+      ];
 
   void _animate() {
     if (_visible) return;
@@ -1759,13 +1860,19 @@ class _StatsCounterState extends State<_StatsCounter> {
         child: wide
             ? Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(_stats.length, (i) => _statCell(i, true)),
+                children: List.generate(
+                  _stats.length,
+                  (i) => _statCell(i, true),
+                ),
               )
             : Wrap(
                 spacing: 20,
                 runSpacing: 24,
                 alignment: WrapAlignment.spaceEvenly,
-                children: List.generate(_stats.length, (i) => _statCell(i, false)),
+                children: List.generate(
+                  _stats.length,
+                  (i) => _statCell(i, false),
+                ),
               ),
       ),
     );
@@ -1774,9 +1881,7 @@ class _StatsCounterState extends State<_StatsCounter> {
   Widget _statCell(int i, bool wide) {
     final (icon, target, suffix, label) = _stats[i];
     final val = _values[i];
-    final display = target == 200
-        ? '₦${val.round()}'
-        : '${val.round()}$suffix';
+    final display = target == 200 ? '₦${val.round()}' : '${val.round()}$suffix';
 
     return SizedBox(
       width: wide ? 140 : MediaQuery.sizeOf(context).width / 2 - 50,
@@ -1822,8 +1927,8 @@ class _TestimonialsState extends State<_Testimonials> {
   Timer? _timer;
   bool _paused = false;
 
-  static const List<(String, String, String, IconData)> _items =
-      <(String, String, String, IconData)>[
+  static const List<(String, String, String, IconData)>
+  _items = <(String, String, String, IconData)>[
     (
       'Adeola O.',
       'Ibadan, Oyo',
@@ -1860,7 +1965,9 @@ class _TestimonialsState extends State<_Testimonials> {
   void initState() {
     super.initState();
     _timer = Timer.periodic(const Duration(seconds: 8), (_) {
-      if (mounted && !_paused) setState(() => _index = (_index + 1) % _items.length);
+      if (mounted && !_paused) {
+        setState(() => _index = (_index + 1) % _items.length);
+      }
     });
   }
 
@@ -1881,159 +1988,178 @@ class _TestimonialsState extends State<_Testimonials> {
       child: Column(
         children: <Widget>[
           AnimatedSwitcher(
-          duration: const Duration(milliseconds: 500),
-          transitionBuilder: (child, anim) => FadeTransition(
-            opacity: anim,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0.08, 0),
-                end: Offset.zero,
-              ).animate(anim),
-              child: child,
+            duration: const Duration(milliseconds: 500),
+            transitionBuilder: (child, anim) => FadeTransition(
+              opacity: anim,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.08, 0),
+                  end: Offset.zero,
+                ).animate(anim),
+                child: child,
+              ),
             ),
-          ),
-          child: Container(
-            key: ValueKey<int>(_index),
-            width: double.infinity,
-            padding: EdgeInsets.all(wide ? 32 : 22),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: TeamakColors.primary.withValues(alpha: 0.1)),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: TeamakColors.primary.withValues(alpha: 0.08),
-                  blurRadius: 24,
-                  offset: const Offset(0, 10),
+            child: Container(
+              key: ValueKey<int>(_index),
+              width: double.infinity,
+              padding: EdgeInsets.all(wide ? 32 : 22),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: TeamakColors.primary.withValues(alpha: 0.1),
                 ),
-              ],
-            ),
-            child: wide
-                ? Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: <Color>[TeamakColors.primary, TeamakColors.primaryDark],
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: TeamakColors.primary.withValues(alpha: 0.08),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: wide
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: <Color>[
+                                TeamakColors.primary,
+                                TeamakColors.primaryDark,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          borderRadius: BorderRadius.circular(16),
+                          child: Icon(
+                            icon,
+                            color: TeamakColors.accent,
+                            size: 32,
+                          ),
                         ),
-                        child: Icon(icon, color: TeamakColors.accent, size: 32),
-                      ),
-                      const SizedBox(width: 24),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Row(
-                              children: List.generate(
-                                5,
-                                (_) => const Icon(
-                                  Icons.star_rounded,
-                                  color: TeamakColors.accent,
-                                  size: 18,
+                        const SizedBox(width: 24),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Row(
+                                children: List.generate(
+                                  5,
+                                  (_) => const Icon(
+                                    Icons.star_rounded,
+                                    color: TeamakColors.accent,
+                                    size: 18,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              '"$quote"',
-                              style: const TextStyle(
-                                fontSize: 17,
-                                height: 1.55,
-                                color: TeamakColors.ink,
-                                fontStyle: FontStyle.italic,
+                              const SizedBox(height: 12),
+                              Text(
+                                '"$quote"',
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  height: 1.55,
+                                  color: TeamakColors.ink,
+                                  fontStyle: FontStyle.italic,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 14),
-                            Text(
-                              name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 15,
+                              const SizedBox(height: 14),
+                              Text(
+                                name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                ),
                               ),
-                            ),
-                            Text(
-                              location,
-                              style: const TextStyle(
-                                color: TeamakColors.subtle,
-                                fontSize: 13,
+                              Text(
+                                location,
+                                style: const TextStyle(
+                                  color: TeamakColors.subtle,
+                                  fontSize: 13,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: <Color>[TeamakColors.primary, TeamakColors.primaryDark],
+                            ],
                           ),
-                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(icon, color: TeamakColors.accent, size: 24),
-                      ),
-                      const SizedBox(height: 14),
-                      Row(
-                        children: List.generate(
-                          5,
-                          (_) => const Icon(
-                            Icons.star_rounded,
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: <Color>[
+                                TeamakColors.primary,
+                                TeamakColors.primaryDark,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            icon,
                             color: TeamakColors.accent,
-                            size: 16,
+                            size: 24,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        '"$quote"',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          height: 1.5,
-                          color: TeamakColors.ink,
-                          fontStyle: FontStyle.italic,
+                        const SizedBox(height: 14),
+                        Row(
+                          children: List.generate(
+                            5,
+                            (_) => const Icon(
+                              Icons.star_rounded,
+                              color: TeamakColors.accent,
+                              size: 16,
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        name,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                      Text(
-                        location,
-                        style: const TextStyle(color: TeamakColors.subtle, fontSize: 13),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(height: 10),
+                        Text(
+                          '"$quote"',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            height: 1.5,
+                            color: TeamakColors.ink,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          name,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                        Text(
+                          location,
+                          style: const TextStyle(
+                            color: TeamakColors.subtle,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(
-            _items.length,
-            (i) => AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: i == _index ? 24 : 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: i == _index
-                    ? TeamakColors.accent
-                    : TeamakColors.primary.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(4),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              _items.length,
+              (i) => AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: i == _index ? 24 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: i == _index
+                      ? TeamakColors.accent
+                      : TeamakColors.primary.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
       ),
     );
   }
@@ -2055,7 +2181,9 @@ class _StickyCtaBarState extends State<_StickyCtaBar> {
 
     return NotificationListener<ScrollNotification>(
       onNotification: (n) {
-        final show = n.metrics.pixels > 500 && n.metrics.pixels < n.metrics.maxScrollExtent - 200;
+        final show =
+            n.metrics.pixels > 500 &&
+            n.metrics.pixels < n.metrics.maxScrollExtent - 200;
         if (show != _visible && mounted) setState(() => _visible = show);
         return false;
       },
@@ -2069,14 +2197,22 @@ class _StickyCtaBarState extends State<_StickyCtaBar> {
             duration: const Duration(milliseconds: 300),
             opacity: _visible ? 1 : 0,
             child: Container(
-              margin: EdgeInsets.symmetric(horizontal: wide ? 48 : 16, vertical: 16),
-              padding: EdgeInsets.symmetric(horizontal: wide ? 24 : 16, vertical: 12),
+              margin: EdgeInsets.symmetric(
+                horizontal: wide ? 48 : 16,
+                vertical: 16,
+              ),
+              padding: EdgeInsets.symmetric(
+                horizontal: wide ? 24 : 16,
+                vertical: 12,
+              ),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: <Color>[Color(0xFF04122E), Color(0xFF072E68)],
                 ),
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: TeamakColors.accent.withValues(alpha: 0.5)),
+                border: Border.all(
+                  color: TeamakColors.accent.withValues(alpha: 0.5),
+                ),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.35),
@@ -2087,11 +2223,15 @@ class _StickyCtaBarState extends State<_StickyCtaBar> {
               ),
               child: wide
                   // The label is Flexible rather than fixed: on a mid-width
-                // tablet the text plus the button overruns the bar by a few
-                // pixels, so the label shrinks instead of clipping the button.
-                ? Row(
+                  // tablet the text plus the button overruns the bar by a few
+                  // pixels, so the label shrinks instead of clipping the button.
+                  ? Row(
                       children: <Widget>[
-                        const Icon(Icons.motorcycle_rounded, color: TeamakColors.accent, size: 24),
+                        const Icon(
+                          Icons.motorcycle_rounded,
+                          color: TeamakColors.accent,
+                          size: 24,
+                        ),
                         const SizedBox(width: 12),
                         const Flexible(
                           child: Text(
@@ -2110,8 +2250,14 @@ class _StickyCtaBarState extends State<_StickyCtaBar> {
                             backgroundColor: TeamakColors.accent,
                             foregroundColor: TeamakColors.ink,
                             elevation: 4,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -2142,8 +2288,14 @@ class _StickyCtaBarState extends State<_StickyCtaBar> {
                             backgroundColor: TeamakColors.accent,
                             foregroundColor: TeamakColors.ink,
                             elevation: 4,
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                            textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 10,
+                            ),
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -2188,25 +2340,51 @@ class _TrustBadges extends StatelessWidget {
         alignment: WrapAlignment.center,
         children: [
           for (final (icon, label) in badges)
-            Row(
-              // Tight tracking on phones; the wide-spaced variant pushes these
-              // past the container width.
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 18, color: TeamakColors.primary),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    label,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13.5,
-                      color: TeamakColors.ink,
+            // Its own white pill: the row of badges reads as a shelf of
+            // stamps, each with a gold-ringed icon, instead of a flat line.
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: TeamakColors.border),
+                boxShadow: const <BoxShadow>[
+                  BoxShadow(
+                    color: Color(0x140E1B33), // ink 8%
+                    blurRadius: 10,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Row(
+                // Tight tracking on phones; the wide-spaced variant pushes these
+                // past the container width.
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 26,
+                    height: 26,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: TeamakColors.accent.withValues(alpha: 0.16),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, size: 15, color: TeamakColors.accentDark),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      label,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.5,
+                        color: TeamakColors.ink,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
         ],
       ),
@@ -2268,15 +2446,26 @@ class _EarningsCalculatorState extends State<_EarningsCalculator> {
                       // Vehicle toggle.
                       Row(
                         children: [
-                          _toggleBtn('Okada', !_isTricycle, () => setState(() => _isTricycle = false)),
+                          _toggleBtn(
+                            'Okada',
+                            !_isTricycle,
+                            () => setState(() => _isTricycle = false),
+                          ),
                           const SizedBox(width: 8),
-                          _toggleBtn('Tricycle', _isTricycle, () => setState(() => _isTricycle = true)),
+                          _toggleBtn(
+                            'Tricycle',
+                            _isTricycle,
+                            () => setState(() => _isTricycle = true),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 20),
                       Text(
                         'Days per week: ${_daysPerWeek.round()}',
-                        style: const TextStyle(color: Colors.white70, fontSize: 14),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
                       ),
                       Slider(
                         value: _daysPerWeek,
@@ -2297,10 +2486,20 @@ class _EarningsCalculatorState extends State<_EarningsCalculator> {
                   child: Column(
                     children: [
                       _earnRow('Daily', '₦${dailyEarning.toStringAsFixed(0)}'),
-                      _earnRow('Weekly', '₦${weeklyEarning.toStringAsFixed(0)}'),
-                      _earnRow('Monthly', '₦${monthlyEarning.toStringAsFixed(0)}'),
+                      _earnRow(
+                        'Weekly',
+                        '₦${weeklyEarning.toStringAsFixed(0)}',
+                      ),
+                      _earnRow(
+                        'Monthly',
+                        '₦${monthlyEarning.toStringAsFixed(0)}',
+                      ),
                       const SizedBox(height: 8),
-                      _earnRow('Per Year', '₦${(yearlyEarning / 1000000).toStringAsFixed(1)}M', highlight: true),
+                      _earnRow(
+                        'Per Year',
+                        '₦${(yearlyEarning / 1000000).toStringAsFixed(1)}M',
+                        highlight: true,
+                      ),
                       const SizedBox(height: 14),
                       const Text(
                         '*Estimates based on average market earnings. Actual income varies.',
@@ -2315,9 +2514,17 @@ class _EarningsCalculatorState extends State<_EarningsCalculator> {
               children: [
                 Row(
                   children: [
-                    _toggleBtn('Okada', !_isTricycle, () => setState(() => _isTricycle = false)),
+                    _toggleBtn(
+                      'Okada',
+                      !_isTricycle,
+                      () => setState(() => _isTricycle = false),
+                    ),
                     const SizedBox(width: 8),
-                    _toggleBtn('Tricycle', _isTricycle, () => setState(() => _isTricycle = true)),
+                    _toggleBtn(
+                      'Tricycle',
+                      _isTricycle,
+                      () => setState(() => _isTricycle = true),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 14),
@@ -2337,7 +2544,11 @@ class _EarningsCalculatorState extends State<_EarningsCalculator> {
                 const SizedBox(height: 8),
                 _earnRow('Weekly', '₦${weeklyEarning.toStringAsFixed(0)}'),
                 _earnRow('Monthly', '₦${monthlyEarning.toStringAsFixed(0)}'),
-                _earnRow('Per Year', '₦${(yearlyEarning / 1000000).toStringAsFixed(1)}M', highlight: true),
+                _earnRow(
+                  'Per Year',
+                  '₦${(yearlyEarning / 1000000).toStringAsFixed(1)}M',
+                  highlight: true,
+                ),
                 const SizedBox(height: 10),
                 const Text(
                   '*Estimates based on average market earnings.',
@@ -2356,7 +2567,9 @@ class _EarningsCalculatorState extends State<_EarningsCalculator> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: selected ? TeamakColors.accent : Colors.white.withValues(alpha: 0.08),
+            color: selected
+                ? TeamakColors.accent
+                : Colors.white.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: selected ? TeamakColors.accent : Colors.white24,
@@ -2442,7 +2655,9 @@ class _AfterSalesSupport extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardW = wide ? (MediaQuery.sizeOf(context).width - 96 - 32) / 3 : MediaQuery.sizeOf(context).width - 40;
+    final cardW = wide
+        ? (MediaQuery.sizeOf(context).width - 96 - 32) / 3
+        : MediaQuery.sizeOf(context).width - 40;
 
     return Wrap(
       spacing: 16,
@@ -2456,7 +2671,9 @@ class _AfterSalesSupport extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: TeamakColors.primary.withValues(alpha: 0.08)),
+                border: Border.all(
+                  color: TeamakColors.primary.withValues(alpha: 0.08),
+                ),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
                     color: TeamakColors.primary.withValues(alpha: 0.05),
@@ -2484,7 +2701,10 @@ class _AfterSalesSupport extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     title,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14.5,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -2536,11 +2756,7 @@ class _ChatFab extends StatelessWidget {
             customBorder: const CircleBorder(),
             onTap: () => context.go('/contact'),
             child: const Center(
-              child: Icon(
-                Icons.chat_rounded,
-                color: Colors.white,
-                size: 24,
-              ),
+              child: Icon(Icons.chat_rounded, color: Colors.white, size: 24),
             ),
           ),
         ),
@@ -2594,7 +2810,11 @@ class _SectionHeader extends StatelessWidget {
           padding: const EdgeInsets.only(left: 19),
           child: Text(
             subtitle,
-            style: TextStyle(color: TeamakColors.subtle, fontSize: 15, height: 1.5),
+            style: TextStyle(
+              color: TeamakColors.subtle,
+              fontSize: 15,
+              height: 1.5,
+            ),
           ),
         ),
       ],
@@ -2613,21 +2833,21 @@ class _HeroChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        // Solid white chips: the old translucent-white treatment was made
-        // for a dark hero and vanished against the pale wash.
-        color: Colors.white,
+        // Translucent white over the navy: the chips glow without leaving
+        // the stage, the gold icon leading each one.
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: TeamakColors.border),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 15, color: TeamakColors.accentDark),
+          Icon(icon, size: 15, color: TeamakColors.accent),
           const SizedBox(width: 6),
           Text(
             label,
             style: const TextStyle(
-              color: TeamakColors.ink,
+              color: Colors.white,
               fontSize: 13,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.2,
@@ -2672,6 +2892,7 @@ class _TierCard extends StatelessWidget {
           Text(
             programme.depositLabel,
             style: const TextStyle(
+              color: TeamakColors.primary,
               fontSize: 32,
               fontWeight: FontWeight.w800,
               height: 1.1,
@@ -2680,7 +2901,11 @@ class _TierCard extends StatelessWidget {
           const SizedBox(height: 4),
           Row(
             children: <Widget>[
-              const Icon(Icons.schedule_rounded, size: 16, color: TeamakColors.subtle),
+              const Icon(
+                Icons.schedule_rounded,
+                size: 16,
+                color: TeamakColors.subtle,
+              ),
               const SizedBox(width: 5),
               Text(
                 'over ${programme.months} months',
@@ -2699,7 +2924,11 @@ class _TierCard extends StatelessWidget {
                   color: TeamakColors.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.motorcycle, color: TeamakColors.accent, size: 20),
+                child: const Icon(
+                  Icons.motorcycle,
+                  color: TeamakColors.accent,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -2713,12 +2942,20 @@ class _TierCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             programme.summary,
-            style: const TextStyle(color: TeamakColors.subtle, fontSize: 13.5, height: 1.4),
+            style: const TextStyle(
+              color: TeamakColors.subtle,
+              fontSize: 13.5,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 18),
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: TeamakColors.accent,
+                foregroundColor: TeamakColors.ink,
+              ),
               onPressed: () => context.go('/apply'),
               icon: const Icon(Icons.arrow_forward_rounded, size: 18),
               label: const Text('Apply for this'),
@@ -2739,25 +2976,29 @@ class _GlobalServices extends StatelessWidget {
     <String, dynamic>{
       'icon': Icons.local_shipping_rounded,
       'title': 'Logistics & Haulage',
-      'body': 'End-to-end cargo movement, last-mile delivery and fleet '
+      'body':
+          'End-to-end cargo movement, last-mile delivery and fleet '
           'logistics powered by our rider network.',
     },
     <String, dynamic>{
       'icon': Icons.school_rounded,
       'title': 'Training & Capacity',
-      'body': 'Rider safety, road etiquette and business-skills training '
+      'body':
+          'Rider safety, road etiquette and business-skills training '
           'so every partner succeeds on and off the road.',
     },
     <String, dynamic>{
       'icon': Icons.handshake_rounded,
       'title': 'Corporate Partnerships',
-      'body': 'B2B fleet packages, CSR mobility schemes and white-label '
+      'body':
+          'B2B fleet packages, CSR mobility schemes and white-label '
           'ownership programmes for NGOs and institutions.',
     },
     <String, dynamic>{
       'icon': Icons.recycling_rounded,
       'title': 'Sustainable Solutions',
-      'body': 'Clean-energy products and eco-friendly mobility options that '
+      'body':
+          'Clean-energy products and eco-friendly mobility options that '
           'cut emissions and support greener communities.',
     },
   ];
@@ -2851,22 +3092,26 @@ class _HowItWorks extends StatelessWidget {
   static const _steps = <Map<String, String>>[
     <String, String>{
       'title': 'Apply online',
-      'body': 'Fill the eight-section application form with your rider and '
+      'body':
+          'Fill the eight-section application form with your rider and '
           'association details.',
     },
     <String, String>{
       'title': 'Verification',
-      'body': 'Our team verifies your park, identity, next of kin and '
+      'body':
+          'Our team verifies your park, identity, next of kin and '
           'references.',
     },
     <String, String>{
       'title': 'Pay your deposit',
-      'body': 'Commit the one-time programme deposit for your chosen option '
+      'body':
+          'Commit the one-time programme deposit for your chosen option '
           'on the agreed date.',
     },
     <String, String>{
       'title': 'Take ownership',
-      'body': 'Sign the asset ownership agreement and receive your brand-new '
+      'body':
+          'Sign the asset ownership agreement and receive your brand-new '
           'Bajaj machine.',
     },
   ];
@@ -2902,12 +3147,18 @@ class _HowItWorks extends StatelessWidget {
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: <Color>[TeamakColors.primary, TeamakColors.primaryDark],
+                          colors: <Color>[
+                            TeamakColors.primary,
+                            TeamakColors.primaryDark,
+                          ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         shape: BoxShape.circle,
-                        border: Border.all(color: TeamakColors.accent, width: 2),
+                        border: Border.all(
+                          color: TeamakColors.accent,
+                          width: 2,
+                        ),
                       ),
                       child: Text(
                         '${i + 1}',
@@ -3071,7 +3322,11 @@ class _Footer extends StatelessWidget {
       width: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: <Color>[Color(0xFF04122E), Color(0xFF072E68), Color(0xFF04122E)],
+          colors: <Color>[
+            Color(0xFF04122E),
+            Color(0xFF072E68),
+            Color(0xFF04122E),
+          ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -3135,13 +3390,19 @@ class _Footer extends StatelessWidget {
           Text(
             'Solution Gospel Complex, Aba Opa, Ojoo, Ibadan',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 14,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             '+234 802 344 9126  ·  Teamakgloblsolution33@gmail.com',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 13),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.55),
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 14),
           // Two pills, wrapped: side by side on a desktop footer, stacked on
@@ -3182,7 +3443,10 @@ class _Footer extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             '© ${DateTime.now().year} Teamak Global Solutions. All rights reserved.',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.35), fontSize: 12),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.35),
+              fontSize: 12,
+            ),
           ),
         ],
       ),

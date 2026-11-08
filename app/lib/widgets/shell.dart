@@ -30,12 +30,7 @@ class AppShell extends StatelessWidget {
             const _Logo(),
             const SizedBox(width: 12),
             if (title != null)
-              Expanded(
-                child: Text(
-                  title!,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              )
+              Expanded(child: Text(title!, overflow: TextOverflow.ellipsis))
             else
               const Expanded(
                 child: Column(
@@ -96,6 +91,10 @@ class AppShell extends StatelessWidget {
                 // /admin), which customers have no reason to visit.
                 const SizedBox(width: 8),
                 FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: TeamakColors.accent,
+                    foregroundColor: TeamakColors.ink,
+                  ),
                   onPressed: () => context.go('/apply'),
                   child: const Text('Apply Now'),
                 ),
@@ -113,8 +112,8 @@ class AppShell extends StatelessWidget {
 class _NavDrawer extends StatelessWidget {
   const _NavDrawer();
 
-  static const List<(IconData, String, String)> _destinations =
-      <(IconData, String, String)>[
+  static const List<(IconData, String, String)>
+  _destinations = <(IconData, String, String)>[
     (Icons.home_outlined, 'Home', '/'),
     (Icons.info_outline, 'About', '/about'),
     (Icons.grid_view_outlined, 'What we do', '/what-we-do'),
