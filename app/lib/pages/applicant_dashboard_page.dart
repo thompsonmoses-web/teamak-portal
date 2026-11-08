@@ -678,44 +678,45 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Row(
-                          children: <Widget>[
-                            const Expanded(
-                              child: Text(
-                                'Your application',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                            if (_checkedAt != null)
-                              Padding(
-                                padding: const EdgeInsets.only(right: 4),
-                                child: Text(
-                                  'Checked ${_clock(_checkedAt!)}',
-                                  style: const TextStyle(
-                                    color: TeamakColors.subtle,
-                                    fontSize: 12.5,
+                        _CardTitle(
+                          'Your application',
+                          icon: Icons.receipt_long_rounded,
+                          tint: TeamakColors.accent,
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              // The checked stamp drops on a phone: beside
+                              // the refresh button it would push the
+                              // title past the card's edge.
+                              if (_checkedAt != null &&
+                                  MediaQuery.sizeOf(context).width >= 360)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 4),
+                                  child: Text(
+                                    'Checked ${_clock(_checkedAt!)}',
+                                    style: const TextStyle(
+                                      color: TeamakColors.subtle,
+                                      fontSize: 12.5,
+                                    ),
                                   ),
                                 ),
+                              IconButton(
+                                onPressed: _loading ? null : _refresh,
+                                iconSize: 20,
+                                visualDensity: VisualDensity.compact,
+                                tooltip: 'Refresh',
+                                icon: _loading
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.refresh_rounded),
                               ),
-                            IconButton(
-                              onPressed: _loading ? null : _refresh,
-                              iconSize: 20,
-                              visualDensity: VisualDensity.compact,
-                              tooltip: 'Refresh',
-                              icon: _loading
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.refresh_rounded),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 12),
                         _Row(
@@ -831,7 +832,7 @@ class _ApplicantDashboardPageState extends State<ApplicantDashboardPage> {
 
 /// The overview canvas — the reference's soft tint, in Teamak blue: on it
 /// the white cards read as cards instead of dissolving into the page.
-const Color _dashboardCanvas = Color(0xFFEDF3FC);
+const Color _dashboardCanvas = Color(0xFFE8F0FC);
 
 /// The desktop rail: who is signed in, where to jump to, and the way out.
 /// Every entry scrolls a real card of this page into view — the rail
@@ -967,10 +968,10 @@ class _SideNav extends StatelessWidget {
                   ],
                 ),
               ),
-              const _RailSection('MAIN'),
+              const _RailSection('MAIN', tint: TeamakColors.primary),
               for (final entry in entries)
                 _RailItem(entry: entry, selected: selected, onSelect: onSelect),
-              const _RailSection('ACCOUNT'),
+              const _RailSection('ACCOUNT', tint: TeamakColors.accentDark),
               for (final entry in _account)
                 _RailItem(entry: entry, selected: selected, onSelect: onSelect),
               if (bounded && fits) const Spacer(),
@@ -987,11 +988,13 @@ class _SideNav extends StatelessWidget {
   }
 }
 
-/// One caps heading in the rail's navigation.
+/// One caps heading in the rail's navigation — blue for MAIN, gold for
+/// ACCOUNT, so the rail carries the palette too.
 class _RailSection extends StatelessWidget {
-  const _RailSection(this.label);
+  const _RailSection(this.label, {this.tint = TeamakColors.subtle});
 
   final String label;
+  final Color tint;
 
   @override
   Widget build(BuildContext context) {
@@ -999,8 +1002,8 @@ class _RailSection extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
       child: Text(
         label,
-        style: const TextStyle(
-          color: TeamakColors.subtle,
+        style: TextStyle(
+          color: tint,
           fontSize: 10.5,
           fontWeight: FontWeight.w800,
           letterSpacing: 1.2,
@@ -1247,9 +1250,10 @@ class _PreparationCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text(
+            _CardTitle(
               'Getting ready for verification',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              icon: Icons.fact_check_outlined,
+              tint: TeamakColors.accentDark,
             ),
             const SizedBox(height: 6),
             const Text(
@@ -1326,79 +1330,178 @@ class _OverviewHeader extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(top: 6, bottom: 2),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          // Greeting: a gray lead-in with the member's name in brand
-          // blue — the reference's coloured name, in Teamak's palette.
-          // Wrap, not Row: a long name drops to its own line at 320px
-          // instead of pushing past the edge.
-          Wrap(
-            spacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: <Widget>[
-              Text(
-                lead,
-                style: const TextStyle(
-                  color: TeamakColors.subtle,
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w600,
+      // The opening wears the brand as a gradient block — blue into
+      // deep blue, gold for the words that matter — so the page reads
+      // colourful from the first glance without leaving the palette.
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: <Color>[TeamakColors.primary, TeamakColors.primaryDark],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: TeamakColors.primary.withValues(alpha: 0.28),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: <Widget>[
+            // Soft bubbles in the corner — the reference's mint dots,
+            // in white over Teamak blue.
+            Positioned(
+              top: -30,
+              right: -16,
+              child: Container(
+                width: 124,
+                height: 124,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.07),
                 ),
               ),
-              if (firstName.isNotEmpty)
-                Text(
-                  firstName,
-                  style: const TextStyle(
-                    color: TeamakColors.primary,
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          // The headline: the programme leads in ink, the coloured word
-          // is the view itself — the same two-tone construction as the
-          // reference's "Your … Overview".
-          Text.rich(
-            TextSpan(
-              children: <TextSpan>[
-                const TextSpan(
-                  text: 'Your Teamak ',
-                  style: TextStyle(
-                    color: TeamakColors.ink,
-                    fontSize: 27,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                  ),
-                ),
-                const TextSpan(
-                  text: 'Overview',
-                  style: TextStyle(
-                    color: TeamakColors.primary,
-                    fontSize: 27,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                  ),
-                ),
-              ],
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            fresh
-                ? 'Keep this number safe. Our team will contact you for '
-                      'verification before any approval.'
-                : 'Track your application from submission to rider '
-                      'ownership.',
-            style: const TextStyle(
-              color: TeamakColors.subtle,
-              fontSize: 14,
-              height: 1.5,
+            Positioned(
+              bottom: -36,
+              right: 86,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.05),
+                ),
+              ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(22, 20, 22, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  // Greeting: the lead-in in soft white with the
+                  // member's name in gold — the reference's coloured
+                  // name, on the brand's own blue.
+                  // Wrap, not Row: a long name drops to its own line at
+                  // 320px instead of pushing past the edge.
+                  Wrap(
+                    spacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        lead,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.78),
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (firstName.isNotEmpty)
+                        Text(
+                          firstName,
+                          style: const TextStyle(
+                            color: TeamakColors.accent,
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // The headline: the programme leads in white, the
+                  // coloured word is the view itself — the same
+                  // two-tone construction as the reference's
+                  // "Your … Overview".
+                  Text.rich(
+                    TextSpan(
+                      children: <TextSpan>[
+                        TextSpan(
+                          text: 'Your Teamak ',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 27,
+                            fontWeight: FontWeight.w800,
+                            height: 1.2,
+                          ),
+                        ),
+                        const TextSpan(
+                          text: 'Overview',
+                          style: TextStyle(
+                            color: TeamakColors.accent,
+                            fontSize: 27,
+                            fontWeight: FontWeight.w800,
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    fresh
+                        ? 'Keep this number safe. Our team will contact you '
+                              'for verification before any approval.'
+                        : 'Track your application from submission to rider '
+                              'ownership.',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.80),
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+}
+
+/// A card's title: a tinted icon chip, the words, and an optional
+/// trailing — the colour every section wears so the page reads as one
+/// dashboard instead of a stack of plain cards.
+class _CardTitle extends StatelessWidget {
+  const _CardTitle(
+    this.title, {
+    required this.icon,
+    required this.tint,
+    this.trailing,
+  });
+
+  final String title;
+  final IconData icon;
+  final Color tint;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Container(
+          width: 30,
+          height: 30,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: tint.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Icon(icon, size: 17, color: tint),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+        ),
+        ?trailing,
+      ],
     );
   }
 }
@@ -1424,9 +1527,10 @@ class _ProgressCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text(
+            _CardTitle(
               'Progress',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              icon: Icons.timeline_rounded,
+              tint: TeamakColors.primaryDark,
             ),
             const SizedBox(height: 14),
             for (final raw in events)
@@ -1578,23 +1682,18 @@ class _JourneyCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                const Expanded(
-                  child: Text(
-                    'Application journey',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                  ),
+            _CardTitle(
+              'Application journey',
+              icon: Icons.route_rounded,
+              tint: TeamakColors.primary,
+              trailing: Text(
+                'Step ${journey.step} of 4',
+                style: const TextStyle(
+                  color: TeamakColors.subtle,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12.5,
                 ),
-                Text(
-                  'Step ${journey.step} of 4',
-                  style: const TextStyle(
-                    color: TeamakColors.subtle,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12.5,
-                  ),
-                ),
-              ],
+              ),
             ),
             const SizedBox(height: 14),
             ClipRRect(
@@ -1609,7 +1708,11 @@ class _JourneyCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               journey.stage,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                color: barColor,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -1647,9 +1750,10 @@ class _PlanCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text(
+            _CardTitle(
               'Your plan',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              icon: Icons.directions_bike_rounded,
+              tint: TeamakColors.accentDark,
             ),
             const SizedBox(height: 14),
             Row(
@@ -1789,35 +1893,30 @@ class _CommitmentCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                const Expanded(
-                  child: Text(
-                    'Your commitment',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            _CardTitle(
+              'Your commitment',
+              icon: Icons.savings_rounded,
+              tint: TeamakColors.accentDark,
+              // Same gold pill the plan's duration badge wears.
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: TeamakColors.accent.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: TeamakColors.accent),
+                ),
+                child: const Text(
+                  'One-time',
+                  style: TextStyle(
+                    color: TeamakColors.primaryDark,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
                   ),
                 ),
-                // Same gold pill the plan's duration badge wears.
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: TeamakColors.accent.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: TeamakColors.accent),
-                  ),
-                  child: const Text(
-                    'One-time',
-                    style: TextStyle(
-                      color: TeamakColors.primaryDark,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
             if (amount != null) ...<Widget>[
               const SizedBox(height: 12),
@@ -1998,6 +2097,7 @@ class _StatStrip extends StatelessWidget {
         tint: TeamakColors.primaryDark,
         label: 'SUBMITTED',
         value: _stamp(detail.createdAt).split(' ').first,
+        valueColor: TeamakColors.primaryDark,
       ),
       _Kpi(
         icon: Icons.flag_rounded,
@@ -2013,12 +2113,14 @@ class _StatStrip extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          // The card wears its own chip's tint at a whisper — the row
+          // reads blue, gold, navy, gold instead of four white boxes.
+          color: kpi.tint.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: TeamakColors.border),
+          border: Border.all(color: kpi.tint.withValues(alpha: 0.28)),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: TeamakColors.primary.withValues(alpha: 0.06),
+              color: kpi.tint.withValues(alpha: 0.14),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -2155,6 +2257,13 @@ class _Kpi {
   final String? copy;
 }
 
+/// The outline every secondary action wears — Teamak blue instead of
+/// the theme's quiet grey, so the button row joins the palette.
+final ButtonStyle _blueOutline = OutlinedButton.styleFrom(
+  foregroundColor: TeamakColors.primary,
+  side: BorderSide(color: TeamakColors.primary.withValues(alpha: 0.45)),
+);
+
 /// Everything an applicant can do from the dashboard, gathered into one
 /// card so the page reads like a portal rather than a receipt.
 class _QuickActionsCard extends StatelessWidget {
@@ -2180,9 +2289,10 @@ class _QuickActionsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text(
+            _CardTitle(
               'Quick actions',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              icon: Icons.bolt_rounded,
+              tint: TeamakColors.accent,
             ),
             const SizedBox(height: 6),
             const Text(
@@ -2206,32 +2316,38 @@ class _QuickActionsCard extends StatelessWidget {
                   label: const Text('Chat on WhatsApp'),
                 ),
                 OutlinedButton.icon(
+                  style: _blueOutline,
                   onPressed: onInvite,
                   icon: const Icon(Icons.group_add_outlined),
                   label: const Text('Invite a rider'),
                 ),
                 OutlinedButton.icon(
+                  style: _blueOutline,
                   onPressed: onSave,
                   icon: const Icon(Icons.save_alt_outlined),
                   label: const Text('Save receipt'),
                 ),
                 OutlinedButton.icon(
+                  style: _blueOutline,
                   onPressed: () => context.go('/faq'),
                   icon: const Icon(Icons.help_outline),
                   label: const Text('FAQ & help'),
                 ),
                 OutlinedButton.icon(
+                  style: _blueOutline,
                   onPressed: () => context.go('/contact'),
                   icon: const Icon(Icons.mail_outline),
                   label: const Text('Contact us'),
                 ),
                 if (showTrackAnother)
                   OutlinedButton.icon(
+                    style: _blueOutline,
                     onPressed: onTrackAnother,
                     icon: const Icon(Icons.manage_search_outlined),
                     label: const Text('Track another application'),
                   ),
                 OutlinedButton.icon(
+                  style: _blueOutline,
                   onPressed: () => context.go('/'),
                   icon: const Icon(Icons.home_outlined),
                   label: const Text('Back to home'),
@@ -2281,36 +2397,32 @@ class _HandoverCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                const Expanded(
-                  child: Text(
-                    'Your handover',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                  ),
-                ),
-                // Same gold pill the commitment card wears, counting to
-                // the delivery instead of the deposit.
-                if (countdown != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: TeamakColors.accent.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      countdown,
-                      style: const TextStyle(
-                        color: TeamakColors.accentDark,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
+            _CardTitle(
+              'Your handover',
+              icon: Icons.local_shipping_rounded,
+              tint: TeamakColors.primary,
+              // Same gold pill the commitment card wears, counting to
+              // the delivery instead of the deposit.
+              trailing: countdown == null
+                  ? null
+                  : Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: TeamakColors.accent.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        countdown,
+                        style: const TextStyle(
+                          color: TeamakColors.accentDark,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                  ),
-              ],
             ),
             const SizedBox(height: 12),
             if (delivery != null)
@@ -2391,9 +2503,10 @@ class _OutcomeCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text(
+            _CardTitle(
               'From our team',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              icon: Icons.assignment_turned_in_rounded,
+              tint: TeamakColors.primary,
             ),
             const SizedBox(height: 12),
             for (final (label, value) in rows) _Row(label: label, value: value),
@@ -2449,6 +2562,13 @@ class _NextStepsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final copy = _copy;
+    // The banner's chip wears the status's colour: gold while the
+    // record waits, blue once it lands, red when it stops.
+    final tint = switch (status) {
+      'approved' => TeamakColors.primary,
+      'not_approved' => TeamakColors.danger,
+      _ => TeamakColors.accent,
+    };
 
     // The reference's status banner: a tinted icon chip beside a bold
     // line and its explanation — what is happening right now, sitting
@@ -2463,7 +2583,7 @@ class _NextStepsCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: TeamakColors.primary.withValues(alpha: 0.10),
+                color: tint.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -2473,7 +2593,7 @@ class _NextStepsCard extends StatelessWidget {
                   'further_review' => Icons.search_rounded,
                   _ => Icons.hourglass_top_rounded,
                 },
-                color: TeamakColors.primary,
+                color: tint,
                 size: 24,
               ),
             ),
@@ -2548,9 +2668,10 @@ class _AccountCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text(
+            _CardTitle(
               'Account & security',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              icon: Icons.shield_rounded,
+              tint: TeamakColors.primaryDark,
             ),
             const SizedBox(height: 6),
             const Text(
