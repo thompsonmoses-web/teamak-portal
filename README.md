@@ -111,7 +111,7 @@ All optional; sensible defaults are used when unset.
 | `TEAMAK_ADMIN_USER` | `admin` | Seeded administrator username. |
 | `TEAMAK_ADMIN_PASSWORD` | `admin123` | Seeded administrator password. |
 | `TEAMAK_UPLOADS` | `uploads` | Directory for stored documents. |
-| `CONTACT_EMAIL` | `Teamakgloblsolution33@gmail.com` | Inbox for contact-form mail. |
+| `CONTACT_EMAIL` | `Teamakglobalsolution33@gmail.com` | Inbox for contact-form mail. |
 | `CONTACT_APP_PASSWORD` | *(unset)* | Gmail App Password. Without it, contact messages are saved but not emailed. |
 
 ## API

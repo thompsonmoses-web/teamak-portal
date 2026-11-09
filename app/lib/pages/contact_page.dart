@@ -291,7 +291,7 @@ class _ContactPageState extends State<ContactPage> {
                       ),
                       const SizedBox(height: 14),
                       _contactRow(Icons.phone_rounded, '+234 802 344 9126'),
-                      _contactRow(Icons.email_rounded, 'Teamakgloblsolution33@gmail.com'),
+                      _contactRow(Icons.email_rounded, 'Teamakglobalsolution33@gmail.com'),
                       _contactRow(Icons.location_on_rounded,
                           'Solution Gospel Complex, Aba Opa, Ojoo, Ibadan'),
                     ],

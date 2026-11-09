@@ -8,7 +8,7 @@ import 'package:server/http_helpers.dart';
 
 /// Company inbox that receives contact-form submissions.
 final _inbox = Platform.environment['CONTACT_EMAIL'] ??
-    'Teamakgloblsolution33@gmail.com';
+    'Teamakglobalsolution33@gmail.com';
 
 /// Gmail App Password (16 chars). Set via CONTACT_APP_PASSWORD env var.
 /// Create one at: https://myaccount.google.com/apppasswords

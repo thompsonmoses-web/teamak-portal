@@ -1,5 +1,12 @@
 include: package:dart_frog_lint/recommended.yaml
 
+analyzer:
+  exclude:
+    # Generated `dart_frog build` output. It ships its own stale package
+    # resolution, and analyzing it buries real findings under ~1,100
+    # `uri_does_not_exist` errors.
+    - build/**
+
 linter:
   rules:
     # Project conventions: this is an application, not a published package.

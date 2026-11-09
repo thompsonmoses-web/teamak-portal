@@ -3397,7 +3397,7 @@ class _Footer extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '+234 802 344 9126  ·  Teamakgloblsolution33@gmail.com',
+            '+234 802 344 9126  ·  Teamakglobalsolution33@gmail.com',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.55),
