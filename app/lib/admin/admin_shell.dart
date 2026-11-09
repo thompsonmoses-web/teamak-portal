@@ -179,7 +179,22 @@ class _Sidebar extends StatelessWidget {
 
     return Container(
       width: 250,
-      color: TeamakColors.primaryDark,
+      // Midnight gradient with a gold hairline: the rail matches the
+      // customer site's hero and footer, so the whole product reads as
+      // one design from marketing page to review console.
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: <Color>[Color(0xFF04122E), Color(0xFF072E68)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        border: Border(
+          right: BorderSide(
+            color: TeamakColors.accent.withValues(alpha: 0.35),
+            width: 1.5,
+          ),
+        ),
+      ),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -443,7 +458,14 @@ class _TopBar extends StatelessWidget {
           );
 
     return Container(
-      color: Colors.white,
+      // White bar over a signature gold hairline — the same line the
+      // footer wears, so the frame is signed in gold on every page.
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: TeamakColors.accent, width: 1.5),
+        ),
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: <Widget>[
@@ -547,6 +569,35 @@ String _initials(String? name) {
   return '$first${parts.last.characters.first.toUpperCase()}';
 }
 
+/// The faint white/gold lattice from the customer site's hero, redrawn
+/// behind the console heading so both halves share one texture.
+class _LatticePainter extends CustomPainter {
+  const _LatticePainter();
+
+  static const Color _vertical = Color(0x14FFFFFF); // white 8%
+  static const Color _horizontal = Color(0x1AF4A81D); // gold 10%
+  static const double _step = 56;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final vPaint = Paint()
+      ..color = _vertical
+      ..strokeWidth = 1;
+    final hPaint = Paint()
+      ..color = _horizontal
+      ..strokeWidth = 1;
+    for (var x = 0.0; x < size.width; x += _step) {
+      canvas.drawLine(Offset(x + .5, 0), Offset(x + .5, size.height), vPaint);
+    }
+    for (var y = 0.0; y < size.height; y += _step) {
+      canvas.drawLine(Offset(0, y + .5), Offset(size.width, y + .5), hPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_LatticePainter oldDelegate) => false;
+}
+
 /// The heading every console page prints: title, one-line description and
 /// any page-specific actions on the right.
 class AdminPageHeader extends StatelessWidget {
@@ -609,15 +660,16 @@ class AdminPageHeader extends StatelessWidget {
             ],
           );
 
-    // The console opens on the same gradient block the member's
-    // dashboard wears — brand blue into deep blue, soft bubbles behind
-    // the words, gold and white for whatever actions the page passes.
+    // The console opens on the customer site's midnight stage — the same
+    // navy lattice-and-gold block the marketing hero wears — so staff and
+    // riders read one design end to end. Whatever actions the page passes
+    // come out gold and white against it.
     return Theme(
       data: Theme.of(context).copyWith(
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
             backgroundColor: TeamakColors.accent,
-            foregroundColor: TeamakColors.primaryDark,
+            foregroundColor: TeamakColors.ink,
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
@@ -634,21 +686,37 @@ class AdminPageHeader extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: <Color>[TeamakColors.primary, TeamakColors.primaryDark],
+            colors: <Color>[Color(0xFF04122E), Color(0xFF072E68)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(18),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: TeamakColors.primary.withValues(alpha: 0.25),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
+              color: TeamakColors.primaryDark.withValues(alpha: 0.45),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
         child: Stack(
           children: <Widget>[
+            const Positioned.fill(
+              child: CustomPaint(painter: _LatticePainter()),
+            ),
+            // Gold wash gathering at the top-right corner.
+            Positioned(
+              top: -56,
+              right: -28,
+              child: Container(
+                width: 180,
+                height: 180,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: TeamakColors.accent.withValues(alpha: 0.14),
+                ),
+              ),
+            ),
             Positioned(
               top: -34,
               right: -14,
@@ -670,6 +738,23 @@ class AdminPageHeader extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white.withValues(alpha: 0.05),
+                ),
+              ),
+            ),
+            // The same faint sheen the landing hero wears.
+            const Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: <Color>[
+                      Color(0x12FFFFFF),
+                      Color(0x00000000),
+                      Color(0x1E000000),
+                    ],
+                    stops: <double>[0, 0.55, 1],
+                    begin: Alignment(-1, -0.3),
+                    end: Alignment(1, 0.35),
+                  ),
                 ),
               ),
             ),
