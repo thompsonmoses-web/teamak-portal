@@ -105311,7 +105311,7 @@ m=n?j:k.gagb()
 l=n?B.p2:B.Qf
 g.push(A.c0(new A.W(new A.S(s,s,s,s),A.D0(B.iJ,A.aa(A.b([r,B.M,q,B.M,p,B.M,o,B.fM,A.c9(A.fo(l,A.p(n?"Sending\u2026":"Send message",j,j,j,j,j,j,j,j),m,A.eZ(j,j,j,B.mE,j,j,j,B.ix)),j,1/0)],f),B.n,B.e,B.f),k.d),j),j,j,j,j))
 g.push(B.al)
-g.push(A.c0(new A.W(B.aj,A.aa(A.b([B.ady,B.M,k.Ie(B.PJ,"+234 802 344 9126"),k.Ie(B.Ps,"Teamakgloblsolution33@gmail.com"),k.Ie(B.tL,u.C)],f),B.n,B.e,B.f),j),j,j,j,j))
+g.push(A.c0(new A.W(B.aj,A.aa(A.b([B.ady,B.M,k.Ie(B.PJ,"+234 802 344 9126"),k.Ie(B.Ps,"Teamakglobalsolution33@gmail.com"),k.Ie(B.tL,u.C)],f),B.n,B.e,B.f),j),j,j,j,j))
 g.push(B.al)
 return new A.fN(A.cJ(new A.cq(B.Hs,A.eh(g,new A.S(h,h,h,h),j,!1),j),j,j),"Contact us",j)},
 Ie(a,b){var s=null
@@ -105984,7 +105984,7 @@ $0(){return A.bw(this.a).bf("/apply",null)},
 $S:0}
 A.YU.prototype={
 A(a){var s=null,r=A.aE(14),q=A.b([new A.ba(0,B.K,B.u.ad(0.35),B.i6,20)],t.V),p=t.p
-return A.al(s,A.aa(A.b([A.al(s,A.op("assets/teamak_logo.png",s,B.cF,B.hd,72,72),B.j,s,s,new A.af(B.h,s,s,r,q,s,B.t),s,s,s,s,B.rZ,s,s,s),B.a2,B.ad3,B.b_,B.adF,B.M,A.al(s,s,B.j,s,s,new A.af(s,s,s,A.aE(2),s,B.Sq,B.t),s,3,s,s,s,s,s,56),B.M,A.p(u.C,s,s,s,s,A.bm(s,s,B.h.ad(0.7),s,s,s,s,s,s,s,s,14,s,s,s,s,s,!0,s,s,s,s,s,s,s,s),B.bu,s,s),B.aS,A.p("+234 802 344 9126  \xb7  Teamakgloblsolution33@gmail.com",s,s,s,s,A.bm(s,s,B.h.ad(0.55),s,s,s,s,s,s,s,s,13,s,s,s,s,s,!0,s,s,s,s,s,s,s,s),B.bu,s,s),B.M,A.cc(B.lj,A.b([new A.zk(B.Py,"FAQ & support",new A.aAB(a),s),new A.zk(B.tM,"Contact us",new A.aAC(a),s),new A.zk(B.PF,"Track application",new A.aAD(a),s)],p),B.ai,8,8),B.a2,B.aeh,B.al,A.p("\xa9 "+A.be(new A.c2(Date.now(),0,!1))+" Teamak Global Solutions. All rights reserved.",s,s,s,s,A.bm(s,s,B.h.ad(0.35),s,s,s,s,s,s,s,s,12,s,s,s,s,s,!0,s,s,s,s,s,s,s,s),s,s,s)],p),B.o,B.e,B.f),B.j,s,s,B.HG,s,s,s,s,B.NO,s,s,1/0)}}
+return A.al(s,A.aa(A.b([A.al(s,A.op("assets/teamak_logo.png",s,B.cF,B.hd,72,72),B.j,s,s,new A.af(B.h,s,s,r,q,s,B.t),s,s,s,s,B.rZ,s,s,s),B.a2,B.ad3,B.b_,B.adF,B.M,A.al(s,s,B.j,s,s,new A.af(s,s,s,A.aE(2),s,B.Sq,B.t),s,3,s,s,s,s,s,56),B.M,A.p(u.C,s,s,s,s,A.bm(s,s,B.h.ad(0.7),s,s,s,s,s,s,s,s,14,s,s,s,s,s,!0,s,s,s,s,s,s,s,s),B.bu,s,s),B.aS,A.p("+234 802 344 9126  \xb7  Teamakglobalsolution33@gmail.com",s,s,s,s,A.bm(s,s,B.h.ad(0.55),s,s,s,s,s,s,s,s,13,s,s,s,s,s,!0,s,s,s,s,s,s,s,s),B.bu,s,s),B.M,A.cc(B.lj,A.b([new A.zk(B.Py,"FAQ & support",new A.aAB(a),s),new A.zk(B.tM,"Contact us",new A.aAC(a),s),new A.zk(B.PF,"Track application",new A.aAD(a),s)],p),B.ai,8,8),B.a2,B.aeh,B.al,A.p("\xa9 "+A.be(new A.c2(Date.now(),0,!1))+" Teamak Global Solutions. All rights reserved.",s,s,s,s,A.bm(s,s,B.h.ad(0.35),s,s,s,s,s,s,s,s,12,s,s,s,s,s,!0,s,s,s,s,s,s,s,s),s,s,s)],p),B.o,B.e,B.f),B.j,s,s,B.HG,s,s,s,s,B.NO,s,s,1/0)}}
 A.aAB.prototype={
 $0(){return A.bw(this.a).bf("/faq",null)},
 $S:0}
