@@ -118,7 +118,7 @@ class WhatWeDoPage extends StatelessWidget {
     (
       'Sustainable solutions',
       'What else can I add to the business?',
-      'Sun King solar home systems from ₦50,000 — panel, LED lighting, phone '
+      'Sun King solar home systems from ₦70,000 — panel, LED lighting, phone '
           'charging and TV support — so the income a vehicle earns can go '
           'further at home, and so a shop can stay open after dark.',
       Icons.solar_power_rounded,

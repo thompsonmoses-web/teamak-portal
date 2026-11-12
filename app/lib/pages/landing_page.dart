@@ -195,9 +195,9 @@ class _LandingPageState extends State<LandingPage> {
                   ],
                   badgeShadow: const Color(0xFF2E7D32),
                   title: 'SUN KING SOLAR — GO GREEN',
-                  headline: 'Sun King solar home system\nfrom just ₦50,000',
+                  headline: 'Sun King solar home system\nfrom just ₦70,000',
                   mobileHeadline:
-                      'Sun King solar home system from just ₦50,000',
+                      'Sun King solar home system from just ₦70,000',
                   benefits:
                       'Solar panel · LED lights · Phone charging · TV support',
                   mobileBenefits: 'Panel · LED lights · Charging · TV',
